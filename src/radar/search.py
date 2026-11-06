@@ -107,7 +107,8 @@ def all_payloads():
     ldb = _db()
     if TABLE not in ldb.table_names():
         return
-    for batch in ldb.open_table(TABLE).to_lance().to_batches(columns=["text", "title"]):
+    tbl = ldb.open_table(TABLE).to_arrow().select(["text", "title"])
+    for batch in tbl.to_batches(max_chunksize=1000):
         for row in batch.to_pylist():
             yield row["text"]
             yield row["title"]

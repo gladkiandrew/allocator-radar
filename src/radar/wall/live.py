@@ -156,10 +156,7 @@ def check_all(*, include_canary: bool = True) -> list[str]:
     v = check_models() + check_dependencies()
     with db.connect() as con:
         v += check_schema(con) + check_sweep(con) + check_egress(con)
-    try:
-        v += check_lance()
-    except ImportError:
-        pass
+    v += check_lance()  # never skipped silently: a failure to read the vector store fails the wall
     if include_canary:
         v += run_canary()
     return v
