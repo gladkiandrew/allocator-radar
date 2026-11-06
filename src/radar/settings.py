@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     flag_two_family_adjudication: bool = False  # TODO: second model family for TERMINATED/ON_WATCH
     flag_gliner: bool = True  # GLiNER PII pass in the scrubber (regex always runs)
     flag_docling_tables: bool = False  # Docling table structure on hit pages
+    flag_ocr: bool = True  # local OCR (Apple Vision / Tesseract) for scanned pages; output is scrubbed like any text
 
     # Web / auth (step 8). "none" is for localhost only.
     auth_mode: Literal["none", "basic"] = "none"

@@ -22,7 +22,7 @@ from radar.extract.prefilter import match_terms
 from radar.wall.scrubber import scrub
 
 log = logging.getLogger(__name__)
-PARSER = "pdfplumber"
+PARSER = "pdfplumber+ocr"
 
 
 def _html_text(data: bytes) -> list[str]:
@@ -32,6 +32,51 @@ def _html_text(data: bytes) -> list[str]:
     text = re.sub(r"&nbsp;|&#160;", " ", text)
     text = re.sub(r"[ \t]+", " ", text)
     return [re.sub(r"\n\s*\n+", "\n\n", text).strip()]
+
+
+OCR_MIN_CHARS = 50  # pages with less text than this are treated as scanned images
+
+
+def _ocr_engine():
+    """Local OCR only (never an LLM): Apple Vision on macOS, Tesseract on Linux. None if unavailable."""
+    try:
+        from ocrmac import ocrmac  # type: ignore[import-not-found]
+
+        return lambda img: "\n".join(r[0] for r in ocrmac.OCR(img, recognition_level="accurate",
+                                                               language_preference=["en-US"]).recognize())
+    except ImportError:
+        pass
+    try:
+        import pytesseract  # type: ignore[import-not-found]
+
+        pytesseract.get_tesseract_version()
+        return lambda img: pytesseract.image_to_string(img)
+    except Exception:
+        return None
+
+
+def _ocr_pages(data: bytes, page_nos: list[int]) -> dict[int, str]:
+    from radar.settings import get_settings
+
+    if not page_nos or not get_settings().flag_ocr:
+        return {}
+    engine = _ocr_engine()
+    if engine is None:
+        log.warning("no local OCR engine; %d scanned pages left empty", len(page_nos))
+        return {}
+    import pypdfium2 as pdfium
+
+    out = {}
+    doc = pdfium.PdfDocument(data)
+    try:
+        for n in page_nos:
+            try:
+                out[n] = engine(doc[n - 1].render(scale=2).to_pil())
+            except Exception as e:
+                log.warning("OCR failed on page %d: %s", n, e)
+    finally:
+        doc.close()
+    return out
 
 
 def extract_pages(data: bytes, content_type: str | None) -> list[str]:
@@ -49,6 +94,10 @@ def extract_pages(data: bytes, content_type: str | None) -> list[str]:
                     pages.append("")
                 finally:
                     page.close()
+        scanned = [i + 1 for i, t in enumerate(pages) if len(t.strip()) < OCR_MIN_CHARS]
+        for n, txt in _ocr_pages(data, scanned).items():
+            if len(txt.strip()) > len(pages[n - 1].strip()):
+                pages[n - 1] = txt
         return pages
     if "html" in ctype or data.lstrip()[:1] == b"<":
         return _html_text(data)

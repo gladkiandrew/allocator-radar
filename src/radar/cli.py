@@ -27,6 +27,7 @@ def main(argv: list[str] | None = None) -> int:
     np_.add_argument("--max-docs", type=int, default=40)
     sub.add_parser("hash-password", help="print the sha256 for RADAR_AUTH_PASSWORD_HASH (reads the password from stdin)")
     sub.add_parser("approve-pending", help="apply config/review_policy.yaml to pending signals (and the registry)")
+    sub.add_parser("reparse-scanned", help="re-parse documents that have scanned (empty) pages, with local OCR")
     sub.add_parser("index", help="add newly parsed (scrubbed) pages to the LanceDB search index")
     dp = sub.add_parser("discover", help="discovery agent: registry/seed_florida.yaml -> registry/florida.yaml")
     dp.add_argument("--resuggest", action="store_true", help="recompute suggested pages only (no fetching)")
@@ -108,6 +109,16 @@ def main(argv: list[str] | None = None) -> int:
         for r in review.integrity_cleanup():
             print(f"removed orphan: {r}")
         print(f"signals approved under policy: {review.approve_pending()}")
+    elif args.cmd == "reparse-scanned":
+        from radar import db
+        from radar.parse import pdf
+        db.init_db()
+        with db.connect() as con:
+            shas = [r[0] for r in con.execute(
+                "SELECT sha256 FROM pages GROUP BY sha256 HAVING sum(CASE WHEN length(text_scrubbed) < 50 THEN 1 ELSE 0 END) > 0").fetchall()]
+        print(f"{len(shas)} documents with scanned pages")
+        for sha in shas:
+            print(sha[:12], pdf.parse_document(sha, force=True))
     elif args.cmd == "index":
         from radar import db, search
         db.init_db()

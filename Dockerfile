@@ -5,7 +5,7 @@ ENV PYTHONUNBUFFERED=1 UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1 \
     HF_HUB_DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 \
     RADAR_DATA_DIR=/data RADAR_LAKE_KEY_FILE=/secrets/lake.key RADAR_MANUAL_INBOX=/data/inbox/manual
 
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates nodejs npm && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates nodejs npm tesseract-ocr && rm -rf /var/lib/apt/lists/*
 # Claude Code CLI: the LLM backend runs `claude -p` on the owner's subscription (CLAUDE_CODE_OAUTH_TOKEN).
 RUN npm install -g @anthropic-ai/claude-code && claude --version
 COPY --from=ghcr.io/astral-sh/uv:0.13.7 /uv /usr/local/bin/uv
