@@ -33,6 +33,10 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("resolve", help="entity resolution for firm names (auto-alias + merge queue)")
     sub.add_parser("report", help="main table vs coverage gaps, with coverage % per allocator")
     sub.add_parser("sba", help="ingest + parse the FL SBA reports in inbox/manual/fl-sba-frs/")
+    sub.add_parser("auto-approve", help="run the tiered auto-approval rules over pending signals")
+    sub.add_parser("scan-searches", help="search-focused extraction over main-table plans' last 12 months of agendas/minutes/RFPs")
+    fp = sub.add_parser("reextract", help="force re-extraction of one document, all pages")
+    fp.add_argument("sha_prefix"); fp.add_argument("--max-pages", type=int, default=64)
     sub.add_parser("index", help="add newly parsed (scrubbed) pages to the LanceDB search index")
     dp = sub.add_parser("discover", help="discovery agent: registry/seed_florida.yaml -> registry/florida.yaml")
     dp.add_argument("--resuggest", action="store_true", help="recompute suggested pages only (no fetching)")
@@ -198,6 +202,43 @@ def main(argv: list[str] | None = None) -> int:
             st = extractor.extract_document(f["sha"], "fl-sba-frs", all_pages=holdings)
             print(json.dumps({"file": f["file"], "extractor": st}))
         print(json.dumps({k: v for k, v in report.items() if k != "llm_docs"}, default=str, indent=1))
+    elif args.cmd == "auto-approve":
+        import json
+        from radar import autoapprove, db
+        db.init_db()
+        print(json.dumps(autoapprove.run_pass(), indent=1))
+    elif args.cmd == "reextract":
+        import json
+        from radar import db
+        from radar.extract import extractor
+        db.init_db()
+        with db.connect() as con:
+            sha, aid = con.execute("SELECT sha256, any_value(allocator_id) FROM document_urls WHERE sha256 LIKE ? GROUP BY 1",
+                                   [args.sha_prefix + "%"]).fetchone()
+        print(json.dumps(extractor.extract_document(sha, aid, all_pages=True, max_pages=args.max_pages, force=True)))
+    elif args.cmd == "scan-searches":
+        import json
+        from concurrent.futures import ThreadPoolExecutor
+        from datetime import date, timedelta
+        from radar import coverage, db, queries
+        from radar.extract import extractor
+        db.init_db()
+        since = date.today() - timedelta(days=365)
+        with db.connect() as con:
+            main = [a for a in queries.allocator_table(con) if not a["bar_reasons"]]
+            todo = []
+            for a in main:
+                for h in coverage.held_documents(con, a["allocator_id"]):
+                    if h["kind"] in ("AGENDA", "MINUTES", "RFP") and h["dated"] and h["dated"] >= since:
+                        todo.append((h["sha256"], a["allocator_id"]))
+        print(f"{len(main)} main-table plans, {len(todo)} agendas/minutes/RFPs from the last 12 months", flush=True)
+
+        def one(item):
+            st = extractor.extract_document(item[0], item[1], search_scan=True, max_pages=20)
+            print(json.dumps({"doc": item[0][:12], "allocator": item[1], **st}), flush=True)
+
+        with ThreadPoolExecutor(max_workers=5) as ex:
+            list(ex.map(one, todo))
     elif args.cmd == "index":
         from radar import db, search
         db.init_db()

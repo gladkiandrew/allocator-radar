@@ -1,6 +1,6 @@
 # Readiness tiers. A tier is never a score; it is derived from APPROVED signals by
 # the rules below and always shown with the signals that produced it.
-# Only signals with review_status = approved count. event_date is the
+# Only signals with review_status = approved (a person) or auto_approved (config/auto_approval.yaml) count. event_date is the
 # source-native date (meeting, notice, or filing date), never the fetch date.
 #
 # Evaluation order: tiers are checked top to bottom; the first tier with a
@@ -30,9 +30,11 @@ tiers:
   - tier: PREPARING
     window_days: 180
     meaning: >-
-      Target allocation raised, IPS amended, asset-liability or pacing study adopted,
-      consultant changed, or an incumbent placed on watch or terminated.
+      A mandate awarded or a commitment made, target allocation raised, IPS amended, asset-liability
+      or pacing study adopted, consultant changed, or an incumbent placed on watch or terminated.
     signal_types:
+      - MANDATE_AWARDED             # 91-180 days old (newer ones are DEPLOYING); manager hires only
+      - COMMITMENT_MADE
       - TARGET_ALLOCATION_CHANGED   # only when qualifier = increase (see below)
       - IPS_AMENDED
       - ASSET_LIABILITY_STUDY
@@ -41,6 +43,7 @@ tiers:
       - MANAGER_ON_WATCH
       - MANAGER_TERMINATED
     qualifiers:
+      MANDATE_AWARDED: [manager]
       TARGET_ALLOCATION_CHANGED: [increase]
 
 coverage:

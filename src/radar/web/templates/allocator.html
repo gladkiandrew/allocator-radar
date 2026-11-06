@@ -62,12 +62,12 @@
 <div class="scroll"><table class="stack">
   <thead><tr><th>Date</th><th>Signal</th><th>What the document says</th><th>Status</th></tr></thead>
   <tbody>{% for s in a.signals %}
-  <tr style="{{ 'opacity:.6' if s.review_status != 'approved' }}">
+  <tr style="{{ 'opacity:.6' if s.review_status not in ('approved', 'auto_approved') }}">
     <td class="mono">{{ s.event_date }}</td>
     <td class="mono" style="font-size:12px">{{ s.signal_type }}{% if s.qualifier %} ({{ s.qualifier }}){% endif %}</td>
     <td class="why">{{ s.summary }}{{ cites(s.evidence) }}
       {% for e in s.evidence[:1] %}<blockquote>{{ e.quote }}</blockquote>{% endfor %}</td>
-    <td>{% if s.review_status == 'approved' %}<span class="tier WATCHING">approved</span>{% elif s.review_status == 'new' %}<span class="pending">pending review</span>{% else %}<span class="muted">rejected</span>{% endif %}
+    <td>{% if s.hf_relevant %}<span class="tier PREPARING">HF</span> {% endif %}{% if s.review_status == 'approved' %}<span class="tier WATCHING">approved by you</span>{% elif s.review_status == 'auto_approved' %}<span class="tier WATCHING" style="opacity:.8" title="{{ s.review_note }}">auto-approved</span>{% elif s.review_status == 'new' %}<span class="pending">pending review</span>{% else %}<span class="muted">rejected</span>{% endif %}
       {% if s.origin == 'MANUAL' %}<br><span class="muted" style="font-size:12px">manual entry</span>{% endif %}</td>
   </tr>{% endfor %}</tbody>
 </table></div>{% endif %}

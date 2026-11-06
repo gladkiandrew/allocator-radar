@@ -29,6 +29,7 @@
     <td class="why">
       {% if r.reasons %}{% set s = r.reasons[0] %}
         <span class="date">{{ s.event_date }}</span>{{ s.summary }}
+        <span class="muted mono" style="font-size:11px">{{ 'auto-approved' if s.review_status == 'auto_approved' else 'approved by you' }}</span>
         {% for e in s.evidence[:1] %} <a class="cite" href="{{ cite_href(e) }}" target="_blank" rel="noopener">[{{ (e.doc_title or 'source')|truncate(28) }}{% if e.page %} p.{{ e.page }}{% endif %}]</a>{% endfor %}
         {% if r.reasons|length > 1 %}<br><a class="muted" href="/a/{{ a.allocator_id }}#signals">+{{ r.reasons|length - 1 }} more qualifying</a>{% endif %}
       {% elif r.tier == 'STALE' %}<span class="muted">{{ 'No documents fetched yet.' if not a.last_fetched else 'No new document in ' ~ stale_days ~ ' days.' }}</span>

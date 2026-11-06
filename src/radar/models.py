@@ -119,7 +119,7 @@ class RoleType(StrEnum):
 
 
 Provenance = Literal["CRAWL", "MANUAL", "RECORDS_REQUEST"]
-ReviewStatus = Literal["new", "approved", "rejected"]
+ReviewStatus = Literal["new", "approved", "auto_approved", "rejected"]  # approved = a person; auto_approved = rules
 
 
 class Evidence(Strict):

@@ -52,16 +52,17 @@ def register(app: FastAPI, render) -> None:
         for s in sigs:
             s["display_name"] = names.get(s["allocator_id"], s["allocator_id"])
             trial = compute([{**s, "review_status": "approved"}], None, _date.today())
+            s["hf"] = bool(s.get("hf_relevant"))
             s["tier_effect"] = trial.tier if trial.tier in ("DEPLOYING", "PREPARING") else None
         return sigs
 
     @app.get("/review", response_class=HTMLResponse)
     def review_page(request: Request, status: str = "new"):
-        status = status if status in ("new", "approved", "rejected") else "new"
+        status = status if status in ("new", "approved", "auto_approved", "rejected") else "new"
         with db.connect() as con:
             sigs = _enrich(con, queries.signals_for(con, statuses=(status,)))
             counts = dict(con.execute("SELECT review_status, count(*) FROM signals GROUP BY 1").fetchall())
-        for k in ("new", "approved", "rejected"):
+        for k in ("new", "approved", "auto_approved", "rejected"):
             counts.setdefault(k, 0)
         if status == "new":  # what could move a tier first, newest first
             sigs.sort(key=lambda s: (s["tier_effect"] is None, s["tier_effect"] != "DEPLOYING", -s["event_date"].toordinal()))
@@ -82,7 +83,8 @@ def register(app: FastAPI, render) -> None:
         if "hx-request" not in request.headers:
             return RedirectResponse("/review", status_code=303)
         with db.connect() as con:
-            s = [x for x in queries.signals_for(con, statuses=("new", "approved", "rejected")) if x["signal_id"] == signal_id]
+            s = [x for x in queries.signals_for(con, statuses=("new", "approved", "auto_approved", "rejected"))
+                 if x["signal_id"] == signal_id]
             _enrich(con, s)
         return templates_partial(request, "review_card.html", s=s[0], error=error,
                                  signal_types=list(SignalType.__members__))

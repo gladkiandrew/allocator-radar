@@ -31,6 +31,13 @@
   checklist covering 18 months of agendas and minutes, plus the latest IPS, quarterly report, actuarial valuation, audited
   financials and 112.664 disclosure.</p>
 
+<h2 id="auto">Auto-approval</h2>
+<p>A pending signal is auto-approved only if all four hold. (a) It is not a termination, watch-list change or
+  redemption; those always go to a person. (b) It was read from a parsed table, or its quote matches the cited page word
+  for word. (c) Its date was printed in the source as a meeting, report or filing date (a quarter-end fallback does not
+  count). (d) Its summary passes the language lint. Auto-approved signals set tiers and show as "auto-approved". They are
+  never exported until a person approves them. Rules: <span class="mono">config/auto_approval.yaml</span>.</p>
+
 <h2>What counts</h2>
 <ul>
   <li>Only <strong>approved</strong> signals change a tier. New signals appear as <span class="pending">pending review</span> until a reviewer approves or rejects them.</li>

@@ -29,7 +29,8 @@ def _evidence_for(con, kind: str, ids: list[str]) -> dict[str, list[dict]]:
     return out
 
 
-def signals_for(con, allocator_ids: list[str] | None = None, statuses: tuple[str, ...] = ("new", "approved")) -> list[dict]:
+def signals_for(con, allocator_ids: list[str] | None = None,
+                statuses: tuple[str, ...] = ("new", "approved", "auto_approved")) -> list[dict]:
     where, params = [f"review_status IN ({','.join('?' * len(statuses))})"], list(statuses)
     if allocator_ids is not None:
         if not allocator_ids:
@@ -112,7 +113,7 @@ def allocator_brief(con, allocator_id: str) -> dict | None:
            WHERE du.allocator_id = ? ORDER BY du.doc_date DESC NULLS LAST, du.first_seen DESC""",
         [allocator_id],
     )
-    sigs = signals_for(con, [allocator_id], statuses=("new", "approved", "rejected"))
+    sigs = signals_for(con, [allocator_id], statuses=("new", "approved", "auto_approved", "rejected"))
     a["signals"] = sigs
     last_new = max((d["first_seen"] for d in a["documents"]), default=None)
     a["readiness"] = compute(sigs, last_new)

@@ -1,0 +1,9 @@
+# Tiered auto-approval (owner, 2026-11-06). A signal is auto-approved ONLY if every rule holds.
+# Auto-approved signals count toward readiness tiers but NEVER export: CSV export requires a person's approval.
+rule_version: auto-approve-v1
+excluded_signal_types: [MANAGER_TERMINATED, MANAGER_ON_WATCH, REDEMPTION_APPROVED, WATCH_REMOVED]
+# Rule (b): extracted deterministically from a parsed table, OR the evidence quote string-matches the cited page.
+deterministic_extractors: [sba-table-parser]
+# Rule (c): source-native date bases that qualify. "quarter_end" (a reporting period used because no meeting or
+# publication date is printed) does not qualify; add it here to let such rows auto-approve.
+qualifying_date_bases: [meeting_date, report_date, publication_date, filing_date, notice_date, document_date, printed_on_page]

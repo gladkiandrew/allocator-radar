@@ -94,7 +94,7 @@ def integrity_cleanup() -> list[str]:
             SELECT s.signal_id, s.allocator_id, s.summary, s.review_status, s.reviewed_by
             FROM signals s
             WHERE s.origin = 'MACHINE'
-              AND (s.review_status = 'new' OR (s.review_status = 'approved' AND s.reviewed_by = ?))
+              AND (s.review_status IN ('new', 'auto_approved') OR (s.review_status = 'approved' AND s.reviewed_by = ?))
               AND NOT EXISTS (
                 SELECT 1 FROM row_evidence re JOIN evidence e USING (evidence_id)
                 JOIN document_urls du ON du.sha256 = e.document_sha256 AND du.allocator_id = s.allocator_id

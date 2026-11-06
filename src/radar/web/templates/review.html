@@ -2,13 +2,15 @@
 {% block title %}Signal review · Allocator Radar{% endblock %}
 {% block body %}
 <h1>Signal review</h1>
-<p class="sub">A signal changes a readiness tier, or appears in an export, only after you approve it. Check the quote against
+<p class="sub">A signal changes a readiness tier only once it is approved, either by you or by the auto-approval rules
+  (<a href="/how#auto">how auto-approval works</a>). It appears in an export only after <strong>you</strong> approve it. Check the quote against
   the page (the link opens the PDF at that page). Correct the type, date or summary if needed, then approve or reject.</p>
 {% if policy_actor %}<div class="notice">Auto-approve is <strong>on</strong> (config/review_policy.yaml, set by the owner). Signals that pass every
   validator are approved as <span class="mono">{{ policy_actor }}</span>. Use <em>Reject</em> or <em>Back to pending</em> below to undo any of them.</div>{% endif %}
 <div class="filters">
   <a href="/review" class="{{ 'on' if status == 'new' }}">Pending {{ counts.new }}</a>
-  <a href="/review?status=approved" class="{{ 'on' if status == 'approved' }}">Approved {{ counts.approved }}</a>
+  <a href="/review?status=auto_approved" class="{{ 'on' if status == 'auto_approved' }}">Auto-approved {{ counts.auto_approved }}</a>
+  <a href="/review?status=approved" class="{{ 'on' if status == 'approved' }}">Approved by you {{ counts.approved }}</a>
   <a href="/review?status=rejected" class="{{ 'on' if status == 'rejected' }}">Rejected {{ counts.rejected }}</a>
 </div>
 {% if not signals %}<div class="card muted">Nothing here.</div>{% endif %}

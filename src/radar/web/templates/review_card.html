@@ -3,13 +3,16 @@
   <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
     <div><a href="/a/{{ s.allocator_id }}"><strong>{{ s.display_name }}</strong></a>
       <span class="muted mono" style="font-size:12px"> · {{ s.origin|lower }} · observed {{ s.observed_at.strftime('%Y-%m-%d') }}</span></div>
-    <div>{% if s.review_status == 'approved' %}<span class="tier WATCHING">approved</span> <span class="muted" style="font-size:12px">by {{ s.reviewed_by }}</span>
+    <div>{% if s.hf %}<span class="tier PREPARING" title="hedge fund / absolute return / diversifying / managed futures / multi-strat">HF</span> {% endif %}
+      {% if s.review_status == 'approved' %}<span class="tier WATCHING">approved by {{ s.reviewed_by }}</span>
+      {% elif s.review_status == 'auto_approved' %}<span class="tier WATCHING" style="opacity:.8">auto-approved</span> <span class="muted" style="font-size:12px" title="{{ s.review_note }}">{{ s.reviewed_by }}</span>
       {% elif s.review_status == 'rejected' %}<span class="muted">rejected by {{ s.reviewed_by }}</span>
       {% else %}<span class="pending">pending review</span>{% endif %}</div>
   </div>
   <p style="margin:8px 0 4px"><span class="mono">{{ s.event_date }}</span> · <span class="mono" style="font-size:12px">{{ s.signal_type }}{% if s.qualifier %} ({{ s.qualifier }}){% endif %}</span>
     {% if s.tier_effect %}<span class="tier {{ s.tier_effect }}" style="margin-left:6px">→ {{ s.tier_effect }} if approved</span>{% endif %}</p>
   <p style="margin:4px 0 8px">{{ s.summary }}</p>
+  {% if s.bucket or s.date_basis %}<p class="muted mono" style="font-size:12px;margin:0 0 6px">{% if s.bucket_label %}{{ s.bucket_label }} → {{ s.bucket }}{% endif %}{% if s.date_basis %} · date basis: {{ s.date_basis|replace('_',' ') }}{% endif %}{% if s.review_status == 'auto_approved' %} · {{ s.review_note }}{% endif %}</p>{% endif %}
   {% for e in s.evidence %}
     <blockquote>{{ e.quote }}</blockquote>
     <p class="muted" style="font-size:12.5px;margin:2px 0 8px"><a class="cite" href="{{ cite_href(e) }}" target="_blank" rel="noopener">{{ e.doc_title or 'source' }}{% if e.page %}, page {{ e.page }}{% endif %}</a>

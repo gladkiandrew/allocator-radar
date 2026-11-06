@@ -175,8 +175,8 @@ def parse_new_investments(sha: str, quarter_end: date, file_name: str) -> dict:
                         [eid, sha, f"manual://{ALLOCATOR}/{file_name}", page, quote, EXTRACTOR, VERSION])
             con.execute(
                 "INSERT INTO signals (signal_id, allocator_id, signal_type, qualifier, event_date, observed_at, summary, "
-                "review_status, origin, dedupe_key, manager_name, amount_usd, bucket_label, bucket, hf_relevant, review_note) "
-                "VALUES (?, ?, ?, ?, ?, now(), ?, 'new', 'MACHINE', ?, ?, ?, ?, ?, ?, ?)",
+                "review_status, origin, dedupe_key, manager_name, amount_usd, bucket_label, bucket, hf_relevant, review_note, "
+                "date_basis) VALUES (?, ?, ?, ?, ?, now(), ?, 'new', 'MACHINE', ?, ?, ?, ?, ?, ?, ?, 'quarter_end')",
                 [sid, ALLOCATOR, stype, "manager" if new_mgr else None, quarter_end, summary, key, manager, amount,
                  label, bucket, hf, f"event date = quarter end (report prints no per-row date); consultant: {consultant}"])
             con.execute("INSERT INTO row_evidence VALUES ('signal', ?, ?)", [sid, eid])

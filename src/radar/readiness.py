@@ -12,6 +12,7 @@ from datetime import date, datetime, timedelta, timezone
 from radar.settings import readiness_config
 
 TIER_ORDER = ["DEPLOYING", "PREPARING", "WATCHING", "STALE"]
+COUNTING_STATUSES = ("approved", "auto_approved")  # a person's approval, or the tiered auto-approval rules
 
 
 @dataclass
@@ -40,7 +41,7 @@ def compute(signals: list[dict], last_new_document: datetime | None, today: date
     now = datetime.now(timezone.utc)
     coverage_stale = last_new_document is None or (now - last_new_document) > timedelta(days=stale_days)
 
-    approved = [s for s in signals if s["review_status"] == "approved"]
+    approved = [s for s in signals if s["review_status"] in COUNTING_STATUSES]
     for rule in cfg["tiers"]:
         window_start = today - timedelta(days=rule["window_days"])
         hits = [s for s in approved if _matches(rule, s) and window_start <= s["event_date"] <= today]

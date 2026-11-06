@@ -287,6 +287,7 @@ def connect(*, timeout_s: float = 60.0) -> Iterator[duckdb.DuckDBPyConnection]:
 
 
 MIGRATIONS = [
+    "ALTER TABLE signals ADD COLUMN IF NOT EXISTS date_basis VARCHAR",  # meeting_date | report_date | publication_date | quarter_end | ...
     "ALTER TABLE document_urls ADD COLUMN IF NOT EXISTS retrieved_by VARCHAR",  # 'human' for manual-inbox files
     "ALTER TABLE signals ADD COLUMN IF NOT EXISTS manager_name VARCHAR",         # as printed
     "ALTER TABLE signals ADD COLUMN IF NOT EXISTS amount_usd DOUBLE",            # as printed
