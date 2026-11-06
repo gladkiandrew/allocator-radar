@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ a.display_name }} · Allocator Radar{% endblock %}
-{% macro cites(evs) %}{% for e in evs[:3] %} <a class="cite" href="{{ cite_href(e) }}" target="_blank" rel="noopener" title="{{ e.quote }}">[{{ (e.doc_title or 'source')|truncate(30) }}{% if e.page %} p.{{ e.page }}{% endif %}]</a>{% endfor %}{% endmacro %}
+{% macro cites(evs) %}{% for e in (evs|uniq_cites)[:2] %} <a class="cite" href="{{ cite_href(e) }}" target="_blank" rel="noopener" title="{{ e.quote }}">[{{ (e.doc_title or 'source')|truncate(30) }}{% if e.page %} p.{{ e.page }}{% endif %}]</a>{% endfor %}{% endmacro %}
 {% block body %}{% set r = a.readiness %}
 <p class="muted" style="margin:0"><a href="/">← All allocators</a></p>
 <h1>{{ a.display_name }}</h1>

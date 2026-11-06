@@ -192,7 +192,13 @@ def managers_by_class(mandates: list[dict]) -> tuple:
     """Managers from the most recent holdings date, grouped by the plan's own asset-class label."""
     if not mandates:
         return None, []
-    as_of = max(m["as_of"] for m in mandates)
+    from collections import Counter
+    from datetime import timedelta
+
+    # The latest full holdings table: among dates within ~9 months of the newest, the one with the most rows.
+    newest = max(m["as_of"] for m in mandates)
+    counts = Counter(m["as_of"] for m in mandates if m["as_of"] >= newest - timedelta(days=270))
+    as_of = max(counts, key=lambda d: (counts[d], d))
     groups: dict[str, list[dict]] = {}
     seen = set()
     for m in mandates:

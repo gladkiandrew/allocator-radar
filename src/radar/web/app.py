@@ -26,6 +26,19 @@ def cite_href(e: dict) -> str:
 templates.env.globals["cite_href"] = cite_href
 
 
+def uniq_cites(evs: list[dict]) -> list[dict]:
+    seen, out = set(), []
+    for e in evs or []:
+        k = (e.get("document_sha256"), e.get("page"), e.get("source_url"))
+        if k not in seen:
+            seen.add(k)
+            out.append(e)
+    return out
+
+
+templates.env.filters["uniq_cites"] = uniq_cites
+
+
 def create_app() -> FastAPI:
     db.init_db()
     app = FastAPI(title="Allocator Radar", docs_url=None, redoc_url=None, dependencies=[Depends(require_user)])
