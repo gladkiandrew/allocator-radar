@@ -106,41 +106,33 @@ def _gliner():
     except ImportError:
         log.warning("GLiNER not installed; scrubber runs regex only")
         return None
-    model = GLiNER.from_pretrained("urchade/gliner_multi_pii-v1")
-    try:
-        import torch
-
-        if torch.backends.mps.is_available():
-            model = model.to("mps")
-        elif torch.cuda.is_available():
-            model = model.to("cuda")
-    except Exception as e:  # CPU is fine, just slower
-        log.info("GLiNER stays on CPU: %s", e)
-    return model
+    return GLiNER.from_pretrained("urchade/gliner_multi_pii-v1")  # CPU: batched it matches the Apple GPU, and is thread-safe
 
 
-_GLINER_LOCK = __import__("threading").Lock()  # one inference at a time: GPU backends are not thread-safe
+# GLiNER only looks at windows with a contact cue; the regex pass has already covered all text.
+# A contact detail cannot appear without one of these (an @, a street/suite word, a contact label, or a phone shape).
+CONTACT_CUE = re.compile(
+    r"(@|\(at\)|\b(suite|ste|street|avenue|ave|blvd|boulevard|road|drive|lane|parkway|highway|court|floor|"
+    r"p\.?\s?o\.?\s?box|tel|telephone|phone|fax|email|e-mail|address|contact|mailing|mail to|zip)\b|"
+    r"\d{3}[\s.)\-]+\d{3}[\s.\-]\d{4}|\b\d{1,6}\s+[NSEW]\.?\s+\w+|\bFL\s+\d{5})", re.I)
+_GLINER_LOCK = __import__("threading").Lock()
 
 
 def _gliner_spans(text: str) -> list[tuple[int, int]]:
-    with _GLINER_LOCK:
-        return _gliner_spans_locked(text)
-
-
-def _gliner_spans_locked(text: str) -> list[tuple[int, int]]:
     model = _gliner()
     if model is None or not text.strip():
         return []
-    spans: list[tuple[int, int]] = []
-    # GLiNER reads at most 384 tokens per window; numbers and punctuation tokenize densely, so
-    # windows are kept well under that (no silent truncation) and overlap so no span is cut in half.
+    # Windows stay under GLiNER's 384-token limit and overlap so no span is cut in half.
     window, step = 450, 380
-    for off in range(0, max(len(text), 1), step):
-        chunk = text[off : off + window]
-        if not chunk.strip():
-            continue
-        for ent in model.predict_entities(chunk, _GLINER_LABELS, threshold=0.5):
-            spans.append((off + ent["start"], off + ent["end"]))
+    offs = [o for o in range(0, max(len(text), 1), step) if CONTACT_CUE.search(text[o:o + window])]
+    if not offs:
+        return []
+    chunks = [text[o:o + window] for o in offs]
+    with _GLINER_LOCK:
+        results = model.inference(chunks, _GLINER_LABELS, threshold=0.5, batch_size=16)
+    spans = []
+    for o, ents in zip(offs, results):
+        spans += [(o + e["start"], o + e["end"]) for e in ents]
     return spans
 
 

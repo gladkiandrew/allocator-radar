@@ -144,7 +144,7 @@ def main(argv: list[str] | None = None) -> int:
                 "SELECT sha256 FROM pages GROUP BY sha256 HAVING sum(CASE WHEN length(text_scrubbed) < 50 THEN 1 ELSE 0 END) > 0").fetchall()]
         print(f"{len(shas)} documents with scanned pages")
         for sha in shas:
-            print(sha[:12], pdf.parse_document(sha, force=True))
+            print(sha[:12], pdf.parse_document(sha, force=True), flush=True)
     elif args.cmd == "resolve":
         from radar import db, resolve
         db.init_db()
