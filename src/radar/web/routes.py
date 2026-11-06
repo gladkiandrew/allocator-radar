@@ -17,8 +17,6 @@ def templates_partial(request, name, **ctx):
 
 def register(app: FastAPI, render) -> None:
     stubs = {
-        "/manual": ("Manual fact entry", "Step 5: enter a dated, cited fact from a manual-only source."),
-        "/records": ("Public-records requests", "Step 5: track Chapter 119 requests filed by a person."),
         "/merges": ("Merge review", "Ambiguous entity matches appear here."),
     }
     for path, (title, msg) in stubs.items():
@@ -83,6 +81,93 @@ def register(app: FastAPI, render) -> None:
             _enrich(con, s)
         return templates_partial(request, "review_card.html", s=s[0], error=error,
                                  signal_types=list(SignalType.__members__))
+
+    # ---------------- Touchpoints 4 + 5: manual facts, records requests, inbox ----------------
+    from datetime import date as _d
+
+    from pydantic import ValidationError
+
+    from radar import manual
+    from radar.models import ManualFact
+
+    def _allocs(con):
+        return db.rows(con, "SELECT allocator_id, display_name FROM allocators ORDER BY display_name")
+
+    @app.get("/manual", response_class=HTMLResponse)
+    def manual_page(request: Request, msg: str | None = None):
+        with db.connect() as con:
+            allocs = _allocs(con)
+        return render(request, "manual.html", allocators=allocs, sources=manual.manual_sources(),
+                      signal_types=list(SignalType.__members__), form={}, msg=msg, err=None)
+
+    @app.post("/manual", response_class=HTMLResponse)
+    def manual_post(request: Request, allocator_id: str = Form(...), source_id: str = Form(...),
+                    source_url: str = Form(...), event_date: str = Form(...), signal_type: str = Form(...),
+                    qualifier: str = Form(default=""), fact: str = Form(...), user: str = Depends(require_user)):
+        form = dict(allocator_id=allocator_id, source_id=source_id, source_url=source_url, event_date=event_date,
+                    signal_type=signal_type, qualifier=qualifier, fact=fact)
+        try:
+            f = ManualFact(allocator_id=allocator_id, source_id=source_id, source_url=source_url,
+                           event_date=event_date, signal_type=signal_type, qualifier=qualifier or None, fact=fact)
+            manual.add_fact(f, user)
+        except (ValidationError, manual.ManualError) as e:
+            err = "; ".join(x["msg"] for x in e.errors()) if isinstance(e, ValidationError) else str(e)
+            with db.connect() as con:
+                allocs = _allocs(con)
+            return render(request, "manual.html", allocators=allocs, sources=manual.manual_sources(),
+                          signal_types=list(SignalType.__members__), form=form, msg=None, err=err)
+        return RedirectResponse("/manual?msg=Added to the review queue as pending.", status_code=303)
+
+    @app.get("/records", response_class=HTMLResponse)
+    def records_page(request: Request, msg: str | None = None, err: str | None = None):
+        with db.connect() as con:
+            reqs = db.rows(con, """SELECT r.*, a.display_name,
+                     (SELECT count(DISTINCT sha256) FROM document_urls du WHERE du.url LIKE 'manual://' || r.request_id || '/%') AS n_docs
+                   FROM records_requests r LEFT JOIN allocators a USING (allocator_id) ORDER BY date_filed DESC""")
+            allocs = _allocs(con)
+        return render(request, "records.html", reqs=reqs, allocators=allocs, statuses=manual.RECORD_STATUSES,
+                      msg=msg, err=err)
+
+    @app.post("/records")
+    def records_add(allocator_id: str = Form(...), request_text: str = Form(...), date_filed: str = Form(...),
+                    note: str = Form(default=""), user: str = Depends(require_user)):
+        try:
+            rid = manual.add_request(allocator_id, request_text, _d.fromisoformat(date_filed), user, note or None)
+        except (manual.ManualError, ValueError) as e:
+            return RedirectResponse(f"/records?err={e}", status_code=303)
+        return RedirectResponse(f"/records?msg=Tracking request {rid}. Drop responses in inbox/manual/records/{rid}/",
+                                status_code=303)
+
+    @app.post("/records/{request_id}/status")
+    def records_status(request_id: str, status: str = Form(...), user: str = Depends(require_user)):
+        try:
+            manual.update_request(request_id, status, user)
+        except manual.ManualError as e:
+            return RedirectResponse(f"/records?err={e}", status_code=303)
+        return RedirectResponse("/records", status_code=303)
+
+    @app.post("/records/{request_id}/ingest")
+    def records_ingest(request_id: str, user: str = Depends(require_user)):
+        try:
+            st = manual.ingest_request(request_id, user)
+        except manual.ManualError as e:
+            return RedirectResponse(f"/records?err={e}", status_code=303)
+        return RedirectResponse(f"/records?msg=Ingested {st['files']} files ({st['new']} new).", status_code=303)
+
+    @app.post("/inbox/ingest")
+    def inbox_ingest(user: str = Depends(require_user)):
+        st = manual.ingest_inbox(user)
+        n = sum(v["files"] for v in st.values())
+        return RedirectResponse(f"/records?msg=Manual inbox: {n} files across {len(st)} plans.", status_code=303)
+
+    @app.get("/export.csv")
+    def export_csv(user: str = Depends(require_user)):
+        from fastapi.responses import Response as _R
+
+        from radar import export
+        text, n = export.build_csv(user)
+        return _R(text, media_type="text/csv",
+                  headers={"Content-Disposition": f'attachment; filename="allocator-radar-approved-{_d.today()}.csv"'})
 
     # ---------------- Touchpoint 1: registry ----------------
     @app.get("/registry", response_class=HTMLResponse)

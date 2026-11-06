@@ -23,7 +23,8 @@ def main(argv: list[str] | None = None) -> int:
     ep = sub.add_parser("extract", help="run the extraction agent over prefiltered pages not yet extracted")
     ep.add_argument("--only", nargs="*", help="allocator ids")
     ep.add_argument("--limit", type=int, default=0, help="max documents this run (0 = all)")
-    sub.add_parser("discover", help="discovery agent: registry/seed_florida.yaml -> registry/florida.yaml")
+    dp = sub.add_parser("discover", help="discovery agent: registry/seed_florida.yaml -> registry/florida.yaml")
+    dp.add_argument("--resuggest", action="store_true", help="recompute suggested pages only (no fetching)")
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -38,7 +39,13 @@ def main(argv: list[str] | None = None) -> int:
         from radar import db
         from radar.registry import discovery
         db.init_db()
-        path = discovery.run()
+        if args.resuggest:
+            path = discovery.registry_path() if hasattr(discovery, "registry_path") else None
+            from radar.settings import get_settings
+            path = get_settings().registry_dir / "florida.yaml"
+            discovery.resuggest(path)
+        else:
+            path = discovery.run()
         print(f"wrote {path} (version {discovery.version(path)[:12]})")
     elif args.cmd == "crawl":
         import json

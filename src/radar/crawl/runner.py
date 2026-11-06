@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 HISTORY_YEARS = 5
 TYPE_PRIORITY = ["RFP", "AGENDA", "MINUTES", "IPS", "PERFORMANCE", "DISCLOSURE_112664", "ACTUARIAL", "FINANCIAL", "OTHER"]
 PLAN_WORDS = {
-    "police": r"\bpolice\b", "fire": r"\bfire(?:fighters?)?\b", "general": r"\bgeneral\b",
+    "police": r"\bpolice\b", "fire": r"\bfire(?:fighters?)?\b", "general": r"\b(?:general|ge)\b",
     "management": r"\bmanagement\b",
 }
 # On city-hosted pages, a document link must look like it belongs to a pension plan.
@@ -70,6 +70,11 @@ def collect_links(client: PoliteClient, allocs: list[dict], pages: dict[str, lis
             continue
         _, links = parse_links(r.text, r.url)
         city = owners[0]["template"] in {"T-CP", "T-CITY", "T-GOV"}
+        if len(owners) > 1:  # a plan-specific board page on a shared city site belongs to that plan only
+            page_owned = [o for o in owners if (w := _plan_word(o["allocator_id"]))
+                          and re.search(PLAN_WORDS[w], unquote(page_url).replace("-", " "), re.I)]
+            if page_owned:
+                owners = page_owned
         for l in links:
             if not is_document(l.url):
                 continue

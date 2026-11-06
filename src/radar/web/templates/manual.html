@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Manual fact · Allocator Radar{% endblock %}
+{% block body %}
+<h1>Manual fact entry</h1>
+<p class="sub">For sources the system never fetches, such as P&amp;I, Dahab Associates RFP postings, FL SBA reports and NFA BASIC. Read the source
+  in your browser, then record one fact with its URL and date. The entry goes through the same language lint and review queue
+  as machine signals.</p>
+{% if msg %}<div class="notice">{{ msg }}</div>{% endif %}
+{% if err %}<div class="error">{{ err }}</div>{% endif %}
+<form method="post" action="/manual" class="card">
+  <div class="grid2">
+    <div><label>Plan</label><select name="allocator_id" required>{% for a in allocators %}<option value="{{ a.allocator_id }}" {{ 'selected' if form.allocator_id == a.allocator_id }}>{{ a.display_name }}</option>{% endfor %}</select></div>
+    <div><label>Source</label><select name="source_id">{% for s in sources %}<option value="{{ s.id }}" {{ 'selected' if form.source_id == s.id }}>{{ s.id }} · {{ s.name }}</option>{% endfor %}<option value="OTHER">Other public page</option></select></div>
+    <div><label>Source URL</label><input name="source_url" type="url" required placeholder="https://…" value="{{ form.source_url or '' }}"></div>
+    <div><label>Event date (as the source states it)</label><input name="event_date" type="date" required value="{{ form.event_date or '' }}"></div>
+    <div><label>Signal type</label><select name="signal_type">{% for t in signal_types %}<option {{ 'selected' if form.signal_type == t }}>{{ t }}</option>{% endfor %}</select></div>
+    <div><label>Qualifier</label><select name="qualifier">{% for q in ['', 'manager', 'consultant', 'service_provider', 'increase', 'decrease'] %}<option value="{{ q }}" {{ 'selected' if form.qualifier == q }}>{{ q or '—' }}</option>{% endfor %}</select></div>
+  </div>
+  <label>Fact (one factual sentence, max 300 characters, no contact details)</label>
+  <textarea name="fact" rows="3" maxlength="300" required placeholder="e.g. The Board issued an RFP for a hedge fund of funds manager with responses due 2026-12-15.">{{ form.fact or '' }}</textarea>
+  <p><button class="primary" type="submit">Add to review queue</button></p>
+</form>
+{% endblock %}

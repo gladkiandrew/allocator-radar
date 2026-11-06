@@ -52,6 +52,28 @@ SUGGEST = re.compile(r"(pension|retire|trust|112\.?664|actuar|investment|perform
                      r"financial|audit|polic|reports|publications|meeting)", re.I)
 
 
+NOT_SUGGEST = re.compile(r"(/forms?/?|retiree|summary-plan|/spd/?|deferred-retirement-option|/drop\b|/benefits/?$|"
+                         r"member-resources|commission-meetings|/AgendaCenter/?$|retirement-center)", re.I)
+
+
+def suggest(p: dict) -> bool:
+    typed = sum(n for k, n in p["by_type"].items() if k != "OTHER")
+    if not p["documents"] or NOT_SUGGEST.search(p["url"]):
+        return False
+    return p["label"] == "plan page" or bool(SUGGEST.search(f"{p['label']} {p['url']}") and (typed or p["documents"] >= 3))
+
+
+def resuggest(path: Path) -> None:
+    """Recompute `suggested` flags in an existing registry file without fetching anything."""
+    text = path.read_text()
+    header = "".join(l for l in text.splitlines(True) if l.startswith("#"))
+    doc = yaml.safe_load(text)
+    for a in doc["allocators"]:
+        for p in a.get("document_pages", []):
+            p["suggested"] = suggest(p)
+    path.write_text(header + yaml.safe_dump(doc, sort_keys=False, allow_unicode=True, width=120))
+
+
 def _norm_url(u: str) -> str:
     from urllib.parse import parse_qsl, urlencode, urlunsplit
 
@@ -138,9 +160,7 @@ def discover_plan(client: PoliteClient, seed: dict) -> dict:
             if s["documents"] and _norm_url(rr.url) not in {_norm_url(p["url"]) for p in pages}:
                 pages.append({"url": rr.url, "label": (l.text or l.context)[:80], **s})
         for p in pages:
-            typed = sum(n for k, n in p["by_type"].items() if k != "OTHER")
-            p["suggested"] = bool(p["documents"]) and (p["label"] == "plan page" or bool(
-                SUGGEST.search(f"{p['label']} {p['url']}") and (typed or p["documents"] >= 3)))
+            p["suggested"] = suggest(p)
         out["document_pages"] = [p for p in pages if p["documents"] or p["label"] == "plan page"]
         if not any(p["documents"] for p in out["document_pages"]):
             out["access_reason"] = "no document links found on the plan page or its listing pages"

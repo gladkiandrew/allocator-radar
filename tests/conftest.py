@@ -10,6 +10,7 @@ def tmp_store(tmp_path, monkeypatch):
     monkeypatch.setenv("RADAR_LAKE_KEY_FILE", str(tmp_path / "lake.key"))
     monkeypatch.setenv("RADAR_FLAG_GLINER", "false")
     monkeypatch.setenv("RADAR_MIN_HOST_DELAY_S", "0")
+    monkeypatch.setenv("RADAR_MANUAL_INBOX", str(tmp_path / "inbox" / "manual"))
     S.get_settings.cache_clear()
     from radar import db
     db.init_db()

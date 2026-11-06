@@ -2,7 +2,7 @@
 # Edits are allowed before approval; any edit changes the version hash and needs re-approval.
 region: florida
 phase: A
-generated_at: '2026-11-06T15:31:18+00:00'
+generated_at: '2026-11-06T15:37:02+00:00'
 generated_by: discovery agent (radar discover)
 seed: registry/seed_florida.yaml
 allocators:
@@ -24,6 +24,7 @@ allocators:
     documents: 1
     by_type:
       OTHER: 1
+    suggested: true
   - url: https://www.miamifipo.org/0b3b9c05-c98c-46ce-a40d-6dd3d1896314/financials/
     label: Financials
     documents: 78
@@ -32,22 +33,20 @@ allocators:
       FINANCIAL: 27
       OTHER: 12
       PERFORMANCE: 18
+    suggested: true
   - url: https://www.miamifipo.org/0b3b9c05-c98c-46ce-a40d-6dd3d1896314/meeting-schedule/
     label: Meeting Schedule
     documents: 133
     by_type:
       MINUTES: 132
       OTHER: 1
+    suggested: true
   - url: https://www.miamifipo.org/about/board-of-trustees/
     label: Board of Trustees
     documents: 1
     by_type:
       OTHER: 1
-  - url: https://www.miamifipo.org/privacy-policy/
-    label: Privacy Policy
-    documents: 1
-    by_type:
-      OTHER: 1
+    suggested: false
 - allocator_id: fl-miami-gese
   display_name: Miami General Employees' and Sanitation Employees' Retirement Trust
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -65,39 +64,99 @@ allocators:
     label: plan page
     documents: 0
     by_type: {}
+    suggested: false
   - url: https://gese.org/publications/trust-investment-performance/
     label: Trust Investment Performance Trust Investment Performance
     documents: 2
     by_type:
       OTHER: 2
-  - url: https://gese.org/publications/senate-bills/
-    label: Florida Senate Bills Florida Senate Bills
-    documents: 2
-    by_type:
-      ACTUARIAL: 2
+    suggested: false
   - url: https://gese.org/publications/summary-of-investment-returns/
     label: Summary of Investment Returns Summary of Investment Returns
     documents: 2
     by_type:
       OTHER: 2
-  - url: https://gese.org/board-meetings/2026/
-    label: Board Meetings
-    documents: 12
-    by_type:
-      AGENDA: 7
-      MINUTES: 5
+    suggested: false
   - url: https://gese.org/board-meetings/2026/
     label: 2026 Board Meeting Dates 2026 Board Meetings
     documents: 12
     by_type:
       AGENDA: 7
       MINUTES: 5
+    suggested: true
   - url: https://gese.org/board-meetings/2025/
     label: 2025 Board Meeting Dates 2025 Board Meetings
     documents: 12
     by_type:
       AGENDA: 6
       MINUTES: 6
+    suggested: true
+  - url: https://gese.org/board-meetings/2024/
+    label: Approved 2024 Board Meeting Dates 2024 Board Meetings
+    documents: 13
+    by_type:
+      AGENDA: 7
+      MINUTES: 6
+    suggested: true
+  - url: https://gese.org/board-meetings/2023/
+    label: Approved 2023 Board Meeting Dates 2023 Board Meetings
+    documents: 12
+    by_type:
+      AGENDA: 6
+      MINUTES: 6
+    suggested: true
+  - url: https://gese.org/board-meetings/2022/
+    label: Approved 2022 Board Meeting Dates 2022 Board Meetings
+    documents: 13
+    by_type:
+      AGENDA: 7
+      MINUTES: 6
+    suggested: true
+  - url: https://gese.org/board-meetings/2021/
+    label: Approved 2021 Board Meeting Dates 2021 Board Meetings
+    documents: 11
+    by_type:
+      AGENDA: 6
+      MINUTES: 5
+    suggested: true
+  - url: https://gese.org/board-meetings/2020/
+    label: Approved 2020 Board Meeting Dates 2020 Board Meetings
+    documents: 14
+    by_type:
+      AGENDA: 9
+      MINUTES: 5
+    suggested: true
+  - url: https://gese.org/board-meetings/2019/
+    label: Approved 2019 Board Meeting Dates 2019 Board Meetings
+    documents: 12
+    by_type:
+      AGENDA: 6
+      MINUTES: 6
+    suggested: true
+  - url: https://gese.org/board-meetings/2018/
+    label: Approved 2018 Board Meeting Dates 2018 Board Meetings
+    documents: 9
+    by_type:
+      AGENDA: 9
+    suggested: true
+  - url: https://gese.org/board-meetings/2017/
+    label: Approved 2017 Board Meeting Dates 2017 Board Meetings
+    documents: 7
+    by_type:
+      AGENDA: 7
+    suggested: true
+  - url: https://gese.org/board-meetings/2016/
+    label: Approved 2016 Board Meeting Dates 2016 Board Meetings
+    documents: 7
+    by_type:
+      AGENDA: 7
+    suggested: true
+  - url: https://gese.org/board-meetings/2015/
+    label: Approved 2015 Board Meeting Dates 2015 Board Meetings
+    documents: 6
+    by_type:
+      AGENDA: 6
+    suggested: true
 - allocator_id: fl-miamibeach-fp
   display_name: Miami Beach Fire and Police Pension
   allocator_type: POLICE_FIRE
@@ -115,33 +174,85 @@ allocators:
     label: plan page
     documents: 0
     by_type: {}
-  - url: https://www.miamibeachfl.gov/city-hall/city-clerk/boards-and-committees/
-    label: Boards & Committees
-    documents: 6
+    suggested: false
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/board-meeting-minutes/
+    label: Board Meeting Minutes
+    documents: 34
     by_type:
-      DISCLOSURE_112664: 1
-      OTHER: 5
-  - url: https://www.miamibeachfl.gov/city-hall/office-of-organizational-development/
-    label: Education & Performance Initiatives
-    documents: 1
+      MINUTES: 28
+      OTHER: 6
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/firepolice-agendas/
+    label: Board Meeting Agendas
+    documents: 42
     by_type:
-      OTHER: 1
-  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/additional-information/
-    label: Additional Contact Information
-    documents: 1
-    by_type:
-      OTHER: 1
+      AGENDA: 34
+      OTHER: 8
+    suggested: true
   - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/actuarial-information/
     label: Actuarial Information
     documents: 30
     by_type:
       ACTUARIAL: 17
       DISCLOSURE_112664: 13
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/financial-statements/
+    label: Financial Statements
+    documents: 17
+    by_type:
+      FINANCIAL: 15
+      OTHER: 2
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/investment-information/
+    label: Investment Information
+    documents: 43
+    by_type:
+      IPS: 1
+      OTHER: 31
+      PERFORMANCE: 11
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/board-meeting-dates/
+    label: Board Meeting Dates
+    documents: 1
+    by_type:
+      AGENDA: 1
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/additional-information/
+    label: Additional Contact Information
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: false
   - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/announcements-2/
     label: Announcements
     documents: 3
     by_type:
       OTHER: 3
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/retiree-information/
+    label: Retiree Information
+    documents: 56
+    by_type:
+      OTHER: 56
+    suggested: false
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/summary-plan-description/
+    label: Summary Plan Description
+    documents: 3
+    by_type:
+      OTHER: 3
+    suggested: false
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/forms/
+    label: Forms
+    documents: 10
+    by_type:
+      OTHER: 10
+    suggested: false
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/professional-service-providers/
+    label: Professional Service Providers
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: false
 - allocator_id: fl-miamibeach-erp
   display_name: Miami Beach Employees' Retirement Plan
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -159,33 +270,48 @@ allocators:
     label: plan page
     documents: 0
     by_type: {}
-  - url: https://www.miamibeachfl.gov/city-hall/city-clerk/boards-and-committees/
-    label: Boards & Committees
-    documents: 6
-    by_type:
-      DISCLOSURE_112664: 1
-      OTHER: 5
-  - url: https://www.miamibeachfl.gov/city-hall/office-of-organizational-development/
-    label: Education & Performance Initiatives
-    documents: 1
-    by_type:
-      OTHER: 1
+    suggested: false
   - url: https://www.miamibeachfl.gov/city-hall/mberp/actuarial-valuation/
     label: Actuarial valuations
     documents: 20
     by_type:
       ACTUARIAL: 20
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/mberp/investment-report-fund-portfolio/
+    label: Investment Reports/Fund Portfolio
+    documents: 65
+    by_type:
+      OTHER: 1
+      PERFORMANCE: 59
+      RFP: 5
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/mberp/investment-policy/
+    label: Go to /city-hall/mberp/investment-policy/
+    documents: 1
+    by_type:
+      IPS: 1
+    suggested: true
   - url: https://www.miamibeachfl.gov/city-hall/mberp/agendas-minutes/
     label: agendas
     documents: 21
     by_type:
       AGENDA: 11
       OTHER: 10
-  - url: https://www.miamibeachfl.gov/city-hall/mberp/financial-statements/
-    label: FINANCIAL STATEMENTS
-    documents: 20
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/mberp/fl-chapter-112-664/
+    label: FL Chapter 112.664 FL Chapter 112.664
+    documents: 5
     by_type:
-      FINANCIAL: 20
+      ACTUARIAL: 2
+      DISCLOSURE_112664: 2
+      FINANCIAL: 1
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/mberp/retiree-benefit-links/
+    label: RETIREE BENEFIT LINKS
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: false
 - allocator_id: fl-coralgables-rs
   display_name: Coral Gables Retirement System
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -206,6 +332,7 @@ allocators:
       ACTUARIAL: 1
       FINANCIAL: 2
       PERFORMANCE: 1
+    suggested: true
 - allocator_id: fl-hialeah-ers
   display_name: Hialeah Employees' Retirement System
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -227,23 +354,21 @@ allocators:
       ACTUARIAL: 4
       FINANCIAL: 3
       OTHER: 7
+    suggested: true
   - url: https://www.hialeahfl.gov/AgendaCenter/Employees-Retirement-System-2
     label: View Most Recent Agendas and Minutes
     documents: 26
     by_type:
       AGENDA: 18
       MINUTES: 8
-  - url: https://www.hialeahfl.gov/290/Compliance-Reports
-    label: Compliance Reports
-    documents: 3
-    by_type:
-      DISCLOSURE_112664: 3
+    suggested: true
   - url: https://www.hialeahfl.gov/AgendaCenter
     label: Meetings & Agendas
     documents: 364
     by_type:
       AGENDA: 268
       MINUTES: 96
+    suggested: false
 - allocator_id: fl-ftlaud-pf
   display_name: Fort Lauderdale Police and Firefighters' Retirement System
   allocator_type: POLICE_FIRE
@@ -262,16 +387,103 @@ allocators:
     documents: 1
     by_type:
       OTHER: 1
-  - url: https://ftlaudpfpension.com/links/
-    label: Links
-    documents: 1
+    suggested: true
+  - url: https://ftlaudpfpension.com/financial-actuarial-reports-2/
+    label: Financial/Actuarial Reports
+    documents: 176
     by_type:
-      DISCLOSURE_112664: 1
-  - url: https://ftlaudpfpension.com/category/press-room/
-    label: Press Room
-    documents: 8
+      ACTUARIAL: 36
+      DISCLOSURE_112664: 4
+      FINANCIAL: 25
+      OTHER: 8
+      PERFORMANCE: 103
+    suggested: true
+  - url: https://ftlaudpfpension.com/category/agendas/
+    label: Agendas
+    documents: 20
     by_type:
-      AGENDA: 8
+      AGENDA: 20
+    suggested: true
+  - url: https://ftlaudpfpension.com/category/minutes/
+    label: Minutes
+    documents: 20
+    by_type:
+      MINUTES: 20
+    suggested: true
+  - url: https://ftlaudpfpension.com/category/minutes/2019-minutes/
+    label: '2019'
+    documents: 20
+    by_type:
+      OTHER: 20
+    suggested: true
+  - url: https://ftlaudpfpension.com/category/minutes/2020-minutes/
+    label: '2020'
+    documents: 20
+    by_type:
+      MINUTES: 20
+    suggested: true
+  - url: https://ftlaudpfpension.com/category/minutes/2022-minutes/
+    label: '2022'
+    documents: 18
+    by_type:
+      MINUTES: 18
+    suggested: true
+  - url: https://ftlaudpfpension.com/category/minutes/2023-minutes/
+    label: '2023'
+    documents: 20
+    by_type:
+      MINUTES: 20
+    suggested: true
+  - url: https://ftlaudpfpension.com/category/minutes/2024-minutes/
+    label: '2024'
+    documents: 20
+    by_type:
+      MINUTES: 20
+    suggested: true
+  - url: https://ftlaudpfpension.com/category/minutes/2025-minutes/
+    label: '2025'
+    documents: 20
+    by_type:
+      MINUTES: 20
+    suggested: true
+  - url: https://ftlaudpfpension.com/category/minutes/2026-minutes/
+    label: '2026'
+    documents: 18
+    by_type:
+      MINUTES: 18
+    suggested: true
+  - url: https://ftlaudpfpension.com/category/agendas/2007/
+    label: '2007'
+    documents: 12
+    by_type:
+      AGENDA: 2
+      OTHER: 10
+    suggested: true
+  - url: https://ftlaudpfpension.com/category/agendas/2009/
+    label: '2009'
+    documents: 20
+    by_type:
+      OTHER: 20
+    suggested: true
+  - url: https://ftlaudpfpension.com/category/agendas/2018/
+    label: '2018'
+    documents: 20
+    by_type:
+      OTHER: 20
+    suggested: true
+  - url: https://ftlaudpfpension.com/category/agendas/2019/
+    label: '2019'
+    documents: 20
+    by_type:
+      OTHER: 20
+    suggested: true
+  - url: https://ftlaudpfpension.com/category/agendas/2020/
+    label: '2020'
+    documents: 20
+    by_type:
+      AGENDA: 18
+      MINUTES: 2
+    suggested: true
 - allocator_id: fl-hollywood-erf
   display_name: Hollywood Employees' Retirement Fund
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -289,24 +501,59 @@ allocators:
     label: plan page
     documents: 0
     by_type: {}
-  - url: https://hollywoodpension.com/board-info/board-information/
-    label: BOARD INFORMATION
-    documents: 4
+    suggested: false
+  - url: https://hollywoodpension.com/fund-information/quarterly-performance-reports/
+    label: PERFORMANCE REPORTS
+    documents: 21
     by_type:
-      AGENDA: 2
-      OTHER: 2
+      OTHER: 21
+    suggested: true
+  - url: https://hollywoodpension.com/fund-information/flash-performance-reports/
+    label: FLASH PERFORMANCE REPORTS
+    documents: 9
+    by_type:
+      OTHER: 9
+    suggested: true
+  - url: https://hollywoodpension.com/fund-information/acturial-valuation-reports/
+    label: ACTURIAL VALUATION REPORTS
+    documents: 29
+    by_type:
+      ACTUARIAL: 16
+      FINANCIAL: 13
+    suggested: true
   - url: https://hollywoodpension.com/agendas/
     label: AGENDAS
     documents: 92
     by_type:
       AGENDA: 89
       OTHER: 3
+    suggested: true
   - url: https://hollywoodpension.com/minutes/
     label: MINUTES
     documents: 183
     by_type:
       MINUTES: 29
       OTHER: 154
+    suggested: true
+  - url: https://hollywoodpension.com/fund-information/treasurers-report/
+    label: TREASURER’S REPORT
+    documents: 42
+    by_type:
+      OTHER: 42
+    suggested: true
+  - url: https://hollywoodpension.com/board-info/board-information/
+    label: BOARD INFORMATION
+    documents: 4
+    by_type:
+      AGENDA: 2
+      OTHER: 2
+    suggested: true
+  - url: https://hollywoodpension.com/member-resources/spd/
+    label: SUMMARY PLAN DESCRIPTION
+    documents: 6
+    by_type:
+      OTHER: 6
+    suggested: false
 - allocator_id: fl-hollywood-police
   display_name: Hollywood Police Officers' Retirement System
   allocator_type: POLICE_FIRE
@@ -324,12 +571,14 @@ allocators:
     label: plan page
     documents: 0
     by_type: {}
+    suggested: false
   - url: https://www.hollywoodpolicepensionfund.com/board-meetings
     label: Board Meetings
     documents: 4
     by_type:
       AGENDA: 2
       OTHER: 2
+    suggested: true
 - allocator_id: fl-hollywood-fire
   display_name: Hollywood Firefighters' Pension
   allocator_type: POLICE_FIRE
@@ -350,64 +599,21 @@ allocators:
     by_type:
       FINANCIAL: 7
       OTHER: 1
-  - url: https://www.hollywoodfl.org/160/Civil-Service-Board
-    label: Civil Service Board
-    documents: 1
-    by_type:
-      OTHER: 1
-  - url: https://www.hollywoodfl.org/161/Community-Development-Advisory-Board
-    label: Community Development Advisory Board
-    documents: 2
-    by_type:
-      MINUTES: 1
-      OTHER: 1
-  - url: https://www.hollywoodfl.org/1130/Emerald-Hills-Safety-District-Board
-    label: Emerald Hills Safety District Board
-    documents: 4
-    by_type:
-      FINANCIAL: 3
-      OTHER: 1
+    suggested: true
   - url: https://www.hollywoodfl.org/597/Employees-Retirement-Fund-Pension-Board
     label: Employees' Retirement Fund Pension Board
     documents: 2
     by_type:
       MINUTES: 1
       OTHER: 1
-  - url: https://www.hollywoodfl.org/166/Historic-Preservation-Board
-    label: Historic Preservation Board
-    documents: 2
-    by_type:
-      MINUTES: 1
-      OTHER: 1
-  - url: https://www.hollywoodfl.org/169/Marine-Advisory-Board
-    label: Marine Advisory Board
-    documents: 2
-    by_type:
-      MINUTES: 1
-      OTHER: 1
-  - url: https://www.hollywoodfl.org/170/Parks-Rec-Cultural-Arts-Advisory-Board
-    label: Parks, Rec & Cultural Arts Advisory Board
-    documents: 2
-    by_type:
-      MINUTES: 1
-      OTHER: 1
-  - url: https://www.hollywoodfl.org/171/Planning-Development-Board
-    label: Planning & Development Board
-    documents: 2
-    by_type:
-      FINANCIAL: 1
-      OTHER: 1
+    suggested: true
   - url: https://www.hollywoodfl.org/172/Police-Officers-Pension-Board
     label: Police Officer's Pension Board
     documents: 2
     by_type:
       MINUTES: 1
       OTHER: 1
-  - url: https://www.hollywoodfl.org/155/Boards-Committees
-    label: Boards & Committees
-    documents: 1
-    by_type:
-      OTHER: 1
+    suggested: true
 - allocator_id: fl-pompano-pf
   display_name: Pompano Beach Police and Firefighters' Retirement System
   allocator_type: POLICE_FIRE
@@ -425,32 +631,68 @@ allocators:
     label: plan page
     documents: 0
     by_type: {}
-  - url: https://www.pbpfrs.org/meeting-calendar/
-    label: Meeting Calendar
-    documents: 2
+    suggested: false
+  - url: https://www.pbpfrs.org/investment-performance-reports/
+    label: Investment Performance Reports
+    documents: 1
     by_type:
-      AGENDA: 2
+      PERFORMANCE: 1
+    suggested: true
   - url: https://www.pbpfrs.org/meeting-minutes/
     label: Meeting Minutes
     documents: 154
     by_type:
       MINUTES: 154
+    suggested: true
   - url: https://www.pbpfrs.org/actuarial-reports/
     label: Actuarial Reports
     documents: 17
     by_type:
       ACTUARIAL: 16
       AGENDA: 1
+    suggested: true
   - url: https://www.pbpfrs.org/audit-reports/
     label: Audit Reports
     documents: 15
     by_type:
       FINANCIAL: 15
+    suggested: true
   - url: https://www.pbpfrs.org/investment-policy-statement/
     label: Investment Policy Statement
     documents: 1
     by_type:
       IPS: 1
+    suggested: true
+  - url: https://www.pbpfrs.org/required-disclosure-reports/
+    label: Required Disclosure Reports
+    documents: 3
+    by_type:
+      ACTUARIAL: 3
+    suggested: true
+  - url: https://www.pbpfrs.org/meeting-calendar/
+    label: Meeting Calendar
+    documents: 2
+    by_type:
+      AGENDA: 2
+    suggested: true
+  - url: https://www.pbpfrs.org/summary-plan-document/
+    label: Summary Plan Document
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: false
+  - url: https://www.pbpfrs.org/financial-calculators/
+    label: Financial Calculators
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: false
+  - url: https://www.pbpfrs.org/pension-related-news/
+    label: Pension Related News
+    documents: 3
+    by_type:
+      OTHER: 3
+    suggested: true
 - allocator_id: fl-pembrokepines-fp
   display_name: Pembroke Pines Fire and Police Pension
   allocator_type: POLICE_FIRE
@@ -469,22 +711,40 @@ allocators:
     documents: 1
     by_type:
       AGENDA: 1
+    suggested: true
   - url: https://www.pinespension.com/agenda/
     label: Agenda
     documents: 1
     by_type:
       AGENDA: 1
+    suggested: true
   - url: https://www.pinespension.com/minutes/
     label: Minutes
     documents: 229
     by_type:
       MINUTES: 224
       OTHER: 5
+    suggested: true
+  - url: https://www.pinespension.com/required-state-documents/
+    label: Required State Documents
+    documents: 3
+    by_type:
+      ACTUARIAL: 1
+      DISCLOSURE_112664: 1
+      FINANCIAL: 1
+    suggested: true
   - url: https://www.pinespension.com/forms/
     label: Forms
     documents: 1
     by_type:
       OTHER: 1
+    suggested: false
+  - url: https://www.pinespension.com/summary-plan-description/
+    label: Summary Plan Description
+    documents: 2
+    by_type:
+      OTHER: 2
+    suggested: false
 - allocator_id: fl-davie-fire
   display_name: Davie Firefighters' Pension
   allocator_type: POLICE_FIRE
@@ -516,32 +776,7 @@ allocators:
     documents: 1
     by_type:
       RFP: 1
-  - url: https://www.coralsprings.gov/Government/Departments/Human-Resources/Pension-Plans?lang_update=639295576232834453
-    label: English (United States) Select this as your preferred language
-    documents: 1
-    by_type:
-      RFP: 1
-  - url: https://www.coralsprings.gov/Government/Boards-Committees-and-Groups
-    label: Boards, Committees and Groups
-    documents: 1
-    by_type:
-      RFP: 1
-  - url: https://www.coralsprings.gov/Government/Departments/Financial-Services
-    label: Financial Services
-    documents: 2
-    by_type:
-      OTHER: 1
-      RFP: 1
-  - url: https://www.coralsprings.gov/Government/My-Coral-Springs
-    label: Report a Problem
-    documents: 1
-    by_type:
-      RFP: 1
-  - url: https://www.coralsprings.gov/Government/Boards-Committees-and-Groups
-    label: Boards, Committees and Groups
-    documents: 1
-    by_type:
-      RFP: 1
+    suggested: true
   - url: https://www.coralsprings.gov/Government/Departments/Human-Resources/Pension-Plans/General-Employees-Pension-Plan
     label: General Employees Pension Plan
     documents: 4
@@ -549,6 +784,7 @@ allocators:
       ACTUARIAL: 2
       OTHER: 1
       RFP: 1
+    suggested: true
   - url: https://www.coralsprings.gov/Government/Departments/Human-Resources/Pension-Plans/Police-Officers-Retirement-Plan
     label: Police Officers' Retirement Plan
     documents: 6
@@ -556,6 +792,7 @@ allocators:
       ACTUARIAL: 4
       OTHER: 1
       RFP: 1
+    suggested: true
   - url: https://www.coralsprings.gov/Government/Departments/Human-Resources/Pension-Plans/Firefighters-Retirement-Plan
     label: Firefighters' Retirement Plan
     documents: 9
@@ -564,11 +801,7 @@ allocators:
       OTHER: 1
       PERFORMANCE: 1
       RFP: 1
-  - url: https://www.coralsprings.gov/Government/City-Attorney/Website-Legal-Notices/Privacy-Policy
-    label: Privacy Policy
-    documents: 1
-    by_type:
-      RFP: 1
+    suggested: true
 - allocator_id: fl-coralsprings-fire
   display_name: Coral Springs Firefighters' Pension
   allocator_type: POLICE_FIRE
@@ -617,67 +850,52 @@ allocators:
       FINANCIAL: 3
       IPS: 1
       OTHER: 7
-  - url: https://www.miramarfl.gov/Departments/Management-Budget/State-Required-Pension-Disclosures?lang_update=639295576731941168
-    label: English (United States) Select this as your preferred language
-    documents: 27
-    by_type:
-      ACTUARIAL: 3
-      DISCLOSURE_112664: 13
-      FINANCIAL: 3
-      IPS: 1
-      OTHER: 7
-  - url: https://www.miramarfl.gov/City-Government/Advisory-Boards-and-Committees
-    label: Advisory Boards and Committees
+    suggested: true
+  - url: https://www.miramarfl.gov/Departments/City-Clerk/Commission-Meetings-Agendas
+    label: Commission Meetings & Agendas
     documents: 3
     by_type:
       OTHER: 3
-  - url: https://www.miramarfl.gov/City-Government/Advisory-Boards-and-Committees/Affordable-Housing-Advisory-Committee
-    label: Affordable Housing Advisory Committee
-    documents: 13
-    by_type:
-      MINUTES: 10
-      OTHER: 3
-  - url: https://www.miramarfl.gov/City-Government/Advisory-Boards-and-Committees/BID-Advisory-Board
-    label: BID Advisory Board
-    documents: 24
-    by_type:
-      MINUTES: 21
-      OTHER: 3
-  - url: https://www.miramarfl.gov/City-Government/Advisory-Boards-and-Committees/Blasting-Citizen-Advisory-Committee
-    label: Blasting Citizen Advisory Committee
-    documents: 15
-    by_type:
-      MINUTES: 12
-      OTHER: 3
-  - url: https://www.miramarfl.gov/City-Government/Advisory-Boards-and-Committees/Civil-Service-Board
-    label: Civil Service Board
-    documents: 3
-    by_type:
-      OTHER: 3
+    suggested: false
   - url: https://www.miramarfl.gov/City-Government/Advisory-Boards-and-Committees/Consolidated-Retirement-Plan-Trust-Fund-Pension-Board
     label: Consolidated Retirement Plan & Trust Fund Pension Board
     documents: 18
     by_type:
       MINUTES: 15
       OTHER: 3
-  - url: https://www.miramarfl.gov/City-Government/Advisory-Boards-and-Committees/Cultural-Center-ArtsPark-Advisory-Board
-    label: Cultural Center ArtsPark Advisory Board
-    documents: 5
-    by_type:
-      MINUTES: 2
-      OTHER: 3
-  - url: https://www.miramarfl.gov/City-Government/Advisory-Boards-and-Committees/Economic-Development-Advisory-Board
-    label: Economic Development Advisory Board
+    suggested: true
+  - url: https://www.miramarfl.gov/City-Government/Advisory-Boards-and-Committees/Firefighters-Pension-Board
+    label: Firefighters' Pension Board
     documents: 15
     by_type:
       MINUTES: 12
       OTHER: 3
-  - url: https://www.miramarfl.gov/City-Government/Advisory-Boards-and-Committees/Education-Advisory-Board
-    label: Education Advisory Board
-    documents: 7
+    suggested: true
+  - url: https://www.miramarfl.gov/City-Government/Advisory-Boards-and-Committees/GE-Pension-Board
+    label: GE Pension Board Info
+    documents: 3
     by_type:
-      MINUTES: 4
       OTHER: 3
+    suggested: true
+  - url: https://www.miramarfl.gov/City-Government/Advisory-Boards-and-Committees/Management-Retirement-Plan-Board
+    label: Management Retirement Plan Board
+    documents: 3
+    by_type:
+      OTHER: 3
+    suggested: true
+  - url: https://www.miramarfl.gov/City-Government/Advisory-Boards-and-Committees/Police-Pension-Board
+    label: Police Pension Board
+    documents: 21
+    by_type:
+      MINUTES: 18
+      OTHER: 3
+    suggested: true
+  - url: https://www.miramarfl.gov/Departments/Human-Resources/Retirement-Center
+    label: Retirement Center
+    documents: 3
+    by_type:
+      OTHER: 3
+    suggested: false
 - allocator_id: fl-miramar-fire
   display_name: Miramar Firefighters' Retirement Plan
   allocator_type: POLICE_FIRE
@@ -736,40 +954,31 @@ allocators:
     documents: 1
     by_type:
       OTHER: 1
-  - url: https://www.myboca.us/357/Policies-Forms-Reports
-    label: Policies / Forms / Reports
-    documents: 17
-    by_type:
-      ACTUARIAL: 4
-      AGENDA: 1
-      FINANCIAL: 2
-      IPS: 1
-      OTHER: 9
-  - url: https://www.myboca.us/955/Pension-Benefit-Links
-    label: Pension Benefit Links
-    documents: 1
-    by_type:
-      OTHER: 1
-  - url: https://www.myboca.us/151/Financial-Services
-    label: Financial Services
-    documents: 7
-    by_type:
-      OTHER: 7
-  - url: https://www.myboca.us/2061/Report-a-Concern-or-Compliment
-    label: Report a Concern or Compliment
-    documents: 1
-    by_type:
-      OTHER: 1
+    suggested: true
   - url: https://www.myboca.us/129/Agendas
     label: Meetings & Agendas
     documents: 1
     by_type:
       OTHER: 1
-  - url: https://www.myboca.us/2834/Privacy-Policy
-    label: Privacy Policy - City - Using This Site Privacy Policy
-    documents: 2
+    suggested: false
+  - url: https://www.myboca.us/343/Police-Firefighters-Retirement-System-Pr
+    label: Police / Firefighters Retirement System Provisions
+    documents: 1
     by_type:
-      OTHER: 2
+      OTHER: 1
+    suggested: false
+  - url: https://www.myboca.us/955/Pension-Benefit-Links
+    label: Pension Benefit Links
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: false
+  - url: https://www.myboca.us/277/Retirement-Systems
+    label: Retirement Systems
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: false
 - allocator_id: fl-boca-ge
   display_name: Boca Raton General Employees' Pension Plan
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -788,11 +997,13 @@ allocators:
     documents: 1
     by_type:
       OTHER: 1
-  - url: https://www.myboca.us/316/General-Employees-Pension-Plan-Provision
-    label: General Employees Pension Plan Provisions
+    suggested: true
+  - url: https://www.myboca.us/129/Agendas
+    label: Meetings & Agendas
     documents: 1
     by_type:
       OTHER: 1
+    suggested: false
   - url: https://www.myboca.us/326/Pension-Plan-Policies-Forms-Reports
     label: Pension Plan Policies / Forms / Reports
     documents: 14
@@ -801,31 +1012,25 @@ allocators:
       FINANCIAL: 2
       IPS: 1
       OTHER: 9
+    suggested: true
+  - url: https://www.myboca.us/316/General-Employees-Pension-Plan-Provision
+    label: General Employees Pension Plan Provisions
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: false
   - url: https://www.myboca.us/954/Pension-Benefit-Links
     label: Pension Benefit Links
     documents: 1
     by_type:
       OTHER: 1
-  - url: https://www.myboca.us/151/Financial-Services
-    label: Financial Services
-    documents: 7
-    by_type:
-      OTHER: 7
-  - url: https://www.myboca.us/2061/Report-a-Concern-or-Compliment
-    label: Report a Concern or Compliment
+    suggested: false
+  - url: https://www.myboca.us/277/Retirement-Systems
+    label: Retirement Systems
     documents: 1
     by_type:
       OTHER: 1
-  - url: https://www.myboca.us/129/Agendas
-    label: Meetings & Agendas
-    documents: 1
-    by_type:
-      OTHER: 1
-  - url: https://www.myboca.us/2834/Privacy-Policy
-    label: Privacy Policy - City - Using This Site Privacy Policy
-    documents: 2
-    by_type:
-      OTHER: 2
+    suggested: false
 - allocator_id: fl-wpb-police
   display_name: West Palm Beach Police Pension Fund
   allocator_type: POLICE_FIRE
@@ -843,11 +1048,13 @@ allocators:
     label: plan page
     documents: 0
     by_type: {}
+    suggested: false
   - url: https://www.wpbppf.com/board-meetings
     label: Board Meetings
     documents: 2
     by_type:
       OTHER: 2
+    suggested: false
 - allocator_id: fl-palmbeach-rs
   display_name: Town of Palm Beach Retirement System
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -872,16 +1079,13 @@ allocators:
       FINANCIAL: 8
       OTHER: 39
       PERFORMANCE: 12
-  - url: https://www.townofpalmbeach.com/QuickLinks.aspx?CID=12
-    label: Related Boards
-    documents: 3
+    suggested: false
+  - url: https://www.townofpalmbeach.com/263/Benefits
+    label: Benefits - Employee and Retiree - Employment opens in new window Benefits - Empl
+    documents: 6
     by_type:
-      OTHER: 3
-  - url: https://www.townofpalmbeach.com/privacy
-    label: Privacy Policy - Footer - Using this site Privacy Policy
-    documents: 3
-    by_type:
-      OTHER: 3
+      OTHER: 6
+    suggested: false
 - allocator_id: fl-jupiter-police
   display_name: Jupiter Police Officers' Pension
   allocator_type: POLICE_FIRE
@@ -891,7 +1095,7 @@ allocators:
   template: T-CP
   source_id: SF-JUP
   access: AUTO
-  access_reason: null
+  access_reason: no document links found on the plan page or its listing pages
   site_title: Police Pension Board | Jupiter, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow Right
     Arrow
   robots: allowed
@@ -900,21 +1104,7 @@ allocators:
     label: plan page
     documents: 0
     by_type: {}
-  - url: https://jupiter.fl.us/285/Boards-Committees
-    label: Boards & Committees
-    documents: 2
-    by_type:
-      OTHER: 2
-  - url: https://jupiter.fl.us/843/Audit-Committee
-    label: Audit Committee
-    documents: 1
-    by_type:
-      FINANCIAL: 1
-  - url: https://jupiter.fl.us/861/Construction-Board-of-Adjustments-Appeal
-    label: Construction Board of Adjustments & Appeals
-    documents: 1
-    by_type:
-      OTHER: 1
+    suggested: false
 - allocator_id: fl-keywest-pf
   display_name: Key West Police and Fire Pension
   allocator_type: POLICE_FIRE
@@ -934,32 +1124,26 @@ allocators:
     documents: 5
     by_type:
       OTHER: 5
-  - url: https://www.cityofkeywest-fl.gov/874/Agendas
-    label: Agendas
-    documents: 26
-    by_type:
-      OTHER: 26
-  - url: https://www.cityofkeywest-fl.gov/873/Minutes
-    label: Minutes
-    documents: 24
-    by_type:
-      OTHER: 24
-  - url: https://www.cityofkeywest-fl.gov/915/Quarterly-Newsletter
-    label: Quarterly Newsletter
-    documents: 17
-    by_type:
-      OTHER: 17
+    suggested: true
   - url: https://www.cityofkeywest-fl.gov/836/Actuarial-Valuation-Reports
     label: Actuarial Valuation Reports
     documents: 8
     by_type:
       ACTUARIAL: 3
       OTHER: 5
-  - url: https://www.cityofkeywest-fl.gov/698/Budget-Projections-Expense-Report
-    label: Budget Projections / Expense Report
-    documents: 12
+    suggested: true
+  - url: https://www.cityofkeywest-fl.gov/874/Agendas
+    label: Agendas
+    documents: 26
     by_type:
-      OTHER: 12
+      OTHER: 26
+    suggested: true
+  - url: https://www.cityofkeywest-fl.gov/873/Minutes
+    label: Minutes
+    documents: 24
+    by_type:
+      OTHER: 24
+    suggested: true
 - allocator_id: fl-keywest-ge
   display_name: Key West General Employees' Pension
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -980,18 +1164,21 @@ allocators:
     by_type:
       IPS: 1
       OTHER: 1
+    suggested: true
   - url: https://www.cityofkeywest-fl.gov/695/Chapter-112664-Compliance-Reports
     label: Chapter 112.664 Compliance Reports
     documents: 4
     by_type:
       IPS: 1
       OTHER: 3
-  - url: https://www.cityofkeywest-fl.gov/1250/General-Employees-Pension-Newsletter
-    label: General Employees' Pension Newsletter
-    documents: 3
+    suggested: true
+  - url: https://www.cityofkeywest-fl.gov/692/Deferred-Retirement-Option-Program-DROP
+    label: Deferred Retirement Option Program (DROP)
+    documents: 4
     by_type:
       IPS: 1
-      OTHER: 2
+      OTHER: 3
+    suggested: false
 - allocator_id: fl-nmb-pf
   display_name: North Miami Beach Police and Fire Pension
   allocator_type: POLICE_FIRE
@@ -1009,6 +1196,7 @@ allocators:
     label: plan page
     documents: 0
     by_type: {}
+    suggested: false
 - allocator_id: fl-riviera
   display_name: Riviera Beach pension plans
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -1028,11 +1216,7 @@ allocators:
     by_type:
       ACTUARIAL: 2
       OTHER: 5
-  - url: https://www.rivierabch.com/AuditCommittee
-    label: Audit Committee
-    documents: 5
-    by_type:
-      FINANCIAL: 5
+    suggested: true
 - allocator_id: fl-sba-frs
   display_name: Florida Retirement System Pension Plan (State Board of Administration)
   allocator_type: PUBLIC_PENSION_STATE

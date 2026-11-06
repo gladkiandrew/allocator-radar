@@ -85,7 +85,7 @@ def is_document(url: str) -> bool:
 
 
 _TYPE_RULES = [
-    ("RFP", r"\b(rfp|rfq|rfi|request for (proposal|qualification|information)|solicitation|search)\b"),
+    ("RFP", r"\b(rfp|rfq|rfi|request for (proposals?|qualifications?|information)|solicitations?|search)\b"),
     ("IPS", r"\b(investment policy|ips)\b"),
     ("MINUTES", r"\bminutes?\b"),
     ("AGENDA", r"\b(agenda|packet|board meeting|meeting materials)\b"),

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Records requests · Allocator Radar{% endblock %}
+{% block body %}
+<h1>Public-records requests</h1>
+<p class="sub">Florida Chapter 119 requests are filed by a person outside this system, which never sends anything. This page tracks
+  each request. Drop the response files into the request's folder, then click <em>Ingest folder</em>. Files ingested this way are
+  tagged as records-request documents.</p>
+{% if msg %}<div class="notice">{{ msg }}</div>{% endif %}
+{% if err %}<div class="error">{{ err }}</div>{% endif %}
+{% if reqs %}
+<div class="scroll"><table class="stack">
+  <thead><tr><th>Plan</th><th>Request</th><th>Filed</th><th>Status</th><th>Response folder</th></tr></thead>
+  <tbody>{% for r in reqs %}
+  <tr><td>{{ r.display_name }}</td><td style="font-size:13px;white-space:pre-wrap">{{ r.request_text|truncate(220) }}{% if r.note %}<br><span class="muted">{{ r.note }}</span>{% endif %}</td>
+    <td class="mono">{{ r.date_filed }}</td>
+    <td><form method="post" action="/records/{{ r.request_id }}/status" class="inline">
+        <select name="status" onchange="this.form.submit()">{% for st in statuses %}<option {{ 'selected' if st == r.status }}>{{ st }}</option>{% endfor %}</select></form></td>
+    <td class="mono" style="font-size:12px">{{ r.response_folder }}<br>
+      <form method="post" action="/records/{{ r.request_id }}/ingest" class="inline"><button>Ingest folder</button></form>
+      <span class="muted">{{ r.n_docs }} docs</span></td></tr>
+  {% endfor %}</tbody></table></div>
+{% endif %}
+<h2>Track a new request</h2>
+<form method="post" action="/records" class="card">
+  <div class="grid2">
+    <div><label>Plan</label><select name="allocator_id">{% for a in allocators %}<option value="{{ a.allocator_id }}">{{ a.display_name }}</option>{% endfor %}</select></div>
+    <div><label>Date filed</label><input type="date" name="date_filed" required></div>
+  </div>
+  <label>Request text (as filed; no contact details)</label><textarea name="request_text" rows="4" required></textarea>
+  <label>Note (optional)</label><input name="note">
+  <p><button class="primary" type="submit">Add to tracker</button></p>
+</form>
+<h2>Manual inbox</h2>
+<p class="muted">Files a person downloads from manual-only sources (for example FL SBA quarterly reports) go in
+  <span class="mono">inbox/manual/&lt;allocator_id&gt;/</span>.</p>
+<form method="post" action="/inbox/ingest"><button>Ingest manual inbox</button></form>
+{% endblock %}
