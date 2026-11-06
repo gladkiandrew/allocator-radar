@@ -70,8 +70,18 @@ def approve(actor: str, expected_version: str, selected_pages: set[tuple[str, st
                     con.execute("INSERT INTO allocator_pages VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
                                 [a["allocator_id"], p["url"], p.get("label")])
             n += 1
+        # Allocators no longer in the registry leave the store (their fetched documents stay in the lake).
+        keep = [x["allocator_id"] for x in reg["allocators"]]
+        marks = ",".join("?" * len(keep))
+        gone = [r[0] for r in con.execute(f"SELECT allocator_id FROM allocators WHERE allocator_id NOT IN ({marks})", keep).fetchall()]
+        for g in gone:
+            for table in ("allocator_pages", "document_urls", "mandates", "officers", "consultant_engagements"):
+                con.execute(f"DELETE FROM {table} WHERE allocator_id = ?", [g])
+            con.execute("DELETE FROM row_evidence WHERE row_kind = 'signal' AND row_id IN (SELECT signal_id FROM signals WHERE allocator_id = ?)", [g])
+            con.execute("DELETE FROM signals WHERE allocator_id = ?", [g])
+            con.execute("DELETE FROM allocators WHERE allocator_id = ?", [g])
         con.execute("INSERT INTO registry_approvals VALUES (?, ?, ?, now(), ?)", [region, v, actor, note])
-        db.audit(con, actor, "registry_approve", region, detail={"version": v, "allocators": n,
+        db.audit(con, actor, "registry_approve", region, detail={"version": v, "allocators": n, "removed": gone,
                                                                  "pages": len(selected_pages or [])})
         con.execute("COMMIT")
     return n

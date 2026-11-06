@@ -7,7 +7,8 @@
 #
 # Set auto_approve: false to go back to manual review (Touchpoint 3). Rows already approved stay approved.
 signals:
-  auto_approve: true
+  # Turned OFF 2026-11-06 by the owner ("put all candidate signals into the review queue. I'll clear it.").
+  auto_approve: false
   actor: "auto-approve (owner policy 2026-11-06)"
 registry:
   # New registry versions are approved automatically. Only hosts on the config/sources.yaml

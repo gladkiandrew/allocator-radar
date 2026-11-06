@@ -62,6 +62,11 @@ def allocator_table(con) -> list[dict]:
                FROM consultant_engagements GROUP BY allocator_id""",
         )
     }
+    from radar.resolve import canonical_map
+
+    cmap = canonical_map(con, "consultant")
+    for c in consultants.values():
+        c["consultant"] = cmap.get(c["consultant"], c["consultant"])
     sigs_by: dict[str, list[dict]] = defaultdict(list)
     for s in signals_for(con):
         sigs_by[s["allocator_id"]].append(s)

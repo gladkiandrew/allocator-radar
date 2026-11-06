@@ -28,6 +28,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("hash-password", help="print the sha256 for RADAR_AUTH_PASSWORD_HASH (reads the password from stdin)")
     sub.add_parser("approve-pending", help="apply config/review_policy.yaml to pending signals (and the registry)")
     sub.add_parser("reparse-scanned", help="re-parse documents that have scanned (empty) pages, with local OCR")
+    sub.add_parser("resolve", help="entity resolution for firm names (auto-alias + merge queue)")
     sub.add_parser("index", help="add newly parsed (scrubbed) pages to the LanceDB search index")
     dp = sub.add_parser("discover", help="discovery agent: registry/seed_florida.yaml -> registry/florida.yaml")
     dp.add_argument("--resuggest", action="store_true", help="recompute suggested pages only (no fetching)")
@@ -95,6 +96,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"integrity removals: {len(review.integrity_cleanup())}")
         print(f"policy approvals: {review.approve_pending()}")
         print(f"indexed: {search.index_new()}")
+        from radar import resolve
+        print(f"resolver: {resolve.run()}")
         return live.main()
     elif args.cmd == "hash-password":
         import getpass
@@ -119,6 +122,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{len(shas)} documents with scanned pages")
         for sha in shas:
             print(sha[:12], pdf.parse_document(sha, force=True))
+    elif args.cmd == "resolve":
+        from radar import db, resolve
+        db.init_db()
+        print(resolve.run())
     elif args.cmd == "index":
         from radar import db, search
         db.init_db()

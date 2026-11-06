@@ -17,7 +17,6 @@ def templates_partial(request, name, **ctx):
 
 def register(app: FastAPI, render) -> None:
     stubs = {
-        "/merges": ("Merge review", "Ambiguous entity matches appear here."),
     }
     for path, (title, msg) in stubs.items():
         def page(request: Request, _t=title, _m=msg):
@@ -174,6 +173,22 @@ def register(app: FastAPI, render) -> None:
         text, n = export.build_csv(user)
         return _R(text, media_type="text/csv",
                   headers={"Content-Disposition": f'attachment; filename="allocator-radar-approved-{_d.today()}.csv"'})
+
+    # ---------------- Touchpoint 2: merge review ----------------
+    from radar import resolve
+
+    @app.get("/merges", response_class=HTMLResponse)
+    def merges_page(request: Request):
+        with db.connect() as con:
+            con.execute(resolve.DDL)
+            items = db.rows(con, "SELECT * FROM merge_queue WHERE status = 'open' ORDER BY score DESC")
+            aliases = db.rows(con, "SELECT * FROM entity_aliases ORDER BY kind, canonical")
+        return render(request, "merges.html", items=items, aliases=aliases)
+
+    @app.post("/merges/{merge_id}")
+    def merges_decide(merge_id: str, same: str = Form(...), user: str = Depends(require_user)):
+        resolve.decide(merge_id, same == "1", user)
+        return RedirectResponse("/merges", status_code=303)
 
     # ---------------- Touchpoint 1: registry ----------------
     @app.get("/registry", response_class=HTMLResponse)
