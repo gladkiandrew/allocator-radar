@@ -413,6 +413,13 @@ def extract_document(sha: str, allocator_id: str, provider=None) -> dict:
         todo = _pages_to_extract(con, sha)
     total = {"pages": len(todo), "calls": 0, "signals": 0, "mandates": 0, "officers": 0, "consultants": 0, "facts": 0,
              "dropped": 0}
+    if not todo:  # nothing qualifies on this document: mark it done for this extractor version
+        with db.connect() as con:
+            if not con.execute("SELECT 1 FROM extraction_runs WHERE sha256 = ? AND extractor_version = ? LIMIT 1",
+                               [sha, EXTRACTOR_VERSION]).fetchone():
+                con.execute("INSERT INTO extraction_runs VALUES (?, 0, ?, now(), 'none') ON CONFLICT DO NOTHING",
+                            [sha, EXTRACTOR_VERSION])
+        return total
     for i in range(0, len(todo), PAGES_PER_CALL):
         batch = todo[i : i + PAGES_PER_CALL]
         user = _user_prompt(meta, batch)
