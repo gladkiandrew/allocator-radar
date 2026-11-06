@@ -119,14 +119,22 @@ def _gliner():
     return model
 
 
+_GLINER_LOCK = __import__("threading").Lock()  # one inference at a time: GPU backends are not thread-safe
+
+
 def _gliner_spans(text: str) -> list[tuple[int, int]]:
+    with _GLINER_LOCK:
+        return _gliner_spans_locked(text)
+
+
+def _gliner_spans_locked(text: str) -> list[tuple[int, int]]:
     model = _gliner()
     if model is None or not text.strip():
         return []
     spans: list[tuple[int, int]] = []
     # GLiNER reads at most 384 tokens per window; numbers and punctuation tokenize densely, so
     # windows are kept well under that (no silent truncation) and overlap so no span is cut in half.
-    window, step = 600, 500
+    window, step = 450, 380
     for off in range(0, max(len(text), 1), step):
         chunk = text[off : off + window]
         if not chunk.strip():
