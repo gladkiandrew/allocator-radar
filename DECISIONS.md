@@ -188,3 +188,33 @@ are the irreversible ones, which went to the repo owner.
 - **D-A44 Consultant column.** The SBA's per-row "Consultant" column is recorded as printed, as
   cited consultant engagements. For some real-estate separate accounts it names the manager
   itself (Heitman, Invesco, Stockbridge).
+
+## Phase A wrap-up (owner's instructions, 2026-11-06)
+
+- **D-A45 Tiered auto-approval** (`config/auto_approval.yaml`, rule `auto-approve-v1`). A pending
+  signal becomes `auto_approved`, a status distinct from a person's `approved`, only if all of these
+  hold:
+  - (a) its type is not MANAGER_TERMINATED, MANAGER_ON_WATCH, REDEMPTION_APPROVED or WATCH_REMOVED;
+  - (b) it came from the deterministic table parser, or a quote matches its cited page after
+    normalization;
+  - (c) its date basis is source-native, meaning the cited document's own date or a date printed on
+    the cited page;
+  - (d) its summary passes the lint.
+
+  Every decision, approve or leave pending, is logged in `audit_log` with the rule version and the
+  reason. Auto-approved signals set tiers. **Export still requires a person's approval**, because the
+  exporter reads `approved` only. The earlier owner policy (D-A26) is superseded for signals.
+- **D-A46 A quarter-end fallback does not satisfy rule (c).** It is a reporting period, not a meeting,
+  report or filing date, so those signals stay pending. Adding `quarter_end` to
+  `qualifying_date_bases` would change that.
+- **D-A47 SBA dating.** Rule: use the publication date or the board/IAC meeting date if either is
+  printed, otherwise the quarter-end. None of the 5 New Investments / New Manager reports prints a
+  publication or meeting date, and the PDFs carry no date metadata. All 115 rows are therefore
+  dated by quarter-end and recorded with `date_basis = quarter_end`.
+- **D-A48 Readiness rules.** PREPARING now also includes MANDATE_AWARDED (manager hires only, the same
+  qualifier as DEPLOYING) and COMMITMENT_MADE within 180 days. Nothing else changed: DEPLOYING
+  searches, RFPs and finalists still count only for manager hires.
+- **D-A49 Search scan.** This is a separate extraction pass, versioned `search-scan-1`, over each
+  main-table plan's agendas, minutes and RFP documents dated in the last 12 months. It reads pages
+  matching a search vocabulary (up to 20 per document), and its prompt focuses on manager and
+  consultant searches.

@@ -122,7 +122,8 @@ def main(argv: list[str] | None = None) -> int:
         for sha, aid in todo:
             print(json.dumps({"doc": sha[:12], "allocator": aid, **extractor.extract_document(sha, aid)}))
         print(f"integrity removals: {len(review.integrity_cleanup())}")
-        print(f"policy approvals: {review.approve_pending()}")
+        from radar import autoapprove
+        print(f"auto-approval: {autoapprove.run_pass()}")
         print(f"indexed: {search.index_new()}")
         from radar import resolve
         print(f"resolver: {resolve.run()}")
