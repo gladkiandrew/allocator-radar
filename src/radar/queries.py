@@ -75,7 +75,11 @@ def allocator_table(con) -> list[dict]:
         d = docs.get(a["allocator_id"], {})
         sigs = sigs_by.get(a["allocator_id"], [])
         r = compute(sigs, d.get("last_new_document"))
+        from radar import coverage
+
         a.update(
+            coverage_pct=coverage.checklist(con, a["allocator_id"])["pct"],
+            bar_reasons=coverage.bar(con, a),
             readiness=r,
             n_docs=d.get("n_docs", 0),
             last_fetched=d.get("last_fetched"),
@@ -122,4 +126,81 @@ def allocator_brief(con, allocator_id: str) -> dict | None:
         for i in items:
             i["evidence"] = ev.get(i[key], [])
         a[table] = items
+    from radar import coverage
+
+    a["facts"] = plan_facts(con, allocator_id)
+    a["managers_as_of"], a["managers"] = managers_by_class(a["mandates"])
+    a["coverage"] = coverage.checklist(con, allocator_id)
+    a["bar_reasons"] = coverage.bar(con, a)
     return a
+
+
+def _norm_label(s: str | None) -> str:
+    import re
+    return re.sub(r"[^a-z0-9]+", " ", (s or "").lower().replace("&", " and ")).strip()
+
+
+def plan_facts(con, allocator_id: str) -> dict:
+    """Latest cited plan facts, de-duplicated for display. Every value keeps its evidence."""
+    from datetime import date
+
+    rows = db.rows(con, "SELECT * FROM plan_facts WHERE allocator_id = ? ORDER BY as_of DESC", [allocator_id])
+    ev = _evidence_for(con, "fact", [r["fact_id"] for r in rows])
+    for r in rows:
+        r["evidence"] = ev.get(r["fact_id"], [])
+    by = {}
+    for r in rows:
+        by.setdefault(r["fact_kind"], []).append(r)
+
+    def latest(kind):
+        xs = by.get(kind, [])
+        return xs[0] if xs else None
+
+    def table(kind):
+        xs = by.get(kind, [])
+        if not xs:
+            return None, {}
+        as_of = max(x["as_of"] for x in xs)
+        cur = {}
+        for x in xs:
+            if x["as_of"] != as_of or x["value_num"] is None:
+                continue
+            k = _norm_label(x["label"])
+            prev = cur.get(k)
+            # same label printed twice (summary vs detail page): keep the more precise figure
+            if prev is None or len(f"{x['value_num']:g}") > len(f"{prev['value_num']:g}"):
+                cur[k] = x
+        return as_of, cur
+
+    t_asof, targets = table("TARGET_ALLOCATION")
+    a_asof, actuals = table("ACTUAL_ALLOCATION")
+    alloc = []
+    for k in list(targets) + [k for k in actuals if k not in targets]:
+        alloc.append({"label": (targets.get(k) or actuals.get(k))["label"], "target": targets.get(k), "actual": actuals.get(k)})
+    today = date.today()
+    future = sorted([x for x in by.get("NEXT_MEETING", []) if x["as_of"] >= today], key=lambda x: x["as_of"])
+    return {
+        "total_assets": latest("TOTAL_ASSETS"),
+        "alloc": alloc, "target_as_of": t_asof, "actual_as_of": a_asof,
+        "providers": {k: latest(k) for k in ("INVESTMENT_CONSULTANT", "ACTUARY", "CUSTODIAN", "AUDITOR")},
+        "assumed_return": latest("ASSUMED_RETURN"),
+        "next_meeting": future[0] if future else None,
+    }
+
+
+def managers_by_class(mandates: list[dict]) -> tuple:
+    """Managers from the most recent holdings date, grouped by the plan's own asset-class label."""
+    if not mandates:
+        return None, []
+    as_of = max(m["as_of"] for m in mandates)
+    groups: dict[str, list[dict]] = {}
+    seen = set()
+    for m in mandates:
+        if m["as_of"] != as_of:
+            continue
+        k = (m["bucket_label_as_disclosed"], m["manager_name_as_disclosed"].lower())
+        if k in seen:
+            continue
+        seen.add(k)
+        groups.setdefault(m["bucket_label_as_disclosed"], []).append(m)
+    return as_of, sorted(groups.items())

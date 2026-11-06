@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Coverage gaps · Allocator Radar{% endblock %}
+{% block body %}
+<h1>Coverage gaps</h1>
+<p class="sub">Plans in the registry that don't meet the main-table bar: at least 3 documents fetched, at least one dated in the
+  last 6 months, and the investment consultant identified (<span class="mono">config/main_table.yaml</span>). Each row says
+  why. A gap describes our coverage, not the plan.</p>
+<div class="scroll"><table class="stack">
+  <thead><tr><th>Plan</th><th>Why it is here</th><th class="hide-sm">Coverage</th></tr></thead>
+  <tbody>{% for a in rows %}
+  <tr><td><a href="/a/{{ a.allocator_id }}"><strong>{{ a.display_name }}</strong></a><br><span class="muted">{{ a.jurisdiction_city }}</span></td>
+    <td style="font-size:13.5px"><ul style="margin:0;padding-left:18px">{% for r in a.bar_reasons %}<li>{{ r }}</li>{% endfor %}</ul></td>
+    <td class="hide-sm mono">{{ a.coverage_pct }}% · {{ a.n_docs }} docs</td></tr>
+  {% endfor %}</tbody></table></div>
+{% if sponsors %}<h2>Sponsors blocked to automated clients</h2>
+<ul>{% for s in sponsors %}<li>{{ s.name }}. <span class="muted">{{ s.reason }}; documents only via the manual inbox</span></li>{% endfor %}</ul>{% endif %}
+{% endblock %}

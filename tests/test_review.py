@@ -34,7 +34,9 @@ def test_review_page_and_post():
     assert "pending review" in c.get("/review").text
     r = c.post(f"/review/{sid}", data={"decision": "approved"}, headers={"HX-Request": "true"})
     assert r.status_code == 200 and "approved" in r.text
-    assert "Canary P&amp;F" in c.get("/").text or "Canary P&F" in c.get("/").text
+    gaps = c.get("/gaps").text  # one document only: below the main-table bar
+    assert "Canary P&amp;F" in gaps and "documents fetched (minimum 3)" in gaps
+    assert "Coverage" in c.get("/a/canary").text
 
 
 def test_auto_approve_policy_stamps_policy_actor():

@@ -7,11 +7,12 @@
 <div class="filters">
   <a href="/" class="{{ 'on' if not tier }}">All {{ counts.total }}</a>
   {% for t in tiers %}<a href="/?tier={{ t }}" class="{{ 'on' if tier == t }}">{{ t|title }} {{ counts[t] }}</a>{% endfor %}
+  <a href="/gaps">Coverage gaps {{ n_gaps }}</a>
   <a href="/export.csv" class="hide-sm">Export CSV (approved only)</a>
 </div>
 
 {% if not rows %}
-<div class="card">No allocators yet. The registry has not been loaded and approved. Go to <a href="/registry">Registry</a>.</div>
+<div class="card">{% if n_gaps %}No plan meets the main-table bar yet. See <a href="/gaps">Coverage gaps</a>.{% else %}No allocators yet. The registry has not been loaded and approved. Go to <a href="/registry">Registry</a>.{% endif %}</div>
 {% else %}
 <div class="scroll">
 <table class="stack">
@@ -35,7 +36,7 @@
       {% if a.pending %}<br><span class="pending">{{ a.pending|length }} pending review</span>{% endif %}
     </td>
     <td class="hide-sm">{% if a.consultant %}{{ a.consultant.consultant }}<br><span class="muted mono">as of {{ a.consultant.as_of }}</span>{% else %}<span class="muted">—</span>{% endif %}</td>
-    <td class="hide-sm"><span class="mono">{{ a.n_docs }} docs</span><br><span class="muted mono">{{ a.last_fetched.strftime('%Y-%m-%d') if a.last_fetched else 'never fetched' }}</span></td>
+    <td class="hide-sm"><span class="mono">{{ a.coverage_pct }}%</span> <span class="muted mono">· {{ a.n_docs }} docs</span><br><span class="muted mono">newest {{ a.newest_doc_date or '—' }}</span></td>
   </tr>
   {% endfor %}
   </tbody>

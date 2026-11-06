@@ -8,14 +8,54 @@
   <a href="{{ a.home_url }}" target="_blank" rel="noopener noreferrer">official site</a>
   {% if a.access == 'MANUAL' %}· <span class="tier STALE">MANUAL SOURCE</span> <span class="muted">{{ a.access_reason }}</span>{% endif %}</p>
 
+{% set f = a.facts %}
+{% macro money(v) %}{% if v is not none %}${{ '{:,.0f}'.format(v) }}{% endif %}{% endmacro %}
+{% macro fact(x) %}{% if x %}{{ caller() }}{{ cites(x.evidence) }}{% else %}<span class="muted">not found in fetched documents</span>{% endif %}{% endmacro %}
 <div class="card">
   <dl class="kv">
     <dt>Readiness</dt><dd><span class="tier {{ r.tier }}">{{ r.tier }}</span> <span class="muted">{{ r.rule_meaning }}</span></dd>
+    <dt>Total assets</dt><dd>{% call fact(f.total_assets) %}{{ money(f.total_assets.value_num) }} <span class="muted mono">as of {{ f.total_assets.as_of }}</span>{% endcall %}</dd>
     <dt>Consultant</dt><dd>{% if a.consultant_engagements %}{% set c = a.consultant_engagements[0] %}{{ c.consultant_name_as_disclosed }}
-        <span class="muted mono">as of {{ c.as_of }}</span>{{ cites(c.evidence) }}{% else %}<span class="muted">not yet extracted</span>{% endif %}</dd>
-    <dt>Documents</dt><dd>{{ a.documents|length }} fetched{% if a.documents %}, newest dated {{ a.documents[0].doc_date or 'undated' }}, last fetch {{ a.documents|map(attribute='last_fetched')|max|string|truncate(16, True, '') }}{% endif %}</dd>
+        <span class="muted mono">as of {{ c.as_of }}</span>{{ cites(c.evidence) }}{% elif f.providers.INVESTMENT_CONSULTANT %}{% set c = f.providers.INVESTMENT_CONSULTANT %}{{ c.label }} <span class="muted mono">as of {{ c.as_of }}</span>{{ cites(c.evidence) }}{% else %}<span class="muted">not found in fetched documents</span>{% endif %}</dd>
+    <dt>Actuary</dt><dd>{% call fact(f.providers.ACTUARY) %}{{ f.providers.ACTUARY.label }} <span class="muted mono">as of {{ f.providers.ACTUARY.as_of }}</span>{% endcall %}</dd>
+    <dt>Custodian</dt><dd>{% call fact(f.providers.CUSTODIAN) %}{{ f.providers.CUSTODIAN.label }} <span class="muted mono">as of {{ f.providers.CUSTODIAN.as_of }}</span>{% endcall %}</dd>
+    <dt>Auditor</dt><dd>{% call fact(f.providers.AUDITOR) %}{{ f.providers.AUDITOR.label }} <span class="muted mono">as of {{ f.providers.AUDITOR.as_of }}</span>{% endcall %}</dd>
+    <dt>Assumed return</dt><dd>{% call fact(f.assumed_return) %}{{ '%g'|format(f.assumed_return.value_num) }}% <span class="muted mono">as of {{ f.assumed_return.as_of }}</span>{% endcall %}</dd>
+    <dt>Next meeting</dt><dd>{% call fact(f.next_meeting) %}<span class="mono">{{ f.next_meeting.as_of }}</span>{% endcall %}</dd>
   </dl>
 </div>
+
+<h2 id="coverage">Coverage <span class="muted" style="font-weight:400">{{ a.coverage.pct }}% of what this plan publishes</span></h2>
+{% if a.bar_reasons %}<div class="notice">Not on the main table: {{ a.bar_reasons|join('; ') }}.</div>{% endif %}
+<div class="scroll"><table class="stack">
+  <thead><tr><th>Document</th><th>Status</th><th>Newest held</th></tr></thead><tbody>
+  {% for it in a.coverage['items'] %}
+  <tr><td>{{ it.label }}</td>
+    <td>{% if it.status == 'ok' %}<span class="tier WATCHING">✓ held</span>{% elif it.status == 'partial' %}<span class="tier PREPARING">partial</span>{% elif it.status == 'missing' %}<span class="tier STALE">missing</span>{% else %}<span class="muted">not published</span>{% endif %}
+      {% if it.detail %}<span class="muted mono" style="font-size:12px"> {{ it.detail }}</span>{% endif %}</td>
+    <td>{% if it.newest %}<a href="/doc/{{ it.newest.sha256 }}" target="_blank" rel="noopener">{{ it.newest.title|truncate(50) }}</a> <span class="muted mono">{{ it.newest.dated or '' }}</span>{% else %}<span class="muted">—</span>{% endif %}</td></tr>
+  {% endfor %}</tbody></table></div>
+<p class="muted" style="font-size:12px">"Not published" means not found on the plan's approved listing pages. "Missing" means listed there but not fetched yet.</p>
+
+<h2 id="allocation">Target vs actual allocation</h2>
+{% if not f.alloc %}<p class="muted">Not found in fetched documents.</p>{% else %}
+<div class="scroll"><table class="stack">
+  <thead><tr><th>Asset class (as labeled)</th><th>Target{% if f.target_as_of %} <span class="muted mono">{{ f.target_as_of }}</span>{% endif %}</th><th>Range</th><th>Actual{% if f.actual_as_of %} <span class="muted mono">{{ f.actual_as_of }}</span>{% endif %}</th></tr></thead>
+  <tbody>{% for row in f.alloc %}
+  <tr><td>{{ row.label }}</td>
+    <td class="mono">{% if row.target %}{{ '%g'|format(row.target.value_num) }}%{{ cites(row.target.evidence[:1]) }}{% else %}—{% endif %}</td>
+    <td class="mono">{% if row.target and row.target.value_low is not none %}{{ '%g'|format(row.target.value_low) }}–{{ '%g'|format(row.target.value_high) }}%{% else %}—{% endif %}</td>
+    <td class="mono">{% if row.actual %}{{ '%g'|format(row.actual.value_num) }}%{{ cites(row.actual.evidence[:1]) }}{% else %}—{% endif %}</td></tr>
+  {% endfor %}</tbody></table></div>{% endif %}
+
+<h2 id="managers">Current managers by asset class{% if a.managers_as_of %} <span class="muted mono" style="font-weight:400">as of {{ a.managers_as_of }}</span>{% endif %}</h2>
+{% if not a.managers %}<p class="muted">Not found in fetched documents.</p>{% else %}
+<div class="scroll"><table class="stack"><thead><tr><th>Asset class (as labeled)</th><th>Manager</th><th>Amount</th><th>Status</th><th>Source</th></tr></thead><tbody>
+{% for label, ms in a.managers %}{% for m in ms %}
+<tr><td>{% if loop.first %}{{ label }}{% endif %}</td><td>{{ m.manager_name_as_disclosed }}</td>
+  <td class="mono">{% if m.amount_usd_as_disclosed is not none %}{% if m.amount_kind in ('target_pct','actual_pct') %}{{ '%g'|format(m.amount_usd_as_disclosed) }}%{% else %}{{ money(m.amount_usd_as_disclosed) }}{% endif %}{% else %}—{% endif %}</td>
+  <td class="mono" style="font-size:12px">{{ m.status }}</td><td>{{ cites(m.evidence[:1]) }}</td></tr>
+{% endfor %}{% endfor %}</tbody></table></div>{% endif %}
 
 <h2 id="signals">Signal timeline</h2>
 {% if not a.signals %}<p class="muted">No signals yet.</p>{% else %}
@@ -31,17 +71,6 @@
       {% if s.origin == 'MANUAL' %}<br><span class="muted" style="font-size:12px">manual entry</span>{% endif %}</td>
   </tr>{% endfor %}</tbody>
 </table></div>{% endif %}
-
-<h2>Holdings and incumbents (as disclosed)</h2>
-{% if not a.mandates %}<p class="muted">None extracted yet.</p>{% else %}
-<div class="scroll"><table class="stack">
-  <thead><tr><th>Bucket (as labeled)</th><th>Manager</th><th>Amount</th><th>As of</th><th>Status</th><th>Source</th></tr></thead>
-  <tbody>{% for m in a.mandates %}
-  <tr><td>{{ m.bucket_label_as_disclosed }}<br><span class="muted mono" style="font-size:11px">{{ m.bucket }}</span></td>
-    <td>{{ m.manager_name_as_disclosed }}</td>
-    <td class="mono">{% if m.amount_usd_as_disclosed is not none %}{% if m.amount_kind in ('target_pct','actual_pct') %}{{ '%.1f'|format(m.amount_usd_as_disclosed) }}%{% else %}${{ '{:,.0f}'.format(m.amount_usd_as_disclosed) }}{% endif %}<br><span class="muted">{{ m.amount_kind|replace('_',' ') }}</span>{% else %}—{% endif %}</td>
-    <td class="mono">{{ m.as_of }}</td><td class="mono" style="font-size:12px">{{ m.status }}</td><td>{{ cites(m.evidence) }}</td></tr>
-  {% endfor %}</tbody></table></div>{% endif %}
 
 <h2>Officers and trustees (as printed)</h2>
 {% if not a.officers %}<p class="muted">None extracted yet.</p>{% else %}

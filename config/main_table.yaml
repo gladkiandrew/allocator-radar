@@ -1,0 +1,4 @@
+# Minimum bar for a row on the main table (owner, 2026-11-06). Rows below it go to the Coverage gaps page.
+min_documents: 3            # documents fetched for the plan
+recent_document_days: 183   # at least one document dated in the last ~6 months (link date, else page-1 date)
+require_consultant: true    # investment consultant identified (cited)
