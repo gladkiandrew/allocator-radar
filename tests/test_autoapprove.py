@@ -27,7 +27,7 @@ def test_eligible_signal_auto_approved_and_never_exported():
     text, n = export.build_csv("owner")
     assert n == 0  # export needs a person's approval
     with db.connect() as con:
-        assert con.execute("SELECT count(*) FROM audit_log WHERE action = 'signal_auto_approved' AND detail LIKE '%auto-approve-v1%'").fetchone()[0] == 1
+        assert con.execute("SELECT count(*) FROM audit_log WHERE action = 'signal_auto_approved' AND detail LIKE '%auto-approve-v2%'").fetchone()[0] == 1
 
 
 def test_excluded_type_stays_pending():
@@ -54,3 +54,61 @@ def test_readiness_counts_auto_approved_and_new_preparing_rules():
     assert compute([s("COMMITMENT_MADE", 170)], now, today).tier == "PREPARING"
     assert compute([s("COMMITMENT_MADE", 190)], now, today).tier == "WATCHING"
     assert compute([s("MANDATE_AWARDED", 30, "service_provider")], now, today).tier == "WATCHING"
+
+
+def test_non_matching_quote_refused():
+    sid = _sig()
+    with db.connect() as con:  # corrupt the stored quote so it no longer matches the cited page
+        con.execute("UPDATE evidence SET quote = 'The Board voted to hire a new manager for the hedge fund portfolio.'")
+    autoapprove.run_pass()
+    assert _status(sid)[0] == "new"
+
+
+def _table_like(extractor, basis):
+    sid = _sig(d="2026-01-10")  # date not printed on the page
+    with db.connect() as con:
+        con.execute("UPDATE evidence SET extractor = ?", [extractor])
+        con.execute("UPDATE signals SET date_basis = ?", [basis])
+    autoapprove.run_pass()
+    return _status(sid)[0]
+
+
+def test_quarter_end_only_for_table_rows():
+    assert _table_like("sba-table-parser", "quarter_end") == "auto_approved"
+
+
+def test_quarter_end_refused_for_llm_rows():
+    assert _table_like("page-extractor", "quarter_end") == "new"
+
+
+def test_table_row_high_impact_still_refused():
+    sid = _sig(stype="REDEMPTION_APPROVED", d="2026-01-10")
+    with db.connect() as con:
+        con.execute("UPDATE evidence SET extractor = 'sba-table-parser'")
+        con.execute("UPDATE signals SET date_basis = 'quarter_end'")
+    autoapprove.run_pass()
+    assert _status(sid)[0] == "new"
+
+
+def test_export_refuses_auto_approved_even_when_many():
+    _sig()
+    autoapprove.run_pass()
+    with db.connect() as con:
+        assert con.execute("SELECT count(*) FROM signals WHERE review_status = 'auto_approved'").fetchone()[0] == 1
+    text, n = export.build_csv("owner")
+    assert n == 0 and "auto_approved" not in text
+
+
+def test_table_row_fund_name_not_linted_but_our_words_are():
+    sid = _sig(d="2026-01-10")
+    with db.connect() as con:
+        con.execute("UPDATE signals SET summary = 'The SBA reported a commitment to Credit Opportunities III LP.'")
+        con.execute("UPDATE evidence SET extractor = 'sba-table-parser', quote = 'Strategic Investments | Credit Opportunities III LP | $1'")
+        con.execute("UPDATE signals SET date_basis = 'quarter_end'")
+    autoapprove.run_pass()
+    assert _status(sid)[0] == "auto_approved"
+
+    with db.connect() as con:  # our own evaluative wording is still refused
+        con.execute("UPDATE signals SET review_status = 'new', summary = 'The SBA made an attractive commitment to Credit Opportunities III LP.'")
+    autoapprove.run_pass()
+    assert _status(sid)[0] == "new"

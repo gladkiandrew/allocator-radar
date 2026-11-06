@@ -73,9 +73,15 @@ def evaluate(con, sig: dict, evidence: list[dict], cfg: dict | None = None) -> t
     if not (deterministic or faithful):
         return False, "(b) not from a parsed table and no quote matches its cited page", None
     basis = infer_date_basis(con, sig, evidence)
-    if not sig.get("event_date") or basis not in cfg["qualifying_date_bases"]:
-        return False, f"(c) date basis {basis or 'unknown'} is not a source-native meeting/report/filing date", basis
-    if not lint(sig["summary"], ignore=[sig.get("manager_name"), sig.get("bucket_label")]).ok:
+    table_ok = deterministic and basis in cfg.get("deterministic_only_date_bases", [])
+    if not sig.get("event_date") or not (basis in cfg["qualifying_date_bases"] or table_ok):
+        why = ("quarter_end qualifies only for table-extracted rows" if basis in cfg.get("deterministic_only_date_bases", [])
+               else "is not a source-native meeting/report/filing date")
+        return False, f"(c) date basis {basis or 'unknown'} {why}", basis
+    # Proper names printed in the source are not our wording (D-A42): for table rows, every printed cell is ignored.
+    printed = [c.strip() for e in evidence if e.get("extractor") in cfg["deterministic_extractors"]
+               for c in (e.get("quote") or "").split(" | ")]
+    if not lint(sig["summary"], ignore=[sig.get("manager_name"), sig.get("bucket_label"), *printed]).ok:
         return False, "(d) summary fails the language lint", basis
     how = "parsed table" if deterministic else "quote matches cited page"
     return True, f"{how}; date basis {basis}; lint clean; type {sig['signal_type']} eligible", basis
