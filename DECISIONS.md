@@ -129,3 +129,37 @@ are the irreversible ones, which went to the repo owner.
   mounted read-only from `./secrets/`.
 - **D-A30 Public-repo hygiene.** No person's or employer's name appears in the code, config or
   docs. The license is left for the owner to choose before the repo goes public.
+
+## Phase A lock-in (owner's instructions, 2026-11-06)
+
+- **D-A31 No new allocators until lock-in is done.** The 14 plans located by the research pass are
+  parked under `parked_plans:` in `registry/seed_florida.yaml`, not deleted. Registry approval now
+  removes allocators that are no longer in the registry, along with their derived rows. Raw documents
+  stay in the lake.
+- **D-A32 Signal review is back with the owner.** Signal auto-approve is off. All 54 signals the
+  policy had approved were returned to the queue, and that change is recorded in `audit_log`.
+  Registry auto-approval stays on.
+- **D-A33 Depth targets (crawler).** Per plan: every agenda, minutes document and RFP from the last
+  18 months; the two newest IPS, quarterly report, actuarial valuation, audited financials and 112.664
+  disclosure; and up to 8 unclassified documents. Capped at 150 per run. Every document link seen is
+  recorded in `document_links`, so coverage can tell "listed but not fetched" from "not published".
+- **D-A34 Document kind and date.** A document's link label decides its type. Page text decides only
+  when the link says nothing useful (OTHER). Minutes routinely discuss valuations and IPSs, so page
+  text alone would mislabel them. The date is the link date, or else the first date on page 1.
+- **D-A35 Coverage %** is the number of checklist items held divided by the items the plan publishes.
+  Partial items count by fraction. "Not published" means not found on the plan's approved listing
+  pages, and is excluded from the denominator.
+- **D-A36 Plan facts (extractor v0.3.0).** These cover total assets, target and actual allocation by
+  asset class (with ranges), assumed and actual return, actuary, custodian, auditor, investment
+  consultant, and next meeting. Each fact needs a verbatim quote that contains its label or number.
+  Report-type documents also get their fact pages read, up to 15 pages per document. When a report
+  prints the same label twice (summary page vs detail page), the brief shows the more precise figure.
+- **D-A37 Main-table bar** (`config/main_table.yaml`): at least 3 documents, at least one dated in the
+  last 183 days, and a consultant identified. Plans below the bar, and MANUAL plans, are listed on
+  `/gaps` with reasons.
+- **D-A38 Gaps that need no further work during lock-in:**
+  - Davie Firefighters: robots.txt disallows the CivicPlus host.
+  - Jupiter Police: newer agendas are on a CivicClerk portal that robots.txt disallows, and its
+    AgendaCenter stops at 2024-08.
+  - North Miami Beach P&F: no plan page found on citynmb.com, and finding new sites is paused.
+  - FL SBA: no files in the manual inbox yet.

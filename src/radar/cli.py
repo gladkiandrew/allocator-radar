@@ -31,6 +31,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("approve-pending", help="apply config/review_policy.yaml to pending signals (and the registry)")
     sub.add_parser("reparse-scanned", help="re-parse documents that have scanned (empty) pages, with local OCR")
     sub.add_parser("resolve", help="entity resolution for firm names (auto-alias + merge queue)")
+    sub.add_parser("report", help="main table vs coverage gaps, with coverage % per allocator")
     sub.add_parser("index", help="add newly parsed (scrubbed) pages to the LanceDB search index")
     dp = sub.add_parser("discover", help="discovery agent: registry/seed_florida.yaml -> registry/florida.yaml")
     dp.add_argument("--resuggest", action="store_true", help="recompute suggested pages only (no fetching)")
@@ -148,6 +149,25 @@ def main(argv: list[str] | None = None) -> int:
         from radar import db, resolve
         db.init_db()
         print(resolve.run())
+    elif args.cmd == "report":
+        from radar import coverage, db, queries
+        db.init_db()
+        with db.connect() as con:
+            rows = queries.allocator_table(con)
+            main = [r for r in rows if not r["bar_reasons"]]
+            gaps = [r for r in rows if r["bar_reasons"]]
+            print(f"MAIN TABLE: {len(main)}   COVERAGE GAPS: {len(gaps)}   (registry: {len(rows)})\n")
+            print("Main table (coverage % | docs | tier | plan):")
+            for r in sorted(main, key=lambda r: -r["coverage_pct"]):
+                ck = coverage.checklist(con, r["allocator_id"])
+                marks = " ".join({"ok": "✓", "partial": "~", "missing": "✗", "not_published": "·"}[i["status"]] for i in ck["items"])
+                print(f"  {r['coverage_pct']:3d}% | {r['n_docs']:3d} | {r['readiness'].tier:9} | {marks} | {r['display_name']}")
+            print("\n  checklist order: agendas-18m minutes-18m IPS quarterly actuarial audited-FS 112.664  (✓ held ~ partial ✗ missing · not published)")
+            print("\nCoverage gaps:")
+            for r in gaps:
+                print(f"  {r['coverage_pct']:3d}% | {r['n_docs']:3d} | {r['display_name']}")
+                for why in r["bar_reasons"]:
+                    print(f"        - {why}")
     elif args.cmd == "index":
         from radar import db, search
         db.init_db()
