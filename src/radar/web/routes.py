@@ -35,6 +35,12 @@ def register(app: FastAPI, render) -> None:
             raise HTTPException(404)
         return render(request, "allocator.html", a=a)
 
+    @app.get("/a/{allocator_id}/search", response_class=HTMLResponse)
+    def allocator_search(request: Request, allocator_id: str, q: str = ""):
+        from radar import search
+        hits = search.search(q, allocator_id) if q else []
+        return templates_partial(request, "search_results.html", hits=hits, q=q)
+
     # ---------------- Touchpoint 3: signal review ----------------
     from datetime import date as _date
 

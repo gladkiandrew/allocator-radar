@@ -23,6 +23,7 @@ def main(argv: list[str] | None = None) -> int:
     ep = sub.add_parser("extract", help="run the extraction agent over prefiltered pages not yet extracted")
     ep.add_argument("--only", nargs="*", help="allocator ids")
     ep.add_argument("--limit", type=int, default=0, help="max documents this run (0 = all)")
+    sub.add_parser("index", help="add newly parsed (scrubbed) pages to the LanceDB search index")
     dp = sub.add_parser("discover", help="discovery agent: registry/seed_florida.yaml -> registry/florida.yaml")
     dp.add_argument("--resuggest", action="store_true", help="recompute suggested pages only (no fetching)")
     dp.add_argument("--only", nargs="*", help="re-discover only these plan ids; keep the rest of the registry")
@@ -68,6 +69,10 @@ def main(argv: list[str] | None = None) -> int:
         for sha, aid in todo:
             st = extractor.extract_document(sha, aid)
             print(json.dumps({"doc": sha[:12], "allocator": aid, **st}))
+    elif args.cmd == "index":
+        from radar import db, search
+        db.init_db()
+        print(f"indexed {search.index_new()} pages")
     elif args.cmd == "wall":
         from radar.wall import live
         return live.main()

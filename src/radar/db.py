@@ -213,6 +213,12 @@ CREATE TABLE IF NOT EXISTS records_requests (  -- Touchpoint 5 (tracking only; s
     note VARCHAR
 );
 
+CREATE TABLE IF NOT EXISTS search_indexed (
+    sha256 VARCHAR NOT NULL,
+    page_no INTEGER NOT NULL,
+    PRIMARY KEY (sha256, page_no)
+);
+
 CREATE TABLE IF NOT EXISTS export_log (
     export_id VARCHAR PRIMARY KEY,
     ts TIMESTAMPTZ NOT NULL,

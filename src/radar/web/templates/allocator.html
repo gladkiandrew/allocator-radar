@@ -50,6 +50,11 @@
 </tbody></table></div>
 <p class="muted" style="font-size:12px">Names and titles only, exactly as the documents print them. No contact details are stored.</p>{% endif %}
 
+<h2 id="search">Search this plan's documents</h2>
+<input type="search" name="q" placeholder="e.g. hedge fund, RFP, absolute return, watch list" hx-get="/a/{{ a.allocator_id }}/search"
+  hx-trigger="keyup changed delay:400ms, search" hx-target="#search-results">
+<div id="search-results"></div>
+
 <h2 id="documents">Documents we watch</h2>
 {% if a.pages %}<p class="muted" style="font-size:13px">Listing pages: {% for p in a.pages %}<a href="{{ p.url }}" target="_blank" rel="noopener noreferrer">{{ p.label or p.url|truncate(40) }}</a>{{ ', ' if not loop.last }}{% endfor %}</p>{% endif %}
 {% if not a.documents %}<p class="muted">Nothing fetched yet.</p>{% else %}

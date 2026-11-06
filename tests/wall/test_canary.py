@@ -34,3 +34,22 @@ def test_raw_lake_is_encrypted():
 
 def test_run_canary_helper():
     assert live.run_canary() == []
+
+
+import os
+
+import pytest
+
+
+@pytest.mark.skipif(os.environ.get("RADAR_TEST_GLINER") != "1", reason="slow (embedding model); nightly runs it")
+def test_canary_never_reaches_vector_store():
+    from radar import search
+    with db.connect() as con:
+        con.execute("""INSERT INTO allocators (allocator_id, legal_name, display_name, allocator_type, home_url, template,
+                       access, updated_at) VALUES ('canary','C','C','POLICE_FIRE','https://c.invalid','T-WP','AUTO',now())""")
+    sha, _ = ingest.store_document(canary_pdf(), url="https://canary.invalid/p.pdf", allocator_id="canary",
+                                   content_type="application/pdf")
+    pdf.parse_document(sha)
+    assert search.index_new() >= 1
+    assert live.check_lance(live.CANARY_TOKENS) == []
+    assert search.search("Request for Proposals hedge fund", "canary")

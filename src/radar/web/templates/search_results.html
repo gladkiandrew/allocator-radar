@@ -1,0 +1,8 @@
+{% if q and not hits %}<p class="muted">No matching pages.</p>{% endif %}
+{% for h in hits %}
+<div class="card" style="padding:8px 12px;margin:6px 0">
+  <a class="cite" href="/doc/{{ h.sha256 }}#page={{ h.page_no }}" target="_blank" rel="noopener">{{ h.title|truncate(60) or 'document' }} p.{{ h.page_no }}</a>
+  <span class="muted mono" style="font-size:12px">{{ h.doc_date }}</span>
+  <div style="font-size:13px;white-space:pre-wrap">{{ h.snippet }}</div>
+</div>
+{% endfor %}
