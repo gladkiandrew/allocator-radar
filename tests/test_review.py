@@ -45,3 +45,14 @@ def test_auto_approve_policy_stamps_policy_actor():
     with db.connect() as con:
         st, by = con.execute("SELECT review_status, reviewed_by FROM signals WHERE signal_id = ?", [sid]).fetchone()
     assert st == "approved" and by == "auto-approve (owner policy test)"
+
+
+def test_integrity_removes_orphans_but_not_human_decisions():
+    sid = _one_signal()
+    review.decide(sid, "approved", "owner")
+    with db.connect() as con:
+        con.execute("DELETE FROM document_urls")
+    assert review.integrity_cleanup() == []  # a person approved it: never touched by code
+    with db.connect() as con:
+        con.execute("UPDATE signals SET reviewed_by = NULL, review_status = 'new'")
+    assert len(review.integrity_cleanup()) == 1

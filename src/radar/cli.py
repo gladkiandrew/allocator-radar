@@ -91,6 +91,7 @@ def main(argv: list[str] | None = None) -> int:
             todo = extractor.pending_documents(con)
         for sha, aid in todo:
             print(json.dumps({"doc": sha[:12], "allocator": aid, **extractor.extract_document(sha, aid)}))
+        print(f"integrity removals: {len(review.integrity_cleanup())}")
         print(f"policy approvals: {review.approve_pending()}")
         print(f"indexed: {search.index_new()}")
         return live.main()
@@ -104,6 +105,8 @@ def main(argv: list[str] | None = None) -> int:
         from radar.registry import approve as reg
         db.init_db()
         print(f"registry auto-approved: {reg.auto_approve_if_policy()}")
+        for r in review.integrity_cleanup():
+            print(f"removed orphan: {r}")
         print(f"signals approved under policy: {review.approve_pending()}")
     elif args.cmd == "index":
         from radar import db, search

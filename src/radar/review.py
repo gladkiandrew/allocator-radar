@@ -78,3 +78,38 @@ def approve_pending() -> int:
     for sid in ids:
         decide(sid, "approved", actor, note="auto-approved under owner policy")
     return len(ids)
+
+
+def integrity_cleanup() -> list[str]:
+    """Remove machine/policy-approved signals whose evidence no longer belongs to their plan.
+
+    A signal is orphaned when none of its crawled evidence documents is filed under the signal's allocator
+    (for example after a document was unfiled from the wrong plan). Human decisions are never touched:
+    only rows that are unreviewed or were approved by the owner's policy actor are removed.
+    """
+    actor = policy_actor("signals")
+    removed = []
+    with db.connect() as con:
+        rows = db.rows(con, """
+            SELECT s.signal_id, s.allocator_id, s.summary, s.review_status, s.reviewed_by
+            FROM signals s
+            WHERE s.origin = 'MACHINE'
+              AND (s.review_status = 'new' OR (s.review_status = 'approved' AND s.reviewed_by = ?))
+              AND NOT EXISTS (
+                SELECT 1 FROM row_evidence re JOIN evidence e USING (evidence_id)
+                JOIN document_urls du ON du.sha256 = e.document_sha256 AND du.allocator_id = s.allocator_id
+                WHERE re.row_kind = 'signal' AND re.row_id = s.signal_id)""", [actor or "\x00"])
+        for r in rows:
+            con.execute("DELETE FROM row_evidence WHERE row_kind = 'signal' AND row_id = ?", [r["signal_id"]])
+            con.execute("DELETE FROM signals WHERE signal_id = ?", [r["signal_id"]])
+            db.audit(con, "integrity", "signal_removed_orphan", r["signal_id"],
+                     detail={"allocator_id": r["allocator_id"], "summary": r["summary"][:200], "was": r["review_status"]})
+            removed.append(r["summary"][:90])
+        # same rule for holdings / officers / consultant rows (no review state; machine-only)
+        for kind, table, key in (("mandate", "mandates", "mandate_id"), ("officer", "officers", "officer_id"),
+                                 ("engagement", "consultant_engagements", "engagement_id")):
+            con.execute(f"""DELETE FROM {table} t WHERE NOT EXISTS (
+                SELECT 1 FROM row_evidence re JOIN evidence e USING (evidence_id)
+                JOIN document_urls du ON du.sha256 = e.document_sha256 AND du.allocator_id = t.allocator_id
+                WHERE re.row_kind = '{kind}' AND re.row_id = t.{key})""")
+    return removed
