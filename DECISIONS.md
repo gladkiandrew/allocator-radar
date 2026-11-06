@@ -163,3 +163,28 @@ are the irreversible ones, which went to the repo owner.
     AgendaCenter stops at 2024-08.
   - North Miami Beach P&F: no plan page found on citynmb.com, and finding new sites is paused.
   - FL SBA: no files in the manual inbox yet.
+
+## FL SBA via the manual inbox (owner downloaded 11 PDFs, 2026-11-06)
+
+- **D-A39 Provenance.** Each file is stored as MANUAL with `retrieved_by = human`, retrieved on
+  2026-11-06. The URL is recorded as `manual://fl-sba-frs/<file>`, and the listing note says
+  "sbafla.com, downloaded by hand". **The exact sbafla.com URLs are not recorded**: SBA uses
+  `/media/<id>/<slug>.pdf` paths whose ids cannot be inferred from a file name, and we never fetch
+  that host. Citations open our encrypted cached copy at the right page.
+- **D-A40 Deterministic table parser (no LLM)** for the ruled New Investments / New Manager tables
+  and the Q1 2026 SI table. Every cell is scrubbed, and each row's key cells must appear in that
+  page's scrubbed text. A "New Manager? = Yes" row becomes MANDATE_AWARDED (qualifier manager);
+  every other row becomes COMMITMENT_MADE. **The event date is the report's quarter-end**, because
+  the reports print no per-row dates. The review note says so.
+- **D-A41 Strategy buckets.** The printed asset class decides first (PE, RE, active credit, equity).
+  Style and fund name only refine Strategic Investments and hedge-fund rows. The hedge-fund flag
+  (`signals.hf_relevant`) covers hedge fund, absolute return, diversifying, managed futures and
+  multi-strategy, plus the standard hedge-fund strategy buckets. Insurance-linked is **not** flagged.
+  Fund names never set the flag ("Opportunities Fund" is not a strategy).
+- **D-A42 Lint ignores proper names quoted from the source**, so a fund named "... Opportunities"
+  can still be summarized. Our own wording is linted as before.
+- **D-A43 Foreign-currency commitments are never converted.** The amount appears in the summary as
+  printed (e.g. €165,000,000), and `amount_usd` stays empty.
+- **D-A44 Consultant column.** The SBA's per-row "Consultant" column is recorded as printed, as
+  cited consultant engagements. For some real-estate separate accounts it names the manager
+  itself (Heitman, Invesco, Stockbridge).
