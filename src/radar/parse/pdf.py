@@ -126,9 +126,13 @@ def parse_document(sha: str, *, force: bool = False) -> int:
         con.execute("DELETE FROM pages WHERE sha256 = ?", [sha])
         if cleaned:
             con.executemany("INSERT INTO pages VALUES (?, ?, ?, ?, ?)", cleaned)
+        from radar.parse.classify import classify_text, content_date
+
+        head = "\n".join(c[2] for c in cleaned[:2])
         con.execute(
-            "UPDATE documents SET parsed_at = now(), parse_method = ?, page_count = ?, parse_error = ? WHERE sha256 = ?",
-            [PARSER, len(cleaned), err, sha],
+            "UPDATE documents SET parsed_at = now(), parse_method = ?, page_count = ?, parse_error = ?, doc_kind = ?, "
+            "content_date = ? WHERE sha256 = ?",
+            [PARSER, len(cleaned), err, classify_text(head), content_date(cleaned[0][2] if cleaned else ""), sha],
         )
         db.audit(con, "parser", "parse", sha, status="error" if err else "ok",
                  detail={"pages": len(cleaned), "redactions": sum(c[3] for c in cleaned), "error": err})

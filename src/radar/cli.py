@@ -19,12 +19,14 @@ def main(argv: list[str] | None = None) -> int:
     cp = sub.add_parser("crawl", help="crawl approved allocators' listing pages and fetch documents")
     cp.add_argument("--only", nargs="*", help="allocator ids")
     cp.add_argument("--templates", nargs="*", help="e.g. T-WP T-CP")
-    cp.add_argument("--max-docs", type=int, default=60, help="per allocator per run")
+    cp.add_argument("--max-docs", type=int, default=150, help="cap on depth targets per allocator per run")
     ep = sub.add_parser("extract", help="run the extraction agent over prefiltered pages not yet extracted")
     ep.add_argument("--only", nargs="*", help="allocator ids")
     ep.add_argument("--limit", type=int, default=0, help="max documents this run (0 = all)")
+    ep.add_argument("--workers", type=int, default=1, help="parallel extraction calls")
+    ep.add_argument("--follow", action="store_true", help="keep going while a crawl is adding documents")
     np_ = sub.add_parser("nightly", help="registry policy -> crawl -> extract -> policy approvals -> index -> wall")
-    np_.add_argument("--max-docs", type=int, default=40)
+    np_.add_argument("--max-docs", type=int, default=150)
     sub.add_parser("hash-password", help="print the sha256 for RADAR_AUTH_PASSWORD_HASH (reads the password from stdin)")
     sub.add_parser("approve-pending", help="apply config/review_policy.yaml to pending signals (and the registry)")
     sub.add_parser("reparse-scanned", help="re-parse documents that have scanned (empty) pages, with local OCR")
@@ -67,14 +69,34 @@ def main(argv: list[str] | None = None) -> int:
         from radar import db
         from radar.extract import extractor
         db.init_db()
-        with db.connect() as con:
-            todo = extractor.pending_documents(con, args.only)
-        if args.limit:
-            todo = todo[: args.limit]
-        print(f"{len(todo)} documents to extract")
-        for sha, aid in todo:
-            st = extractor.extract_document(sha, aid)
-            print(json.dumps({"doc": sha[:12], "allocator": aid, **st}))
+        import time
+        from concurrent.futures import ThreadPoolExecutor
+
+        def one(item):
+            sha, aid = item
+            try:
+                st = extractor.extract_document(sha, aid)
+            except Exception as e:  # keep the run going; the document stays pending
+                st = {"error": f"{type(e).__name__}: {str(e)[:160]}"}
+            print(json.dumps({"doc": sha[:12], "allocator": aid, **st}), flush=True)
+
+        idle = 0
+        while True:
+            with db.connect() as con:
+                todo = extractor.pending_documents(con, args.only)
+            if args.limit:
+                todo = todo[: args.limit]
+            print(f"{len(todo)} documents to extract", flush=True)
+            if todo:
+                idle = 0
+                with ThreadPoolExecutor(max_workers=args.workers) as ex:
+                    list(ex.map(one, todo))
+            if not args.follow or args.limit:
+                break
+            idle += 1
+            if idle > 30:  # ~15 minutes with nothing new: the crawl is done
+                break
+            time.sleep(30)
     elif args.cmd == "nightly":
         import json
         from radar import db, review, search

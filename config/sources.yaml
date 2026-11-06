@@ -38,7 +38,7 @@ verdicts:
   - {id: SF-BOCA, name: "City of Boca Raton", hosts: [www.myboca.us, myboca.us], verdict: CRAWL, template: T-CP}
   - {id: SF-WPBPP, name: "West Palm Beach Police Pension", hosts: [www.wpbppf.com, wpbppf.com], verdict: CRAWL, template: T-AIRO, render: playwright}
   - {id: SF-TOPB, name: "Town of Palm Beach", hosts: [www.townofpalmbeach.com, townofpalmbeach.com], verdict: CRAWL, template: T-CP}
-  - {id: SF-JUP, name: "Town of Jupiter", hosts: [jupiter.fl.us, www.jupiter.fl.us], verdict: CRAWL, template: T-CP}
+  - {id: SF-JUP, name: "Town of Jupiter", hosts: [jupiter.fl.us, www.jupiter.fl.us, jupiterfl.portal.civicclerk.com, jupiterfl.api.civicclerk.com], verdict: CRAWL, template: T-CP}
   - {id: SF-KW, name: "City of Key West", hosts: [cityofkeywest-fl.gov, www.cityofkeywest-fl.gov, keywest.legistar.com], verdict: CRAWL, template: T-CP}
   - {id: SF-NMB, name: "City of North Miami Beach", hosts: [www.citynmb.com, citynmb.com], verdict: CRAWL, template: T-CP}
   - {id: SF-RIV, name: "City of Riviera Beach", hosts: [www.rivierabch.com, rivierabch.com], verdict: CRAWL, template: T-CP}

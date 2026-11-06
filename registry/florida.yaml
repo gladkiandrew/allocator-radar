@@ -2,7 +2,7 @@
 # Edits are allowed before approval; any edit changes the version hash and needs re-approval.
 region: florida
 phase: A
-generated_at: '2026-11-06T16:59:48+00:00'
+generated_at: '2026-11-06T17:09:44+00:00'
 generated_by: discovery agent (radar discover)
 seed: registry/seed_florida.yaml
 allocators:
@@ -311,7 +311,7 @@ allocators:
     documents: 1
     by_type:
       OTHER: 1
-    suggested: false
+    suggested: true
 - allocator_id: fl-coralgables-rs
   display_name: Coral Gables Retirement System
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -332,6 +332,12 @@ allocators:
       ACTUARIAL: 1
       FINANCIAL: 2
       PERFORMANCE: 1
+    suggested: true
+  - url: https://webapi.legistar.com/v1/coralgables/events?body=30
+    label: 'Legistar: Coral Gables Retirement Board'
+    documents: 44
+    by_type:
+      AGENDA: 44
     suggested: true
 - allocator_id: fl-hialeah-ers
   display_name: Hialeah Employees' Retirement System
@@ -1075,12 +1081,22 @@ allocators:
   home_url: https://www.wpbppf.com/
   template: T-AIRO
   source_id: SF-WPBPP
-  access: MANUAL
-  access_reason: 'fetch failed: ResourceInUseException: Browser.close: Resource In Use Error: Unique file handle conflict:
-    Cannot attach "radar" - the database file "/Users/dre'
-  site_title: null
+  access: AUTO
+  access_reason: null
+  site_title: West Palm Beach Police Pension Fund
   robots: allowed
-  document_pages: []
+  document_pages:
+  - url: https://www.wpbppf.com/
+    label: plan page
+    documents: 0
+    by_type: {}
+    suggested: false
+  - url: https://www.wpbppf.com/board-meetings
+    label: Board Meetings
+    documents: 2
+    by_type:
+      OTHER: 2
+    suggested: true
 - allocator_id: fl-palmbeach-rs
   display_name: Town of Palm Beach Retirement System
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -1105,7 +1121,7 @@ allocators:
       FINANCIAL: 8
       OTHER: 39
       PERFORMANCE: 12
-    suggested: false
+    suggested: true
   - url: https://www.townofpalmbeach.com/263/Benefits
     label: Benefits - Employee and Retiree - Employment opens in new window Benefits - Empl
     documents: 6

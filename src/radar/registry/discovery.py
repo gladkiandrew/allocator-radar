@@ -52,7 +52,7 @@ SUGGEST = re.compile(r"(pension|retire|trust|112\.?664|actuar|investment|perform
                      r"financial|audit|polic|reports|publications|meeting)", re.I)
 
 
-NOT_SUGGEST = re.compile(r"(/forms?/?|retiree|summary-plan|/spd/?|deferred-retirement-option|/drop\b|/benefits/?$|"
+NOT_SUGGEST = re.compile(r"(/forms?/?|retiree-information|summary-plan|/spd/?|deferred-retirement-option|/drop\b|/benefits/?$|"
                          r"member-resources|commission-meetings|/AgendaCenter/?$|retirement-center)", re.I)
 
 

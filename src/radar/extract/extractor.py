@@ -18,7 +18,7 @@ import hashlib
 import json
 import logging
 import re
-from datetime import date
+from datetime import date, timedelta
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -32,7 +32,8 @@ from radar.wall.scrubber import detect
 
 log = logging.getLogger(__name__)
 EXTRACTOR = "page-extractor"
-EXTRACTOR_VERSION = "0.2.0"
+EXTRACTOR_VERSION = "0.3.0"
+MAX_PAGES_PER_DOC = 15
 PAGES_PER_CALL = 6
 
 SignalTypeLit = Literal[
@@ -91,11 +92,25 @@ class XConsultant(BaseModel):
     quote: str
 
 
+class XFact(BaseModel):
+    fact_kind: Literal["TOTAL_ASSETS", "TARGET_ALLOCATION", "ACTUAL_ALLOCATION", "NEXT_MEETING", "ACTUARY", "CUSTODIAN",
+                       "AUDITOR", "INVESTMENT_CONSULTANT", "ASSUMED_RETURN", "ACTUAL_RETURN"]
+    label: str = Field(description="asset-class label verbatim for *_ALLOCATION; firm name as printed for providers; "
+                                   "period for ACTUAL_RETURN (e.g. 'FY 2025'); empty otherwise")
+    value: float | None = Field(description="number only: dollars for TOTAL_ASSETS, percent for *_ALLOCATION and *_RETURN")
+    value_low: float | None = Field(description="lower bound of a target range, percent, if printed")
+    value_high: float | None = Field(description="upper bound of a target range, percent, if printed")
+    as_of: str = Field(description="YYYY-MM-DD: the as-of date for the figure, or the meeting date for NEXT_MEETING")
+    page: int
+    quote: str
+
+
 class XResult(BaseModel):
     signals: list[XSignal]
     mandates: list[XMandate]
     officers: list[XOfficer]
     consultants: list[XConsultant]
+    facts: list[XFact] = []
 
 
 SYSTEM = """You read public records published by Florida public pension plans (board agendas, minutes, \
@@ -129,6 +144,12 @@ retype a number differently than printed; amounts are plain numbers.
 - officers: trustees, chair, executive director, CIO, plan administrator, consultant representatives, as printed. \
 Names and titles only.
 - consultants: the plan's investment consultant firm when the page names it.
+- facts (plan facts, each with its own quote): TOTAL_ASSETS (total fund market value or fiduciary net position, \
+dollars), TARGET_ALLOCATION and ACTUAL_ALLOCATION (one row per asset class, label verbatim, percent; targets from an \
+IPS or the policy column of a report, with the range if printed), ASSUMED_RETURN and ACTUAL_RETURN (percent; label \
+the period), ACTUARY / CUSTODIAN / AUDITOR / INVESTMENT_CONSULTANT (firm name as printed in label), NEXT_MEETING \
+(a scheduled future meeting date stated on the page). Never compute or infer a number; copy it as printed. For \
+allocation tables, the quote may be the table row (asset class and its percent).
 - Text shown as [REDACTED-CONTACT] was removed on purpose; never try to restore it.
 - If a page holds nothing relevant, return empty lists. Precision matters more than recall."""
 
@@ -171,6 +192,14 @@ def supports(summary: str, quote: str, allocator_name: str = "") -> bool:
     return any(n.lower() in q for n in names) or any(n.lower().strip("$") in qn for n in nums)
 
 
+def _num_in(v: float, quote: str) -> bool:
+    q = quote.replace(",", "").replace("$", "")
+    cands = {f"{v:g}", f"{v:.1f}", f"{v:.2f}", f"{int(v)}" if float(v).is_integer() else f"{v:g}"}
+    if v >= 1e6:  # "$412.3 million" style
+        cands |= {f"{v / 1e6:.1f}", f"{v / 1e6:g}", f"{v / 1e9:.2f}", f"{v / 1e9:.1f}"}
+    return any(c in q for c in cands)
+
+
 def _date(s: str, today: date) -> date | None:
     try:
         d = date.fromisoformat(s[:10])
@@ -179,12 +208,36 @@ def _date(s: str, today: date) -> date | None:
     return d if date(2000, 1, 1) <= d <= today else None
 
 
+def _doc_kind(con, sha: str) -> str:
+    r = con.execute("""SELECT CASE WHEN any_value(du.doc_type) IS NULL OR any_value(du.doc_type) = 'OTHER'
+                                   THEN coalesce(any_value(d.doc_kind), 'OTHER') ELSE any_value(du.doc_type) END
+                       FROM documents d LEFT JOIN document_urls du USING (sha256) WHERE d.sha256 = ?""", [sha]).fetchone()
+    return (r[0] if r else None) or "OTHER"
+
+
+def select_pages(pages: list[dict], kind: str) -> list[dict]:
+    """Signal pages (prefilter) for every document; plan-fact pages for report-type documents. Capped per document."""
+    from radar.extract.prefilter import FACT_DOC_KINDS, FACT_THRESHOLD, fact_score, match_terms, score
+
+    scored = []
+    for p in pages:
+        terms = json.loads(p["prefilter_terms"]) if p["prefilter_terms"] else match_terms(p["text_scrubbed"])
+        sig = score(terms) if is_hit(terms) else 0
+        fac = fact_score(p["text_scrubbed"]) if (kind in FACT_DOC_KINDS or p["page_no"] <= 2) else 0
+        fac = fac if fac >= FACT_THRESHOLD else 0
+        if sig or fac:
+            scored.append((sig + fac, p))
+    scored.sort(key=lambda t: -t[0])
+    return sorted([p for _, p in scored[:MAX_PAGES_PER_DOC]], key=lambda p: p["page_no"])
+
+
 def _pages_to_extract(con, sha: str) -> list[dict]:
     pages = db.rows(con, "SELECT page_no, text_scrubbed, prefilter_terms FROM pages WHERE sha256 = ? ORDER BY page_no", [sha])
     done = {r[0] for r in con.execute(
         "SELECT page_no FROM extraction_runs WHERE sha256 = ? AND extractor_version = ?", [sha, EXTRACTOR_VERSION]).fetchall()}
-    return [p for p in pages if p["page_no"] not in done and p["prefilter_terms"]
-            and is_hit(json.loads(p["prefilter_terms"]))]
+    if done:
+        return []  # a document is extracted once per extractor version
+    return select_pages(pages, _doc_kind(con, sha))
 
 
 def _user_prompt(meta: dict, pages: list[dict]) -> str:
@@ -292,6 +345,42 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
         link("officer", oid, eid)
         stats["officers"] += 1
 
+    for f in res.facts:
+        d = _date(f.as_of, today + timedelta(days=400) if f.fact_kind == "NEXT_MEETING" else today)
+        if d is None:
+            drop(f"fact date {f.as_of!r}")
+            continue
+        label = (f.label or "").strip()[:200]
+        if detect(label):
+            drop("fact label contact-shaped")
+            continue
+        token_ok = (not label or _norm(label.split()[0]) in _norm(f.quote)) or (
+            f.value is not None and _num_in(f.value, f.quote))
+        if not token_ok:
+            drop("fact quote does not support label/value")
+            continue
+        eid = evidence(f.page, f.quote, 0.9)
+        if eid is None:
+            drop("fact quote not on page")
+            continue
+        unit = "usd" if f.fact_kind == "TOTAL_ASSETS" else ("pct" if f.value is not None else None)
+        key = _dedupe_key(aid, f.fact_kind, label.lower(), f.value, d)
+        row = con.execute("SELECT fact_id FROM plan_facts WHERE dedupe_key = ?", [key]).fetchone()
+        if row:
+            link("fact", row[0], eid)
+            continue
+        fid = new_id()
+        con.execute("INSERT INTO plan_facts VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    [fid, aid, f.fact_kind, label or None, f.value, f.value_low, f.value_high, unit, d, key])
+        link("fact", fid, eid)
+        stats["facts"] = stats.get("facts", 0) + 1
+        if f.fact_kind == "INVESTMENT_CONSULTANT" and label:
+            ckey = _dedupe_key(aid, label, d)
+            if not con.execute("SELECT 1 FROM consultant_engagements WHERE dedupe_key = ?", [ckey]).fetchone():
+                cid = new_id()
+                con.execute("INSERT INTO consultant_engagements VALUES (?, ?, ?, ?, ?)", [cid, aid, label[:160], d, ckey])
+                link("engagement", cid, eid)
+
     for c in res.consultants:
         d = _date(c.as_of, today)
         eid = evidence(c.page, c.quote, 0.9) if d else None
@@ -322,7 +411,8 @@ def extract_document(sha: str, allocator_id: str, provider=None) -> dict:
             raise KeyError((sha, allocator_id))
         meta = meta[0]
         todo = _pages_to_extract(con, sha)
-    total = {"pages": len(todo), "calls": 0, "signals": 0, "mandates": 0, "officers": 0, "consultants": 0, "dropped": 0}
+    total = {"pages": len(todo), "calls": 0, "signals": 0, "mandates": 0, "officers": 0, "consultants": 0, "facts": 0,
+             "dropped": 0}
     for i in range(0, len(todo), PAGES_PER_CALL):
         batch = todo[i : i + PAGES_PER_CALL]
         user = _user_prompt(meta, batch)
@@ -340,22 +430,26 @@ def extract_document(sha: str, allocator_id: str, provider=None) -> dict:
             for p in batch:
                 con.execute("INSERT INTO extraction_runs VALUES (?, ?, ?, now(), 'ok') ON CONFLICT DO NOTHING",
                             [sha, p["page_no"], EXTRACTOR_VERSION])
+            if not todo[i + PAGES_PER_CALL:]:  # mark the document done even if some pages were not selected
+                con.execute("INSERT INTO extraction_runs VALUES (?, 0, ?, now(), 'doc') ON CONFLICT DO NOTHING",
+                            [sha, EXTRACTOR_VERSION])
             db.audit(con, "extractor", "extract", sha, model=call.model, inputs_hash=call.prompt_sha256,
                      outputs_hash=call.response_sha256, duration_ms=call.duration_ms, detail=st)
             con.execute("COMMIT")
-        for k in ("signals", "mandates", "officers", "consultants", "dropped"):
-            total[k] += st[k]
+        for k in ("signals", "mandates", "officers", "consultants", "facts", "dropped"):
+            total[k] += st.get(k, 0)
     return total
 
 
 def pending_documents(con, allocator_ids: list[str] | None = None) -> list[tuple[str, str]]:
-    """(sha, allocator_id) pairs that have hit pages not yet extracted, newest documents first."""
-    rs = db.rows(con, """SELECT DISTINCT du.sha256, du.allocator_id, du.doc_date
-                         FROM document_urls du JOIN pages p USING (sha256)
-                         WHERE p.prefilter_terms IS NOT NULL
-                           AND NOT EXISTS (SELECT 1 FROM extraction_runs r WHERE r.sha256 = p.sha256
-                                           AND r.page_no = p.page_no AND r.extractor_version = ?)
-                         ORDER BY du.doc_date DESC NULLS LAST""", [EXTRACTOR_VERSION])
+    """(sha, allocator_id) pairs not yet extracted by this extractor version, newest documents first."""
+    rs = db.rows(con, """SELECT du.sha256, any_value(du.allocator_id) AS allocator_id,
+                                max(coalesce(du.doc_date, d.content_date)) AS dd
+                         FROM document_urls du JOIN documents d USING (sha256)
+                         WHERE d.parsed_at IS NOT NULL
+                           AND NOT EXISTS (SELECT 1 FROM extraction_runs r WHERE r.sha256 = du.sha256
+                                           AND r.extractor_version = ?)
+                         GROUP BY du.sha256 ORDER BY dd DESC NULLS LAST""", [EXTRACTOR_VERSION])
     out = []
     for r in rs:
         if allocator_ids and r["allocator_id"] not in allocator_ids:

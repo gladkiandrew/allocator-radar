@@ -150,6 +150,45 @@ def collect_links(client: PoliteClient, allocs: list[dict], pages: dict[str, lis
     return list(found.values())
 
 
+LATEST_KINDS = ["IPS", "PERFORMANCE", "ACTUARIAL", "FINANCIAL", "DISCLOSURE_112664"]
+WINDOW_DAYS = 548  # 18 months of agendas + minutes
+
+
+def select_targets(links: list[DocLink], cap: int = 150) -> list[DocLink]:
+    """Depth targets (owner's Phase A bar): 18 months of agendas/minutes/RFPs, and the latest IPS,
+    quarterly report, actuarial valuation, audited financials, and 112.664 disclosure."""
+    since = date.today() - timedelta(days=WINDOW_DAYS)
+    pick: list[DocLink] = []
+    by_kind: dict[str, list[DocLink]] = defaultdict(list)
+    for d in links:
+        by_kind[d.doc_type].append(d)
+    for kind in ("RFP", "AGENDA", "MINUTES"):
+        dated = sorted([d for d in by_kind[kind] if d.doc_date and d.doc_date >= since], key=lambda d: d.doc_date, reverse=True)
+        undated = [d for d in by_kind[kind] if not d.doc_date][:10]
+        pick += dated + undated
+    for kind in LATEST_KINDS:
+        dated = sorted([d for d in by_kind[kind] if d.doc_date], key=lambda d: d.doc_date, reverse=True)[:2]
+        pick += dated or by_kind[kind][:3]
+    pick += sorted(by_kind["OTHER"], key=lambda d: (d.doc_date is None, -(d.doc_date.toordinal() if d.doc_date else 0)))[:8]
+    seen, out = set(), []
+    for d in pick:
+        if d.url not in seen:
+            seen.add(d.url)
+            out.append(d)
+    return out[:cap]
+
+
+def record_links(links: list[DocLink]) -> None:
+    with db.connect() as con:
+        for d in links:
+            for aid in d.allocator_ids:
+                con.execute("""INSERT INTO document_links VALUES (?, ?, ?, ?, ?, ?, now())
+                               ON CONFLICT (allocator_id, url) DO UPDATE SET last_seen = now(), title = excluded.title,
+                                 doc_type = excluded.doc_type, doc_date = coalesce(excluded.doc_date, document_links.doc_date),
+                                 listed_on = excluded.listed_on""",
+                            [aid, d.url, d.title, d.doc_type, d.doc_date, d.listed_on])
+
+
 def _rank(d: DocLink) -> tuple:
     return (0 if d.doc_date else 1, -(d.doc_date.toordinal() if d.doc_date else 0), TYPE_PRIORITY.index(d.doc_type))
 
@@ -160,11 +199,18 @@ def crawl_host(host: str, allocs: list[dict], pages: dict[str, list[str]], max_d
     stats = {"host": host, "listed": 0, "fetched": 0, "new": 0, "skipped_known": 0, "errors": 0, "status": "ok"}
     try:
         links = collect_links(client, allocs, pages)
-        links.sort(key=_rank)
+        record_links(links)
         stats["listed"] = len(links)
+        # Per allocator: depth targets. A shared link counts once.
+        targets: dict[str, DocLink] = {}
+        for a in allocs:
+            mine = [d for d in links if a["allocator_id"] in d.allocator_ids]
+            for d in select_targets(mine, cap=max_docs):
+                targets[d.url] = d
+        stats["targets"] = len(targets)
         with db.connect() as con:
             known = {u for (u,) in con.execute("SELECT DISTINCT url FROM document_urls").fetchall()}
-        for d in links[:max_docs]:
+        for d in sorted(targets.values(), key=_rank):
             if skip_known and d.url in known:
                 stats["skipped_known"] += 1
                 continue
@@ -202,7 +248,7 @@ def crawl_host(host: str, allocs: list[dict], pages: dict[str, list[str]], max_d
     return stats
 
 
-def run(only: list[str] | None = None, templates: set[str] | None = None, max_docs: int = 60) -> list[dict]:
+def run(only: list[str] | None = None, templates: set[str] | None = None, max_docs: int = 150) -> list[dict]:
     with db.connect() as con:
         if not reg.is_current_approved(con):
             raise PermissionError("registry/florida.yaml is not approved in its current version (Touchpoint 1)")
@@ -219,5 +265,5 @@ def run(only: list[str] | None = None, templates: set[str] | None = None, max_do
         by_host[urlsplit(pages[a["allocator_id"]][0]).hostname or ""].append(a)
     log.info("crawling %d allocators on %d hosts", len(allocs), len(by_host))
     with ThreadPoolExecutor(max_workers=12) as ex:
-        futs = [ex.submit(crawl_host, h, al, pages, max_docs * len(al)) for h, al in by_host.items()]
+        futs = [ex.submit(crawl_host, h, al, pages, max_docs) for h, al in by_host.items()]
         return [f.result() for f in futs]

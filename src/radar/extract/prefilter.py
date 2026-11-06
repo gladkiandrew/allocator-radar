@@ -42,3 +42,23 @@ def score(terms: list[str]) -> int:
 
 def is_hit(terms: list[str]) -> bool:
     return score(terms) >= THRESHOLD
+
+
+# Plan-fact pages (allocation tables, assets, providers, meetings). Used for report-type documents.
+FACT_VOCAB: dict[str, int] = {
+    r"target allocation|policy target|target %|target weight|strategic allocation": 4,
+    r"asset allocation": 3, r"actual allocation|current allocation|% of (total )?(fund|portfolio)": 3,
+    r"total fund|total plan|total portfolio": 2, r"market value": 2, r"net position|fiduciary net position": 3,
+    r"assumed (rate of )?return|investment return assumption|assumed rate": 3, r"rate of return": 1,
+    r"custodian": 3, r"actuary|actuarial firm|enrolled actuary": 2, r"auditor|independent auditor": 2,
+    r"investment consultant|performance consultant|investment monitor": 3,
+    r"next (regular )?meeting|meeting schedule|meeting dates|will be held on": 3,
+    r"(domestic|international|global) equity|fixed income|real estate|private (equity|credit|debt)|cash": 1,
+}
+_FACT = [(re.compile(t, re.I), w) for t, w in FACT_VOCAB.items()]
+FACT_THRESHOLD = 5
+FACT_DOC_KINDS = {"IPS", "PERFORMANCE", "ACTUARIAL", "FINANCIAL", "DISCLOSURE_112664"}
+
+
+def fact_score(text: str) -> int:
+    return sum(w for pat, w in _FACT if pat.search(text or ""))

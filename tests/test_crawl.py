@@ -59,3 +59,16 @@ def test_foreign_plan_page():
     assert not runner.foreign_plan_page("https://www.hollywoodfl.org/164/Firefighters-Pension-Board", fire)
     pf = [{"allocator_id": "fl-boca-pf", "display_name": "Boca Raton Police and Firefighters' Retirement System", "template": "T-CP"}]
     assert not runner.foreign_plan_page("https://www.myboca.us/337/Police-Firefighters-Retirement-System", pf)
+
+
+def test_select_targets_depth():
+    from datetime import timedelta
+    from radar.crawl.runner import DocLink, select_targets
+    today = date.today()
+    L = [DocLink(f"https://x/a{i}.pdf", "a", "AGENDA", today - timedelta(days=30 * i), "p", ["x"]) for i in range(30)]
+    L += [DocLink(f"https://x/ips{i}.pdf", "ips", "IPS", today - timedelta(days=400 * i), "p", ["x"]) for i in range(4)]
+    L += [DocLink("https://x/v.pdf", "valuation", "ACTUARIAL", None, "p", ["x"])]
+    got = {d.url for d in select_targets(L)}
+    assert sum(u.startswith("https://x/a") for u in got) == 19  # 0..18 months
+    assert {"https://x/ips0.pdf", "https://x/ips1.pdf"} <= got and "https://x/ips3.pdf" not in got
+    assert "https://x/v.pdf" in got

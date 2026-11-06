@@ -68,3 +68,16 @@ def test_support_check():
     assert X.supports("The Board voted to issue an RFP for a hedge fund of funds manager.",
                       "The Board voted to issue a Request for Proposals", "Canary P&F")
     assert X.supports("transferring $3 million to the R&D cash account", "transfer $3 million to R&D", "x")
+
+
+def test_fact_stored_with_support_and_page_selection():
+    sha = _setup()
+    res = X.XResult(signals=[], mandates=[], officers=[], consultants=[], facts=[
+        X.XFact(fact_kind="INVESTMENT_CONSULTANT", label="Mariner", value=None, value_low=None, value_high=None,
+                as_of="2026-01-15", page=1, quote="The consultant presented the target allocation study"),  # label not in quote
+        X.XFact(fact_kind="NEXT_MEETING", label="", value=None, value_low=None, value_high=None,
+                as_of="2026-01-15", page=1, quote="Regular Meeting Agenda - January 15, 2026"),
+    ])
+    st = X.extract_document(sha, "canary", provider=FakeProvider(res))
+    assert st["facts"] == 1 and st["dropped"] == 1
+    assert X.extract_document(sha, "canary", provider=FakeProvider(res))["calls"] == 0

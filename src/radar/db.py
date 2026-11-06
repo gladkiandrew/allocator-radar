@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import threading
 import time
 from collections.abc import Iterator
 from typing import Any
@@ -213,6 +214,30 @@ CREATE TABLE IF NOT EXISTS records_requests (  -- Touchpoint 5 (tracking only; s
     note VARCHAR
 );
 
+CREATE TABLE IF NOT EXISTS document_links (  -- every document link seen on an approved listing page
+    allocator_id VARCHAR NOT NULL,
+    url VARCHAR NOT NULL,
+    title VARCHAR,
+    doc_type VARCHAR,
+    doc_date DATE,
+    listed_on VARCHAR,
+    last_seen TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (allocator_id, url)
+);
+
+CREATE TABLE IF NOT EXISTS plan_facts (      -- cited facts about a plan (assets, allocation, providers, meetings)
+    fact_id VARCHAR PRIMARY KEY,
+    allocator_id VARCHAR NOT NULL,
+    fact_kind VARCHAR NOT NULL,              -- TOTAL_ASSETS | TARGET_ALLOCATION | ACTUAL_ALLOCATION | NEXT_MEETING | ACTUARY | CUSTODIAN | AUDITOR | INVESTMENT_CONSULTANT | ASSUMED_RETURN | ACTUAL_RETURN
+    label VARCHAR,                           -- asset-class label verbatim, or the provider name as printed
+    value_num DOUBLE,
+    value_low DOUBLE,
+    value_high DOUBLE,
+    unit VARCHAR,                            -- usd | pct
+    as_of DATE,
+    dedupe_key VARCHAR
+);
+
 CREATE TABLE IF NOT EXISTS search_indexed (
     sha256 VARCHAR NOT NULL,
     page_no INTEGER NOT NULL,
@@ -236,28 +261,42 @@ def _open(read_only: bool = False) -> duckdb.DuckDBPyConnection:
     return duckdb.connect(str(s.duckdb_path), read_only=read_only)
 
 
+# DuckDB allows one open handle per file per process: serialize connections across threads.
+_PROCESS_LOCK = threading.RLock()
+
+
 @contextlib.contextmanager
 def connect(*, timeout_s: float = 60.0) -> Iterator[duckdb.DuckDBPyConnection]:
     deadline = time.monotonic() + timeout_s
     delay = 0.05
-    while True:
+    with _PROCESS_LOCK:
+        while True:
+            try:
+                con = _open()
+                break
+            except (duckdb.IOException, duckdb.Error) as e:  # lock held by another process
+                msg = str(e).lower()
+                if not ("lock" in msg or "file handle conflict" in msg) or time.monotonic() > deadline:
+                    raise
+                time.sleep(delay)
+                delay = min(delay * 2, 1.0)
         try:
-            con = _open()
-            break
-        except duckdb.IOException as e:  # lock held by another process
-            if "lock" not in str(e).lower() or time.monotonic() > deadline:
-                raise
-            time.sleep(delay)
-            delay = min(delay * 2, 1.0)
-    try:
-        yield con
-    finally:
-        con.close()
+            yield con
+        finally:
+            con.close()
+
+
+MIGRATIONS = [
+    "ALTER TABLE documents ADD COLUMN IF NOT EXISTS doc_kind VARCHAR",       # content-based type
+    "ALTER TABLE documents ADD COLUMN IF NOT EXISTS content_date DATE",      # first dated phrase on page 1
+]
 
 
 def init_db() -> None:
     with connect() as con:
         con.execute(SCHEMA)
+        for m in MIGRATIONS:
+            con.execute(m)
 
 
 def rows(con: duckdb.DuckDBPyConnection, sql: str, params: list[Any] | tuple = ()) -> list[dict]:
