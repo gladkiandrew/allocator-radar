@@ -401,7 +401,8 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
     return stats
 
 
-def extract_document(sha: str, allocator_id: str, provider=None) -> dict:
+def extract_document(sha: str, allocator_id: str, provider=None, all_pages: bool = False) -> dict:
+    """all_pages: send every page with text (holdings lists that the vocabularies do not select)."""
     provider = provider or get_provider()
     today = date.today()
     with db.connect() as con:
@@ -412,7 +413,16 @@ def extract_document(sha: str, allocator_id: str, provider=None) -> dict:
         if not meta:
             raise KeyError((sha, allocator_id))
         meta = meta[0]
-        todo = _pages_to_extract(con, sha)
+        if all_pages:
+            con.execute("DELETE FROM extraction_runs WHERE sha256 = ? AND extractor_version = ? AND status = 'none'",
+                        [sha, EXTRACTOR_VERSION])
+            done = con.execute("SELECT 1 FROM extraction_runs WHERE sha256 = ? AND extractor_version = ? LIMIT 1",
+                               [sha, EXTRACTOR_VERSION]).fetchone()
+            todo = [] if done else [p for p in db.rows(con, "SELECT page_no, text_scrubbed, prefilter_terms FROM pages "
+                                                       "WHERE sha256 = ? ORDER BY page_no", [sha])
+                                    if len(p["text_scrubbed"]) > 200][:MAX_PAGES_PER_DOC]
+        else:
+            todo = _pages_to_extract(con, sha)
     total = {"pages": len(todo), "calls": 0, "signals": 0, "mandates": 0, "officers": 0, "consultants": 0, "facts": 0,
              "dropped": 0}
     if not todo:  # nothing qualifies on this document: mark it done for this extractor version

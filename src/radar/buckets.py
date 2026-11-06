@@ -10,8 +10,8 @@ import re
 HF_BUCKETS = {
     "EQUITY_LONG_SHORT", "EQUITY_MARKET_NEUTRAL", "EVENT_DRIVEN", "MERGER_ARB", "DISTRESSED", "CREDIT_LONG_SHORT",
     "CONVERTIBLE_ARB", "FIXED_INCOME_RV", "GLOBAL_MACRO", "MANAGED_FUTURES_CTA", "MULTI_STRATEGY",
-    "FUND_OF_HEDGE_FUNDS", "QUANT_SYSTEMATIC", "VOLATILITY", "INSURANCE_LINKED",
-}
+    "FUND_OF_HEDGE_FUNDS", "QUANT_SYSTEMATIC", "VOLATILITY",
+}  # owner's flag: hedge fund / absolute return / diversifying / managed futures / multi-strat (+ standard HF strategies)
 HF_TEXT = re.compile(r"hedge|absolute return|diversifying|managed futures|\bcta\b|multi[- ]?strat|global macro|\bmacro\b|"
                      r"relative value|market neutral|long[/ -]short|event driven|pure alpha|tactical credit|risk premia|"
                      r"style premia", re.I)
@@ -46,13 +46,35 @@ RULES = [
 _RULES = [(re.compile(p, re.I), b) for p, b in RULES]
 
 
-def to_bucket(*texts: str | None) -> str:
-    t = " | ".join(x for x in texts if x)
+_ASSET_FIRST = [  # the printed asset class decides first; names only refine hedge-fund / strategic rows
+    (re.compile(r"venture", re.I), "VENTURE"),
+    (re.compile(r"private equity|^pe$|buyout", re.I), "PRIVATE_EQUITY"),
+    (re.compile(r"real estate|^re$", re.I), "REAL_ESTATE"),
+    (re.compile(r"infrastructure", re.I), "INFRASTRUCTURE"),
+    (re.compile(r"global equity|domestic equity|international equity|^equity", re.I), "LONG_ONLY_EQUITY"),
+]
+
+
+def _rules(t: str) -> str:
     for pat, b in _RULES:
         if pat.search(t):
             return b
     return "OTHER"
 
 
-def hf_relevant(bucket: str | None, *texts: str | None) -> bool:
-    return bool((bucket and bucket in HF_BUCKETS) or any(t and HF_TEXT.search(t) for t in texts))
+def to_bucket(asset_class: str | None, style: str | None = None, name: str | None = None) -> str:
+    a, st = (asset_class or "").strip(), (style or "").strip()
+    for pat, b in _ASSET_FIRST:
+        if pat.search(a):
+            return "VENTURE" if b == "PRIVATE_EQUITY" and re.search(r"venture", st, re.I) else b
+    if re.search(r"active credit|fixed income|credit", a, re.I):
+        return "PRIVATE_CREDIT" if re.search(r"direct lending|private credit|private debt|lender|mezz", st, re.I) \
+            else _rules(st) if re.search(r"hedge|macro|relative value|long/short", st, re.I) else "LONG_ONLY_FIXED_INCOME"
+    # Strategic Investments, hedge funds, unknown: style first, then the fund name
+    return _rules(st) if _rules(st) != "OTHER" else _rules(f"{a} | {name or ''}")
+
+
+def hf_relevant(bucket: str | None, *labels: str | None) -> bool:
+    """Bucket in the hedge-fund set, or the source's own asset-class/style label says hedge fund, absolute return,
+    diversifying, managed futures, multi-strategy (fund names are not used: "Opportunities Fund" is not a strategy)."""
+    return bool((bucket and bucket in HF_BUCKETS) or any(t and HF_TEXT.search(t) for t in labels))

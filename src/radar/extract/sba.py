@@ -84,6 +84,9 @@ def _cell(c: str | None) -> str:
 
 
 def _money(s: str) -> float | None:
+    """US-dollar amounts only. Other currencies return None and are kept verbatim in the summary (never converted)."""
+    if re.search(r"[€£¥]|EUR|GBP|JPY", s):
+        return None
     t = s.replace("$", "").replace(",", "").replace(" ", "")
     try:
         return float(t)
@@ -117,8 +120,8 @@ def _on_page(cells: list[str], page_text: str) -> bool:
 def parse_new_investments(sha: str, quarter_end: date, file_name: str) -> dict:
     stats = {"rows": 0, "signals": 0, "hf": 0, "failed": []}
     rows = []
+    header = None
     for page, table in _tables(sha):
-        header = None
         for raw in table:
             cells = [_cell(c) for c in raw]
             low = [c.lower() for c in cells]
@@ -135,12 +138,14 @@ def parse_new_investments(sha: str, quarter_end: date, file_name: str) -> dict:
             stats["rows"] += 1
             manager = row.get("manager name", "")
             account = row.get("account name", "")
+            amount_text = re.sub(r"\s+", "", row.get("commitment", ""))
             amount = _money(row.get("commitment", ""))
+            foreign = amount is None and bool(re.search(r"[€£¥]", amount_text)) and bool(re.search(r"\d", amount_text))
             asset = row.get("asset class", "")
             style = row.get("investment style", "")
             consultant = row.get("consultant", "")
             new_mgr = row.get("new manager?", row.get("new manager", "")).strip().lower().startswith("y")
-            if not manager or amount is None:
+            if not manager or (amount is None and not foreign):
                 stats["failed"].append(f"{file_name} p{page}: unreadable row {cells}")
                 continue
             clean = [scrub_text(c) for c in cells]
@@ -152,12 +157,13 @@ def parse_new_investments(sha: str, quarter_end: date, file_name: str) -> dict:
                 continue
             label = f"{asset} / {style}".strip(" /")
             bucket = to_bucket(asset, style, account)
-            hf = hf_relevant(bucket, asset, style, account)
+            hf = hf_relevant(bucket, asset, style)
             stype = "MANDATE_AWARDED" if new_mgr else "COMMITMENT_MADE"
-            summary = (f"The SBA reported a ${amount:,.0f} commitment to {account or manager} ({manager}), "
+            shown = f"${amount:,.0f}" if amount is not None else amount_text  # foreign currency: as printed
+            summary = (f"The SBA reported a {shown} commitment to {account or manager} ({manager}), "
                        f"{label}, in its Q{q} {quarter_end.year} new investments report"
                        f"{'; new manager relationship' if new_mgr else ''}.")[:300]
-            if not lint(summary).ok:
+            if not lint(summary, ignore=[account, manager, label, asset, style]).ok:
                 stats["failed"].append(f"{file_name} p{page}: summary failed lint: {summary}")
                 continue
             key = f"sba|{stype}|{manager.lower()}|{account.lower()}|{amount}|{quarter_end}"
@@ -174,6 +180,13 @@ def parse_new_investments(sha: str, quarter_end: date, file_name: str) -> dict:
                 [sid, ALLOCATOR, stype, "manager" if new_mgr else None, quarter_end, summary, key, manager, amount,
                  label, bucket, hf, f"event date = quarter end (report prints no per-row date); consultant: {consultant}"])
             con.execute("INSERT INTO row_evidence VALUES ('signal', ?, ?)", [sid, eid])
+            if consultant:  # the SBA's consultant for this investment, as printed in the row
+                ckey = f"sba-consultant|{consultant.lower()}|{quarter_end}"
+                if not con.execute("SELECT 1 FROM consultant_engagements WHERE dedupe_key = ?", [ckey]).fetchone():
+                    cid = new_id()
+                    con.execute("INSERT INTO consultant_engagements VALUES (?, ?, ?, ?, ?)",
+                                [cid, ALLOCATOR, consultant[:160], quarter_end, ckey])
+                    con.execute("INSERT INTO row_evidence VALUES ('engagement', ?, ?)", [cid, eid])
             stats["signals"] += 1
             stats["hf"] += int(hf)
         db.audit(con, "extractor", "sba_new_investments", sha, detail={k: v for k, v in stats.items() if k != "failed"}
@@ -183,13 +196,13 @@ def parse_new_investments(sha: str, quarter_end: date, file_name: str) -> dict:
 
 def parse_si_table(sha: str, as_of: date, file_name: str) -> dict:
     stats = {"rows": 0, "holdings": 0, "hf": 0, "failed": [], "tabular": False}
+    header = None  # the header row prints on page 1 only; it carries over to later pages
     with db.connect() as con:
         for page, table in _tables(sha):
-            header = None
             for raw in table:
                 cells = [_cell(c) for c in raw]
                 low = [c.lower() for c in cells]
-                if any("holding" in c for c in low):
+                if "holding name" in low and any(c.startswith("asset type") for c in low):
                     header = low
                     stats["tabular"] = True
                     continue
@@ -209,7 +222,7 @@ def parse_si_table(sha: str, as_of: date, file_name: str) -> dict:
                 if not _on_page([name.split()[0]], _page_text(con, sha, page)):
                     stats["failed"].append(f"{file_name} p{page}: holding not found in page text: {name}")
                     continue
-                bucket = to_bucket(category, name)
+                bucket = to_bucket(category, None, name)
                 key = f"sba-si|{name.lower()}|{as_of}"
                 if con.execute("SELECT 1 FROM mandates WHERE dedupe_key = ?", [key]).fetchone():
                     continue
@@ -222,7 +235,7 @@ def parse_si_table(sha: str, as_of: date, file_name: str) -> dict:
                              "ACTIVE" if mv > 0 else "UNKNOWN", key])
                 con.execute("INSERT INTO row_evidence VALUES ('mandate', ?, ?)", [mid, eid])
                 stats["holdings"] += 1
-                stats["hf"] += int(hf_relevant(bucket, category, name))
+                stats["hf"] += int(hf_relevant(bucket, category))
         db.audit(con, "extractor", "sba_si_table", sha, detail={k: v for k, v in stats.items() if k != "failed"}
                  | {"failed": len(stats["failed"])})
     return stats

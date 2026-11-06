@@ -194,7 +194,8 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 report["llm_docs"].append(f)
         for f in report["llm_docs"]:
-            st = extractor.extract_document(f["sha"], "fl-sba-frs")
+            holdings = f["kind"] in ("SI_PERFORMANCE", "PE_PERFORMANCE")
+            st = extractor.extract_document(f["sha"], "fl-sba-frs", all_pages=holdings)
             print(json.dumps({"file": f["file"], "extractor": st}))
         print(json.dumps({k: v for k, v in report.items() if k != "llm_docs"}, default=str, indent=1))
     elif args.cmd == "index":

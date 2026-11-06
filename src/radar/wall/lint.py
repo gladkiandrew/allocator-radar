@@ -41,8 +41,11 @@ def banned_terms(posture: str | None = None) -> list[str]:
     return BASE_BANNED + (STRICT_BANNED if posture != "none" else [])
 
 
-def lint(text: str, posture: str | None = None) -> LintResult:
+def lint(text: str, posture: str | None = None, ignore: list[str] | None = None) -> LintResult:
+    """`ignore`: proper names quoted verbatim from the source (a fund called "... Opportunities Fund")."""
     found = []
+    for name in sorted((n for n in (ignore or []) if n), key=len, reverse=True):
+        text = text.replace(name, " ")
     low = text.lower()
     for term in banned_terms(posture):
         if re.search(r"(?<![a-z])" + re.escape(term) + r"(?![a-z])", low):
