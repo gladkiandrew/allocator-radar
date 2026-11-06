@@ -1,0 +1,19 @@
+# Review policy. Set by the repo owner.
+#
+# auto_approve: true means rows that pass every machine validator (quote on page, quote supports
+# summary, language lint, contact detector) are approved without a person clicking. Each one is
+# stamped with `actor` in signals.reviewed_by and audit_log, so the trail always shows that a policy
+# approved it, not a person. The review page stays open for after-the-fact rejection or correction.
+#
+# Set auto_approve: false to go back to manual review (Touchpoint 3). Rows already approved stay approved.
+signals:
+  auto_approve: true
+  actor: "auto-approve (owner policy 2026-11-06)"
+registry:
+  # New registry versions are approved automatically. Only hosts on the config/sources.yaml
+  # allowlist can ever be crawled, and robots.txt and bot-wall rules still apply on every request.
+  auto_approve: true
+  actor: "auto-approve (owner policy 2026-11-06)"
+authorized_by: owner
+authorized_on: 2026-11-06
+reason: "Owner instruction: approve all signals and registry versions; keep building."

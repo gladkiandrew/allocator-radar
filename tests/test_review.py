@@ -35,3 +35,13 @@ def test_review_page_and_post():
     r = c.post(f"/review/{sid}", data={"decision": "approved"}, headers={"HX-Request": "true"})
     assert r.status_code == 200 and "approved" in r.text
     assert "Canary P&amp;F" in c.get("/").text or "Canary P&F" in c.get("/").text
+
+
+def test_auto_approve_policy_stamps_policy_actor():
+    from radar.settings import get_settings
+    (get_settings().config_dir / "review_policy.yaml").write_text(
+        "signals: {auto_approve: true, actor: 'auto-approve (owner policy test)'}\n")
+    sid = _one_signal()
+    with db.connect() as con:
+        st, by = con.execute("SELECT review_status, reviewed_by FROM signals WHERE signal_id = ?", [sid]).fetchone()
+    assert st == "approved" and by == "auto-approve (owner policy test)"

@@ -94,6 +94,13 @@ def readiness_config() -> dict[str, Any]:
     return load_yaml("readiness_rules.yaml")
 
 
+def review_policy() -> dict[str, Any]:
+    try:
+        return load_yaml("review_policy.yaml") or {}
+    except FileNotFoundError:
+        return {}
+
+
 def firm_posture() -> str:
     posture = load_yaml("firm_posture.yaml").get("posture", "both")
     if posture not in {"ria", "cpo_cta", "both", "none"}:

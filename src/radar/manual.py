@@ -58,6 +58,10 @@ def add_fact(f: ManualFact, actor: str) -> str:
         con.execute("INSERT INTO row_evidence VALUES ('signal', ?, ?)", [sid, eid])
         db.audit(con, actor, "manual_fact", sid, detail={"source_id": f.source_id, "url": f.source_url})
         con.execute("COMMIT")
+    from radar.review import decide, policy_actor
+
+    if (auto := policy_actor("signals")):
+        decide(sid, "approved", auto, note="auto-approved under owner policy")
     return sid
 
 

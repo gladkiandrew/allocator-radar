@@ -11,6 +11,12 @@ def tmp_store(tmp_path, monkeypatch):
     monkeypatch.setenv("RADAR_FLAG_GLINER", "false")
     monkeypatch.setenv("RADAR_MIN_HOST_DELAY_S", "0")
     monkeypatch.setenv("RADAR_MANUAL_INBOX", str(tmp_path / "inbox" / "manual"))
+    # Tests exercise manual review by default; the owner's auto-approve policy is tested explicitly.
+    cfg = tmp_path / "config"
+    import shutil
+    shutil.copytree(S.REPO_ROOT / "config", cfg)
+    (cfg / "review_policy.yaml").write_text("signals: {auto_approve: false}\nregistry: {auto_approve: false}\n")
+    monkeypatch.setenv("RADAR_CONFIG_DIR", str(cfg))
     S.get_settings.cache_clear()
     from radar import db
     db.init_db()

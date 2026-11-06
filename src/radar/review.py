@@ -56,3 +56,25 @@ def decide(signal_id: str, decision: str, actor: str, *, note: str | None = None
                  detail={"changed": {k: str(v) for k, v in upd.items()}, "note": note,
                          "before": {k: str(before[k]) for k in ("signal_type", "qualifier", "event_date", "review_status")}})
         return db.rows(con, "SELECT * FROM signals WHERE signal_id = ?", [signal_id])[0]
+
+
+def policy_actor(kind: str = "signals") -> str | None:
+    """The auto-approve actor string if the owner's policy auto-approves this kind, else None."""
+    from radar.settings import review_policy
+
+    pol = (review_policy().get(kind) or {})
+    return pol.get("actor") if pol.get("auto_approve") else None
+
+
+def approve_pending() -> int:
+    """Apply the owner's auto-approve policy to every pending signal that has evidence."""
+    actor = policy_actor("signals")
+    if not actor:
+        return 0
+    with db.connect() as con:
+        ids = [r[0] for r in con.execute(
+            """SELECT signal_id FROM signals s WHERE review_status = 'new'
+               AND EXISTS (SELECT 1 FROM row_evidence re WHERE re.row_kind = 'signal' AND re.row_id = s.signal_id)""").fetchall()]
+    for sid in ids:
+        decide(sid, "approved", actor, note="auto-approved under owner policy")
+    return len(ids)

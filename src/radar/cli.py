@@ -23,6 +23,7 @@ def main(argv: list[str] | None = None) -> int:
     ep = sub.add_parser("extract", help="run the extraction agent over prefiltered pages not yet extracted")
     ep.add_argument("--only", nargs="*", help="allocator ids")
     ep.add_argument("--limit", type=int, default=0, help="max documents this run (0 = all)")
+    sub.add_parser("approve-pending", help="apply config/review_policy.yaml to pending signals (and the registry)")
     sub.add_parser("index", help="add newly parsed (scrubbed) pages to the LanceDB search index")
     dp = sub.add_parser("discover", help="discovery agent: registry/seed_florida.yaml -> registry/florida.yaml")
     dp.add_argument("--resuggest", action="store_true", help="recompute suggested pages only (no fetching)")
@@ -69,6 +70,12 @@ def main(argv: list[str] | None = None) -> int:
         for sha, aid in todo:
             st = extractor.extract_document(sha, aid)
             print(json.dumps({"doc": sha[:12], "allocator": aid, **st}))
+    elif args.cmd == "approve-pending":
+        from radar import db, review
+        from radar.registry import approve as reg
+        db.init_db()
+        print(f"registry auto-approved: {reg.auto_approve_if_policy()}")
+        print(f"signals approved under policy: {review.approve_pending()}")
     elif args.cmd == "index":
         from radar import db, search
         db.init_db()

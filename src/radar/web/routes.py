@@ -67,7 +67,7 @@ def register(app: FastAPI, render) -> None:
         if status == "new":  # what could move a tier first, newest first
             sigs.sort(key=lambda s: (s["tier_effect"] is None, s["tier_effect"] != "DEPLOYING", -s["event_date"].toordinal()))
         return render(request, "review.html", signals=sigs, status=status, counts=counts,
-                      signal_types=list(SignalType.__members__))
+                      signal_types=list(SignalType.__members__), policy_actor=review.policy_actor("signals"))
 
     @app.post("/review/{signal_id}", response_class=HTMLResponse)
     def review_decide(request: Request, signal_id: str, decision: str = Form(...), note: str = Form(default=""),

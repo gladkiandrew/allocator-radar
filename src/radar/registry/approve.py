@@ -75,3 +75,20 @@ def approve(actor: str, expected_version: str, selected_pages: set[tuple[str, st
                                                                  "pages": len(selected_pages or [])})
         con.execute("COMMIT")
     return n
+
+
+def auto_approve_if_policy(region: str = "florida") -> bool:
+    """Approve the current registry version under the owner's policy (all suggested pages)."""
+    from radar.review import policy_actor
+
+    actor = policy_actor("registry")
+    reg, v = load(region)
+    if not actor or reg is None:
+        return False
+    with db.connect() as con:
+        if is_current_approved(con, region):
+            return True
+    selected = {(a["allocator_id"], p["url"]) for a in reg["allocators"] for p in a.get("document_pages", [])
+                if p.get("suggested")}
+    approve(actor, v, selected, region, note="auto-approved under owner policy (suggested pages)")
+    return True

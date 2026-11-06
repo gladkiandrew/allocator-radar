@@ -201,6 +201,9 @@ def _dedupe_key(*parts) -> str:
 
 def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: str, today: date) -> dict:
     stats = {"signals": 0, "mandates": 0, "officers": 0, "consultants": 0, "dropped": 0, "drop_reasons": []}
+    from radar.review import policy_actor
+
+    auto_actor = policy_actor("signals")
     aid, sha, url = meta["allocator_id"], meta["sha256"], meta["url"]
 
     def evidence(page: int, quote: str, conf: float) -> str | None:
@@ -245,6 +248,10 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
             "INSERT INTO signals VALUES (?, ?, ?, ?, ?, now(), ?, 'new', 'MACHINE', ?, NULL, NULL, NULL)",
             [sid, aid, s.signal_type, q, d, summary, key])
         link("signal", sid, eid)
+        if auto_actor:
+            con.execute("UPDATE signals SET review_status = 'approved', reviewed_by = ?, reviewed_at = now(), "
+                        "review_note = 'auto-approved under owner policy' WHERE signal_id = ?", [auto_actor, sid])
+            db.audit(con, auto_actor, "signal_approved", sid, detail={"policy": "review_policy.yaml"})
         stats["signals"] += 1
 
     for m in res.mandates:
