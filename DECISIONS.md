@@ -218,3 +218,14 @@ are the irreversible ones, which went to the repo owner.
   main-table plan's agendas, minutes and RFP documents dated in the last 12 months. It reads pages
   matching a search vocabulary (up to 20 per document), and its prompt focuses on manager and
   consultant searches.
+- **D-A50 Auto-approval v2 (owner, 2026-11-06).** `quarter_end` qualifies as a date basis only for
+  signals extracted deterministically from a parsed table. LLM-extracted signals still need a
+  meeting, report or filing date. The re-check now ignores printed table cells when linting (D-A42),
+  which fixed 2 SBA rows whose fund names contain "Opportunity" or "Opportunities".
+- **D-A51 Strategy filter.** The main table can be filtered to a hedge-fund preset (hedge fund,
+  diversifying, managed futures, multi-strategy, quant, absolute return) or to a single bucket.
+  For LLM-extracted signals the bucket is **inferred from the summary** and marked "(inferred)".
+  Table-parsed signals carry the source's own label.
+- **D-A52 Phase A locked 2026-11-06.** Final state: 13 plans on the main table (1 DEPLOYING, 1
+  PREPARING, 11 WATCHING) and 17 on gaps; 193 signals auto-approved and 27 pending for the owner.
+  Phase B (DMS statewide list, 112.664 crawl, the parked plans) is not started.
