@@ -16,6 +16,14 @@ def main(argv: list[str] | None = None) -> int:
     sp.add_argument("--port", type=int, default=8000)
     sp.add_argument("--reload", action="store_true")
     sub.add_parser("wall", help="run the live wall checks (nightly)")
+    cp = sub.add_parser("crawl", help="crawl approved allocators' listing pages and fetch documents")
+    cp.add_argument("--only", nargs="*", help="allocator ids")
+    cp.add_argument("--templates", nargs="*", help="e.g. T-WP T-CP")
+    cp.add_argument("--max-docs", type=int, default=60, help="per allocator per run")
+    ep = sub.add_parser("extract", help="run the extraction agent over prefiltered pages not yet extracted")
+    ep.add_argument("--only", nargs="*", help="allocator ids")
+    ep.add_argument("--limit", type=int, default=0, help="max documents this run (0 = all)")
+    sub.add_parser("discover", help="discovery agent: registry/seed_florida.yaml -> registry/florida.yaml")
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -26,6 +34,32 @@ def main(argv: list[str] | None = None) -> int:
     elif args.cmd == "serve":
         import uvicorn
         uvicorn.run("radar.web.app:create_app", factory=True, host=args.host, port=args.port, reload=args.reload)
+    elif args.cmd == "discover":
+        from radar import db
+        from radar.registry import discovery
+        db.init_db()
+        path = discovery.run()
+        print(f"wrote {path} (version {discovery.version(path)[:12]})")
+    elif args.cmd == "crawl":
+        import json
+        from radar import db
+        from radar.crawl import runner
+        db.init_db()
+        for st in runner.run(args.only, set(args.templates) if args.templates else None, args.max_docs):
+            print(json.dumps(st))
+    elif args.cmd == "extract":
+        import json
+        from radar import db
+        from radar.extract import extractor
+        db.init_db()
+        with db.connect() as con:
+            todo = extractor.pending_documents(con, args.only)
+        if args.limit:
+            todo = todo[: args.limit]
+        print(f"{len(todo)} documents to extract")
+        for sha, aid in todo:
+            st = extractor.extract_document(sha, aid)
+            print(json.dumps({"doc": sha[:12], "allocator": aid, **st}))
     elif args.cmd == "wall":
         from radar.wall import live
         return live.main()

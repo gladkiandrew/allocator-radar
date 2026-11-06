@@ -87,3 +87,34 @@ def allocator_table(con) -> list[dict]:
 
 def pending_count(con) -> int:
     return con.execute("SELECT count(*) FROM signals WHERE review_status = 'new'").fetchone()[0]
+
+
+def allocator_brief(con, allocator_id: str) -> dict | None:
+    rs = db.rows(con, "SELECT * FROM allocators WHERE allocator_id = ?", [allocator_id])
+    if not rs:
+        return None
+    a = rs[0]
+    a["pages"] = db.rows(con, "SELECT * FROM allocator_pages WHERE allocator_id = ? ORDER BY url", [allocator_id])
+    a["documents"] = db.rows(
+        con,
+        """SELECT du.*, d.page_count, d.parse_error, d.provenance,
+                  (SELECT count(*) FROM pages p WHERE p.sha256 = du.sha256 AND p.prefilter_terms IS NOT NULL) AS hit_pages
+           FROM document_urls du JOIN documents d USING (sha256)
+           WHERE du.allocator_id = ? ORDER BY du.doc_date DESC NULLS LAST, du.first_seen DESC""",
+        [allocator_id],
+    )
+    sigs = signals_for(con, [allocator_id], statuses=("new", "approved", "rejected"))
+    a["signals"] = sigs
+    last_new = max((d["first_seen"] for d in a["documents"]), default=None)
+    a["readiness"] = compute(sigs, last_new)
+    for kind, table, key, order in [
+        ("mandate", "mandates", "mandate_id", "as_of DESC, bucket_label_as_disclosed"),
+        ("officer", "officers", "officer_id", "as_of DESC, role_type, name_as_printed"),
+        ("engagement", "consultant_engagements", "engagement_id", "as_of DESC"),
+    ]:
+        items = db.rows(con, f"SELECT * FROM {table} WHERE allocator_id = ? ORDER BY {order}", [allocator_id])
+        ev = _evidence_for(con, kind, [i[key] for i in items])
+        for i in items:
+            i["evidence"] = ev.get(i[key], [])
+        a[table] = items
+    return a

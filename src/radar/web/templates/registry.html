@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Registry · Allocator Radar{% endblock %}
+{% block body %}
+<h1>Florida registry</h1>
+<p class="sub">The discovery agent built this list from AGENDA §2.4. Approve it once and the crawler can start. Nothing is
+  crawled before approval. Untick any listing page you don't want crawled.</p>
+
+{% if msg %}<div class="notice">{{ msg }}</div>{% endif %}
+{% if err %}<div class="error">{{ err }}</div>{% endif %}
+
+{% if not reg %}
+<div class="card">No registry yet. Run <span class="mono">uv run radar discover</span>.</div>
+{% else %}
+<div class="card">
+  <dl class="kv">
+    <dt>Version</dt><dd class="mono">{{ version[:16] }}</dd>
+    <dt>Generated</dt><dd class="mono">{{ reg.generated_at }}</dd>
+    <dt>Allocators</dt><dd>{{ reg.allocators|length }} ({{ n_auto }} automatable, {{ reg.allocators|length - n_auto }} manual)</dd>
+    <dt>Status</dt><dd>{% if current %}<span class="tier DEPLOYING">APPROVED</span> by {{ appr.approved_by }} on {{ appr.approved_at.strftime('%Y-%m-%d %H:%M') }}
+      {% elif appr %}<span class="tier PREPARING">CHANGED</span>. An earlier version was approved; this one needs review
+      {% else %}<span class="tier STALE">NOT APPROVED</span>{% endif %}</dd>
+  </dl>
+</div>
+
+<form method="post" action="/registry/approve">
+<input type="hidden" name="version" value="{{ version }}">
+<div class="scroll">
+<table class="stack">
+  <thead><tr><th>Allocator</th><th>Access</th><th>Listing pages to crawl (documents found)</th></tr></thead>
+  <tbody>
+  {% for a in reg.allocators %}
+  <tr>
+    <td><strong>{{ a.display_name }}</strong><br><span class="muted">{{ a.allocator_type }} · {{ a.jurisdiction_city }} · {{ a.template }}</span>
+      <br><a class="mono" href="{{ a.home_url }}" target="_blank" rel="noopener noreferrer">{{ a.home_url|truncate(60) }}</a>
+      {% if a.site_title %}<br><span class="muted" style="font-size:12px">site title: {{ a.site_title }}</span>{% endif %}</td>
+    <td>{% if a.access == 'AUTO' %}<span class="tier WATCHING">AUTO</span>{% else %}<span class="tier STALE">MANUAL</span>{% endif %}
+      {% if a.robots %}<br><span class="muted mono">robots: {{ a.robots }}</span>{% endif %}
+      {% if a.access_reason %}<br><span class="muted" style="font-size:12px">{{ a.access_reason }}</span>{% endif %}</td>
+    <td style="font-size:13px">
+      {% if a.access == 'AUTO' %}{% for p in a.document_pages %}
+        <label style="margin:2px 0;color:var(--fg)"><input type="checkbox" style="width:auto" name="page" value="{{ a.allocator_id }}|{{ p.url }}"
+          {% if p.suggested %}checked{% endif %}> {{ p.label|truncate(50) }} · <span class="mono">{{ p.documents }}</span>
+          {% for k, n in p.by_type.items() %}<span class="muted mono"> {{ k|lower }}:{{ n }}</span>{% endfor %}
+          <br><a class="mono muted" href="{{ p.url }}" target="_blank" rel="noopener noreferrer" style="font-size:11.5px">{{ p.url|truncate(80) }}</a></label>
+      {% else %}<span class="muted">no listing pages</span>{% endfor %}
+      {% else %}<span class="muted">documents arrive only via inbox/manual/ or manual fact entry</span>{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% if reg.manual_only_sponsors %}
+<h2>Sponsors blocked to automated clients (manual only)</h2>
+<ul>{% for s in reg.manual_only_sponsors %}<li>{{ s.name }}. <span class="muted">{{ s.reason }}</span></li>{% endfor %}</ul>
+{% endif %}
+
+<p><label>Note (optional)</label><input name="note" placeholder="e.g. reviewed all listing pages"></p>
+<p><button class="primary" type="submit">Approve this registry version</button>
+  <span class="muted">Your approval is logged with your name and this version hash.</span></p>
+</form>
+{% endif %}
+{% endblock %}

@@ -2,38 +2,20 @@
 
 from __future__ import annotations
 
-import hashlib
-import secrets
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from radar import db, lake, queries
 from radar.readiness import TIER_ORDER
-from radar.settings import get_settings, readiness_config
+from radar.settings import readiness_config
+from radar.web.auth import require_user
 
 HERE = Path(__file__).parent
 templates = Jinja2Templates(directory=HERE / "templates")
-_basic = HTTPBasic(auto_error=False)
-
-
-def require_user(creds: HTTPBasicCredentials | None = Depends(_basic)) -> str:
-    s = get_settings()
-    if s.auth_mode == "none":
-        return s.reviewer
-    if creds is None or not s.auth_password_hash:
-        raise HTTPException(401, headers={"WWW-Authenticate": "Basic"})
-    ok_user = secrets.compare_digest(creds.username, s.auth_user)
-    ok_pass = secrets.compare_digest(hashlib.sha256(creds.password.encode()).hexdigest(), s.auth_password_hash)
-    if not (ok_user and ok_pass):
-        raise HTTPException(401, headers={"WWW-Authenticate": "Basic"})
-    return creds.username
-
-
 def cite_href(e: dict) -> str:
     """A citation always lands on the page of the PDF: our cached copy if we hold it."""
     if e.get("document_sha256"):

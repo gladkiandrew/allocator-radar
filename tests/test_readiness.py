@@ -6,7 +6,7 @@ TODAY = date(2026, 11, 6)
 NOW = datetime.now(timezone.utc)
 
 
-def sig(t, days_ago, status="approved", q=None):
+def sig(t, days_ago, status="approved", q="manager"):
     return {"signal_type": t, "event_date": TODAY - timedelta(days=days_ago), "review_status": status, "qualifier": q}
 
 
@@ -40,3 +40,8 @@ def test_stale_when_no_new_documents():
 
 def test_future_dated_signal_ignored():
     assert compute([sig("RFP_ISSUED", -5)], NOW, TODAY).tier == "WATCHING"
+
+
+def test_service_provider_rfp_does_not_deploy():
+    assert compute([sig("RFP_ISSUED", 5, q="service_provider")], NOW, TODAY).tier == "WATCHING"
+    assert compute([sig("RFP_ISSUED", 5, q="consultant")], NOW, TODAY).tier == "WATCHING"

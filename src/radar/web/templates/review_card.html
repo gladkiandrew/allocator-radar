@@ -1,0 +1,35 @@
+<div class="card" id="sig-{{ s.signal_id }}">
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+    <div><a href="/a/{{ s.allocator_id }}"><strong>{{ s.display_name }}</strong></a>
+      <span class="muted mono" style="font-size:12px"> · {{ s.origin|lower }} · observed {{ s.observed_at.strftime('%Y-%m-%d') }}</span></div>
+    <div>{% if s.review_status == 'approved' %}<span class="tier WATCHING">approved</span> <span class="muted" style="font-size:12px">by {{ s.reviewed_by }}</span>
+      {% elif s.review_status == 'rejected' %}<span class="muted">rejected by {{ s.reviewed_by }}</span>
+      {% else %}<span class="pending">pending review</span>{% endif %}</div>
+  </div>
+  <p style="margin:8px 0 4px"><span class="mono">{{ s.event_date }}</span> · <span class="mono" style="font-size:12px">{{ s.signal_type }}{% if s.qualifier %} ({{ s.qualifier }}){% endif %}</span>
+    {% if s.tier_effect %}<span class="tier {{ s.tier_effect }}" style="margin-left:6px">→ {{ s.tier_effect }} if approved</span>{% endif %}</p>
+  <p style="margin:4px 0 8px">{{ s.summary }}</p>
+  {% for e in s.evidence %}
+    <blockquote>{{ e.quote }}</blockquote>
+    <p class="muted" style="font-size:12.5px;margin:2px 0 8px"><a class="cite" href="{{ cite_href(e) }}" target="_blank" rel="noopener">{{ e.doc_title or 'source' }}{% if e.page %}, page {{ e.page }}{% endif %}</a>
+      {% if e.doc_date %} · dated {{ e.doc_date }}{% endif %} · <a href="{{ e.source_url }}" target="_blank" rel="noopener noreferrer">original URL</a>
+      · confidence {{ '%.2f'|format(e.confidence) }}</p>
+  {% endfor %}
+  <form hx-post="/review/{{ s.signal_id }}" hx-target="#sig-{{ s.signal_id }}" hx-swap="outerHTML" method="post" action="/review/{{ s.signal_id }}">
+    <details><summary class="muted" style="font-size:13px;cursor:pointer">Correct before deciding</summary>
+      <div class="grid2">
+        <div><label>Signal type</label><select name="signal_type">{% for t in signal_types %}<option {{ 'selected' if t == s.signal_type }}>{{ t }}</option>{% endfor %}</select></div>
+        <div><label>Qualifier</label><select name="qualifier">{% for q in ['', 'manager', 'consultant', 'service_provider', 'increase', 'decrease'] %}<option value="{{ q }}" {{ 'selected' if (s.qualifier or '') == q }}>{{ q or '—' }}</option>{% endfor %}</select></div>
+        <div><label>Event date</label><input type="date" name="event_date" value="{{ s.event_date }}"></div>
+        <div><label>Note (optional)</label><input name="note" value=""></div>
+      </div>
+      <label>Summary (factual; lint-checked)</label><textarea name="summary" rows="2">{{ s.summary }}</textarea>
+    </details>
+    <p style="margin:10px 0 0;display:flex;gap:8px">
+      <button class="primary" name="decision" value="approved">Approve</button>
+      <button name="decision" value="rejected">Reject</button>
+      {% if s.review_status != 'new' %}<button name="decision" value="new">Back to pending</button>{% endif %}
+    </p>
+  </form>
+</div>

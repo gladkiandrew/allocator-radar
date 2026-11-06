@@ -21,6 +21,7 @@ dependencies = [
     "gliner>=0.2.30",
     "protobuf>=7.36.2",
     "sentencepiece>=0.2.3",
+    "pytz>=2026.6",
 ]
 
 [dependency-groups]

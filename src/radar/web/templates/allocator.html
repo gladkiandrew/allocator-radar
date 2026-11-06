@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ a.display_name }} · Allocator Radar{% endblock %}
+{% macro cites(evs) %}{% for e in evs[:3] %} <a class="cite" href="{{ cite_href(e) }}" target="_blank" rel="noopener" title="{{ e.quote }}">[{{ (e.doc_title or 'source')|truncate(30) }}{% if e.page %} p.{{ e.page }}{% endif %}]</a>{% endfor %}{% endmacro %}
+{% block body %}{% set r = a.readiness %}
+<p class="muted" style="margin:0"><a href="/">← All allocators</a></p>
+<h1>{{ a.display_name }}</h1>
+<p class="sub">{{ a.allocator_type|replace('_',' ')|title }} · {{ a.jurisdiction_city }}, {{ a.jurisdiction_state }} ·
+  <a href="{{ a.home_url }}" target="_blank" rel="noopener noreferrer">official site</a>
+  {% if a.access == 'MANUAL' %}· <span class="tier STALE">MANUAL SOURCE</span> <span class="muted">{{ a.access_reason }}</span>{% endif %}</p>
+
+<div class="card">
+  <dl class="kv">
+    <dt>Readiness</dt><dd><span class="tier {{ r.tier }}">{{ r.tier }}</span> <span class="muted">{{ r.rule_meaning }}</span></dd>
+    <dt>Consultant</dt><dd>{% if a.consultant_engagements %}{% set c = a.consultant_engagements[0] %}{{ c.consultant_name_as_disclosed }}
+        <span class="muted mono">as of {{ c.as_of }}</span>{{ cites(c.evidence) }}{% else %}<span class="muted">not yet extracted</span>{% endif %}</dd>
+    <dt>Documents</dt><dd>{{ a.documents|length }} fetched{% if a.documents %}, newest dated {{ a.documents[0].doc_date or 'undated' }}, last fetch {{ a.documents|map(attribute='last_fetched')|max|string|truncate(16, True, '') }}{% endif %}</dd>
+  </dl>
+</div>
+
+<h2 id="signals">Signal timeline</h2>
+{% if not a.signals %}<p class="muted">No signals yet.</p>{% else %}
+<div class="scroll"><table class="stack">
+  <thead><tr><th>Date</th><th>Signal</th><th>What the document says</th><th>Status</th></tr></thead>
+  <tbody>{% for s in a.signals %}
+  <tr style="{{ 'opacity:.6' if s.review_status != 'approved' }}">
+    <td class="mono">{{ s.event_date }}</td>
+    <td class="mono" style="font-size:12px">{{ s.signal_type }}{% if s.qualifier %} ({{ s.qualifier }}){% endif %}</td>
+    <td class="why">{{ s.summary }}{{ cites(s.evidence) }}
+      {% for e in s.evidence[:1] %}<blockquote>{{ e.quote }}</blockquote>{% endfor %}</td>
+    <td>{% if s.review_status == 'approved' %}<span class="tier WATCHING">approved</span>{% elif s.review_status == 'new' %}<span class="pending">pending review</span>{% else %}<span class="muted">rejected</span>{% endif %}
+      {% if s.origin == 'MANUAL' %}<br><span class="muted" style="font-size:12px">manual entry</span>{% endif %}</td>
+  </tr>{% endfor %}</tbody>
+</table></div>{% endif %}
+
+<h2>Holdings and incumbents (as disclosed)</h2>
+{% if not a.mandates %}<p class="muted">None extracted yet.</p>{% else %}
+<div class="scroll"><table class="stack">
+  <thead><tr><th>Bucket (as labeled)</th><th>Manager</th><th>Amount</th><th>As of</th><th>Status</th><th>Source</th></tr></thead>
+  <tbody>{% for m in a.mandates %}
+  <tr><td>{{ m.bucket_label_as_disclosed }}<br><span class="muted mono" style="font-size:11px">{{ m.bucket }}</span></td>
+    <td>{{ m.manager_name_as_disclosed }}</td>
+    <td class="mono">{% if m.amount_usd_as_disclosed is not none %}{% if m.amount_kind in ('target_pct','actual_pct') %}{{ '%.1f'|format(m.amount_usd_as_disclosed) }}%{% else %}${{ '{:,.0f}'.format(m.amount_usd_as_disclosed) }}{% endif %}<br><span class="muted">{{ m.amount_kind|replace('_',' ') }}</span>{% else %}—{% endif %}</td>
+    <td class="mono">{{ m.as_of }}</td><td class="mono" style="font-size:12px">{{ m.status }}</td><td>{{ cites(m.evidence) }}</td></tr>
+  {% endfor %}</tbody></table></div>{% endif %}
+
+<h2>Officers and trustees (as printed)</h2>
+{% if not a.officers %}<p class="muted">None extracted yet.</p>{% else %}
+<div class="scroll"><table class="stack"><thead><tr><th>Name</th><th>Title</th><th>As of</th><th>Source</th></tr></thead><tbody>
+{% for o in a.officers %}<tr><td>{{ o.name_as_printed }}</td><td>{{ o.title_as_printed }}</td><td class="mono">{{ o.as_of }}</td><td>{{ cites(o.evidence) }}</td></tr>{% endfor %}
+</tbody></table></div>
+<p class="muted" style="font-size:12px">Names and titles only, exactly as the documents print them. No contact details are stored.</p>{% endif %}
+
+<h2 id="documents">Documents we watch</h2>
+{% if a.pages %}<p class="muted" style="font-size:13px">Listing pages: {% for p in a.pages %}<a href="{{ p.url }}" target="_blank" rel="noopener noreferrer">{{ p.label or p.url|truncate(40) }}</a>{{ ', ' if not loop.last }}{% endfor %}</p>{% endif %}
+{% if not a.documents %}<p class="muted">Nothing fetched yet.</p>{% else %}
+<div class="scroll"><table class="stack">
+  <thead><tr><th>Document</th><th>Type</th><th>Dated</th><th class="hide-sm">Fetched</th><th class="hide-sm">Pages</th></tr></thead>
+  <tbody>{% for d in a.documents %}
+  <tr><td><a href="/doc/{{ d.sha256 }}" target="_blank" rel="noopener">{{ d.title|truncate(70) }}</a>
+      <br><a class="muted mono" style="font-size:11px" href="{{ d.url }}" target="_blank" rel="noopener noreferrer">source</a>
+      {% if d.provenance != 'CRAWL' %}<span class="muted" style="font-size:11px"> · {{ d.provenance|lower }}</span>{% endif %}</td>
+    <td class="mono" style="font-size:12px">{{ d.doc_type }}</td>
+    <td class="mono">{{ d.doc_date or '—' }}</td>
+    <td class="mono hide-sm">{{ d.last_fetched.strftime('%Y-%m-%d') }}</td>
+    <td class="mono hide-sm">{{ d.page_count or 0 }}{% if d.hit_pages %} <span class="muted">({{ d.hit_pages }} w/ terms)</span>{% endif %}{% if d.parse_error %} <span class="muted">parse error</span>{% endif %}</td></tr>
+  {% endfor %}</tbody></table></div>{% endif %}
+{% endblock %}
