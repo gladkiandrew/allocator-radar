@@ -24,7 +24,7 @@ verdicts:
   - {id: SF-FIPO, name: "Miami FIPO", hosts: [www.miamifipo.org, miamifipo.org], verdict: CRAWL, template: CUSTOM}
   - {id: SF-GESE, name: "Miami GESE", hosts: [gese.org, www.gese.org], verdict: CRAWL, template: T-WP}
   - {id: SF-MB, name: "City of Miami Beach", hosts: [www.miamibeachfl.gov], verdict: CRAWL, template: T-CITY}
-  - {id: SF-CG, name: "City of Coral Gables", hosts: [www.coralgables.com, coralgables.legistar.com], verdict: CRAWL, template: T-CITY}
+  - {id: SF-CG, name: "City of Coral Gables", hosts: [www.coralgables.com, coralgables.legistar.com, coralgables.legistar1.com], verdict: CRAWL, template: T-CITY}
   - {id: SF-HIA, name: "City of Hialeah", hosts: [www.hialeahfl.gov, hialeahfl.gov], verdict: CRAWL, template: T-CP}
   - {id: SF-FTLPF, name: "Fort Lauderdale Police & Fire", hosts: [ftlaudpfpension.com, www.ftlaudpfpension.com], verdict: CRAWL, template: T-WP}
   - {id: SF-HWERF, name: "Hollywood Employees' Retirement Fund", hosts: [hollywoodpension.com, www.hollywoodpension.com], verdict: CRAWL, template: T-WP}

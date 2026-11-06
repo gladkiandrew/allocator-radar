@@ -170,8 +170,18 @@ def discover_plan(client: PoliteClient, seed: dict) -> dict:
             s = _summarize_docs(sub)
             if s["documents"] and _norm_url(rr.url) not in {_norm_url(p["url"]) for p in pages}:
                 pages.append({"url": rr.url, "label": (l.text or l.context)[:80], **s})
+        if seed.get("legistar"):  # T-LEG board on the Legistar Web API
+            from radar.crawl import legistar
+
+            lg = seed["legistar"]
+            evs = legistar.events(client, legistar.page_url(lg["client"], lg["body_id"]), 5)
+            kinds = defaultdict(int)
+            for e in evs:
+                kinds[e["doc_type"]] += 1
+            pages.append({"url": legistar.page_url(lg["client"], lg["body_id"]), "label": f"Legistar: {lg['body']}",
+                          "documents": len(evs), "by_type": dict(kinds)})
         for p in pages:
-            p["suggested"] = suggest(p)
+            p["suggested"] = suggest(p) or p["url"].startswith("https://webapi.legistar.com/")
         out["document_pages"] = [p for p in pages if p["documents"] or p["label"] == "plan page"]
         if not any(p["documents"] for p in out["document_pages"]):
             out["access_reason"] = "no document links found on the plan page or its listing pages"

@@ -22,6 +22,7 @@ from datetime import date, timedelta
 from urllib.parse import unquote, urlsplit
 
 from radar import db, ingest
+from radar.crawl import legistar
 from radar.crawl.links import classify, is_document, parse_date, parse_links
 from radar.net.client import BotWall, HostThrottled, PoliteClient, RefusedRequest
 from radar.parse import pdf
@@ -89,6 +90,12 @@ def collect_links(client: PoliteClient, allocs: list[dict], pages: dict[str, lis
     found: dict[str, DocLink] = {}
     cutoff = date.today() - timedelta(days=365 * HISTORY_YEARS)
     for page_url, owners in by_page.items():
+        if legistar.is_legistar(page_url):  # T-LEG: dated agenda/minutes files from the Legistar API
+            for ev in legistar.events(client, page_url, HISTORY_YEARS):
+                if ev["url"] not in found:
+                    found[ev["url"]] = DocLink(ev["url"], ev["title"], ev["doc_type"], ev["doc_date"], page_url,
+                                               [o["allocator_id"] for o in owners])
+            continue
         if foreign_plan_page(page_url, owners):
             log.info("skipping %s: names a different plan than %s", page_url, [o["allocator_id"] for o in owners])
             continue
