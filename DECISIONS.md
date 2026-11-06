@@ -88,3 +88,24 @@ are the irreversible ones, which went to the repo owner.
   writes a `POST api.anthropic.com` egress row (purpose `llm`) and an audit row with tokens and the
   list-price estimate the CLI reports. Usage counts against the plan's limits, so extraction runs
   sequentially. The same pattern runs on the VPS (see `deploy/VPS.md`).
+- **D-A20 Quote-support validator.** It is not enough for the quote to appear on the cited page.
+  The summary's specific names and numbers must also appear in the quote, or the row is dropped.
+  The cause was a summary about an audit engagement that cited a quote about a legal-services
+  contract. The extractor (v0.2.0) is also told to quote the words that establish the fact.
+- **D-A21 Which plan a document belongs to, on shared city sites.** First, a plan named in the
+  link text or filename. Second, the plan whose listing page it was found on. Third, every owner
+  of that page. A city listing page that names only a different plan kind is never crawled for
+  that plan. Example: the Police board's page filed under the Firefighters' plan.
+- **D-A22 Renderer (T-AIRO).** The renderer is Playwright Chromium, headless, with our declared UA
+  and no stealth. Every browser request is intercepted. Non-GET requests are aborted and logged as
+  refused. Images, fonts and media are skipped. Subresource GETs to the site's CDN and app hosts
+  are allowed for rendering only and are logged, and nothing they return is stored.
+- **D-A23 Retroactive validator cleanup.** When a new validator lands, unreviewed machine rows
+  that fail it are deleted, and each deletion is recorded in `audit_log`. Reviewed rows (approved
+  or rejected) are never touched by code.
+- **D-A24 Search.** LanceDB holds scrubbed page text only. Search fuses BM25 full-text results and
+  local `BAAI/bge-small-en-v1.5` embedding results with reciprocal-rank fusion. The vector-store
+  sweep is part of the nightly wall and cannot be skipped silently.
+- **D-A25 Known limitation.** A document that belongs to several plans (a combined 112.664 report)
+  is extracted once and attributed to one of them. The fix is per-(document, plan) extraction,
+  planned for Phase B.
