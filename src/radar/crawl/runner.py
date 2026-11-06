@@ -30,6 +30,7 @@ from radar.registry import approve as reg
 log = logging.getLogger(__name__)
 
 HISTORY_YEARS = 5
+RENDER_TEMPLATES = {"T-AIRO"}  # client-rendered sites: listing pages go through the Playwright renderer
 TYPE_PRIORITY = ["RFP", "AGENDA", "MINUTES", "IPS", "PERFORMANCE", "DISCLOSURE_112664", "ACTUARIAL", "FINANCIAL", "OTHER"]
 PLAN_WORDS = {
     "police": r"\bpolice\b", "fire": r"\bfire(?:fighters?)?\b", "general": r"\b(?:general|ge)\b",
@@ -55,8 +56,32 @@ def _plan_word(allocator_id: str) -> str | None:
     return tail if tail in PLAN_WORDS else None
 
 
+_PLAN_KIND = {"police": r"\bpolice\b", "fire": r"\bfire(?:fighters?)?\b",
+              "general": r"\b(?:general|employees|ge)\b", "management": r"\bmanagement\b"}
+
+
+def _kinds(text: str) -> set[str]:
+    t = unquote(text).replace("-", " ").replace("_", " ")
+    return {k for k, pat in _PLAN_KIND.items() if re.search(pat, t, re.I)}
+
+
+def foreign_plan_page(page_url: str, owners: list[dict]) -> bool:
+    """A city listing page that names only OTHER plan kinds than its owners (e.g. the Police board's page
+    filed under the Firefighters' plan) is not crawled for them."""
+    if owners[0].get("template") not in {"T-CP", "T-CITY", "T-GOV"}:
+        return False
+    page_kinds = _kinds(urlsplit(page_url).path)
+    if not page_kinds:
+        return False
+    owner_kinds = set()
+    for o in owners:
+        owner_kinds |= _kinds(o["allocator_id"].split("-", 2)[-1]) | _kinds(o.get("display_name", ""))
+    return bool(owner_kinds) and not (page_kinds & owner_kinds)
+
+
 def collect_links(client: PoliteClient, allocs: list[dict], pages: dict[str, list[str]]) -> list[DocLink]:
     """Read every listing page once; return document links assigned to allocators."""
+    siblings = [a for a in allocs if _plan_word(a["allocator_id"])]
     by_page: dict[str, list[dict]] = defaultdict(list)
     for a in allocs:
         for u in pages.get(a["allocator_id"], []):
@@ -64,11 +89,21 @@ def collect_links(client: PoliteClient, allocs: list[dict], pages: dict[str, lis
     found: dict[str, DocLink] = {}
     cutoff = date.today() - timedelta(days=365 * HISTORY_YEARS)
     for page_url, owners in by_page.items():
-        r = client.get(page_url)
-        if r.status != 200:
-            log.warning("listing page %s returned %s", page_url, r.status)
+        if foreign_plan_page(page_url, owners):
+            log.info("skipping %s: names a different plan than %s", page_url, [o["allocator_id"] for o in owners])
             continue
-        _, links = parse_links(r.text, r.url)
+        if owners[0].get("template") in RENDER_TEMPLATES:
+            from radar.net.render import render
+
+            final, html = render(client, page_url)
+            _, links = parse_links(html, final)
+            r = type("R", (), {"url": final})()
+        else:
+            r = client.get(page_url)
+            if r.status != 200:
+                log.warning("listing page %s returned %s", page_url, r.status)
+                continue
+            _, links = parse_links(r.text, r.url)
         city = owners[0]["template"] in {"T-CP", "T-CITY", "T-GOV"}
         if len(owners) > 1:  # a plan-specific board page on a shared city site belongs to that plan only
             page_owned = [o for o in owners if (w := _plan_word(o["allocator_id"]))
@@ -86,7 +121,14 @@ def collect_links(client: PoliteClient, allocs: list[dict], pages: dict[str, lis
                 continue
             if d and d > date.today() + timedelta(days=60):
                 d = None  # implausible: ignore rather than invent
-            if len(owners) > 1:
+            # 1) a plan named in the link text / filename wins (any sibling plan on this site),
+            # 2) else the plan that owns the listing page, 3) else every owner of the page.
+            link_label = f"{l.text} {unquote(urlsplit(l.url).path.rsplit('/', 1)[-1]).replace('-', ' ').replace('_', ' ')}"
+            named = [o["allocator_id"] for o in siblings
+                     if re.search(PLAN_WORDS[_plan_word(o["allocator_id"])], link_label, re.I)] if len(siblings) > 1 else []
+            if named:
+                ids = named
+            elif len(owners) > 1:
                 matched = [o["allocator_id"] for o in owners
                            if (w := _plan_word(o["allocator_id"])) and re.search(PLAN_WORDS[w], label, re.I)]
                 ids = matched or [o["allocator_id"] for o in owners]

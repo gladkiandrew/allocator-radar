@@ -55,4 +55,5 @@ banned_imports:
 # Only these modules may construct an HTTP client.
 http_client_modules:
   - radar/net/client.py
+  - radar/net/render.py
   - radar/llm/provider.py

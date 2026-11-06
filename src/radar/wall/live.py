@@ -119,7 +119,7 @@ def check_dependencies() -> list[str]:
                 for b in banned:
                     if m == b or m.startswith(b + "."):
                         out.append(f"deps: {rel} imports banned module {m}")
-                if m.split(".")[0] == "httpx" and rel not in http_ok:
+                if m.split(".")[0] in ("httpx", "playwright") and rel not in http_ok:
                     out.append(f"deps: {rel} imports httpx (only {sorted(http_ok)} may)")
     return out
 

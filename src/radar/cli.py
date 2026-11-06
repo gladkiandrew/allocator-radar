@@ -25,6 +25,7 @@ def main(argv: list[str] | None = None) -> int:
     ep.add_argument("--limit", type=int, default=0, help="max documents this run (0 = all)")
     dp = sub.add_parser("discover", help="discovery agent: registry/seed_florida.yaml -> registry/florida.yaml")
     dp.add_argument("--resuggest", action="store_true", help="recompute suggested pages only (no fetching)")
+    dp.add_argument("--only", nargs="*", help="re-discover only these plan ids; keep the rest of the registry")
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -45,7 +46,7 @@ def main(argv: list[str] | None = None) -> int:
             path = get_settings().registry_dir / "florida.yaml"
             discovery.resuggest(path)
         else:
-            path = discovery.run()
+            path = discovery.run(only=set(args.only) if args.only else None)
         print(f"wrote {path} (version {discovery.version(path)[:12]})")
     elif args.cmd == "crawl":
         import json

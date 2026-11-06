@@ -58,3 +58,13 @@ def test_faithful_signal_stored_and_bad_ones_dropped():
 def test_quote_matching():
     assert X.quote_on_page("the board voted to  issue", "The Board\nvoted to issue an RFP")
     assert not X.quote_on_page("the board voted to fire", "The Board voted to issue an RFP")
+
+
+def test_support_check():
+    assert X.supports("The Board approved the engagement letter with CBIZ CPAs for audit services.",
+                      "approved the engagement letter with CBIZ CPAs", "Canary P&F")
+    assert not X.supports("The Board approved the engagement letter with CBIZ CPAs for audit services.",
+                          "The Board agreed to extend the contract for legal services with Rossman", "Canary P&F")
+    assert X.supports("The Board voted to issue an RFP for a hedge fund of funds manager.",
+                      "The Board voted to issue a Request for Proposals", "Canary P&F")
+    assert X.supports("transferring $3 million to the R&D cash account", "transfer $3 million to R&D", "x")

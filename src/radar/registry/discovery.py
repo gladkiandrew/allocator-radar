@@ -124,7 +124,14 @@ def discover_plan(client: PoliteClient, seed: dict) -> dict:
         if not allowed:
             out["access"], out["access_reason"] = "MANUAL", "robots.txt disallows the plan page"
             return out
-        r = client.get(seed["url"])
+        rendered = seed["template"] == "T-AIRO"
+        if rendered:
+            from radar.net.render import render
+
+            final, html = render(client, seed["url"])
+            r = type("R", (), {"url": final, "status": 200, "text": html, "content_type": "text/html"})()
+        else:
+            r = client.get(seed["url"])
         if r.status != 200:
             out["access"], out["access_reason"] = "MANUAL", f"home page returned HTTP {r.status}"
             return out
@@ -149,7 +156,11 @@ def discover_plan(client: PoliteClient, seed: dict) -> dict:
         # Shared city pages (several plans on one page) and CivicPlus sites: stay close to the plan page.
         for l in cands[:MAX_CANDIDATES]:
             try:
-                rr = client.get(l.url)
+                if rendered:
+                    final, html = render(client, l.url)
+                    rr = type("R", (), {"url": final, "status": 200, "text": html, "content_type": "text/html"})()
+                else:
+                    rr = client.get(l.url)
             except (RefusedRequest, HostThrottled) as e:
                 pages.append({"url": l.url, "label": l.text[:80], "documents": 0, "by_type": {}, "note": str(e)[:120]})
                 continue
@@ -173,15 +184,20 @@ def discover_plan(client: PoliteClient, seed: dict) -> dict:
     return out
 
 
-def run(seed_path: Path | None = None, out_path: Path | None = None) -> Path:
+def run(seed_path: Path | None = None, out_path: Path | None = None, only: set[str] | None = None) -> Path:
     s = get_settings()
     seed_path = seed_path or s.registry_dir / "seed_florida.yaml"
     out_path = out_path or s.registry_dir / "florida.yaml"
     seed = yaml.safe_load(seed_path.read_text())
 
     # One thread per host; plans sharing a host run sequentially so per-host delays hold.
+    previous = {}
+    if only and out_path.exists():  # refresh some plans, keep the rest of the existing registry as-is
+        previous = {a["allocator_id"]: a for a in yaml.safe_load(out_path.read_text())["allocators"]}
     by_host: dict[str, list[dict]] = defaultdict(list)
     for p in seed["plans"]:
+        if only and p["id"] not in only and p["id"] in previous:
+            continue
         by_host[urlsplit(p["url"]).hostname or ""].append(p)
 
     def work(plans: list[dict]) -> list[dict]:
@@ -205,6 +221,8 @@ def run(seed_path: Path | None = None, out_path: Path | None = None) -> Path:
 
     with ThreadPoolExecutor(max_workers=12) as ex:
         results = [r for chunk in ex.map(work, by_host.values()) for r in chunk]
+    got = {r["allocator_id"] for r in results}
+    results += [a for aid, a in previous.items() if aid not in got]
     order = {p["id"]: i for i, p in enumerate(seed["plans"])}
     results.sort(key=lambda r: order[r["allocator_id"]])
     doc = {

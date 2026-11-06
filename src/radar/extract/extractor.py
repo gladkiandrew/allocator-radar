@@ -32,7 +32,7 @@ from radar.wall.scrubber import detect
 
 log = logging.getLogger(__name__)
 EXTRACTOR = "page-extractor"
-EXTRACTOR_VERSION = "0.1.0"
+EXTRACTOR_VERSION = "0.2.0"
 PAGES_PER_CALL = 6
 
 SignalTypeLit = Literal[
@@ -105,7 +105,8 @@ Your output feeds a review queue; a person approves every signal before anyone u
 Rules:
 - Extract only what the pages state. Do not infer intent, predict, or characterize.
 - Every item cites one page number from the PAGE markers and a quote copied character-for-character from that \
-page (<= 400 characters). If you cannot quote it, do not extract it.
+page (<= 400 characters). The quote must itself establish the fact: it contains the action and, when the summary \
+names a firm, fund or amount, that name or amount. If you cannot quote it, do not extract it.
 - event_date / as_of: the date the document gives for the action or holding (meeting date when the minutes record a \
 vote; issue date for an RFP; report "as of" date for holdings). Use the document date from the metadata only when \
 the page is the record of that meeting or report. Format YYYY-MM-DD.
@@ -147,6 +148,27 @@ def quote_on_page(quote: str, page_text: str) -> bool:
     # tolerate ellipses joining two exact fragments
     parts = [x.strip() for x in re.split(r"\.\.\.|…", q) if len(x.strip()) >= 12]
     return bool(parts) and all(x in p for x in parts)
+
+
+_STOP = {"The", "Board", "Plan", "Fund", "Trust", "System", "Retirement", "Pension", "Police", "Fire", "Firefighters",
+         "Officers", "City", "Town", "Trustees", "Trustee", "Investment", "Committee", "Mr", "Ms", "Mrs", "Chair",
+         "Chairman", "Motion", "Inc", "LLC", "LP", "And", "Of", "For", "In", "On", "To", "A", "An", "Employees", "General",
+         "Request", "Proposals", "RFP", "Florida", "FL", "Policy", "Statement", "IPS"}
+
+
+def supports(summary: str, quote: str, allocator_name: str = "") -> bool:
+    """Deterministic support check: the summary's named entities / numbers must overlap the quote.
+
+    Names of the plan itself and generic words don't count. If the summary names nothing specific,
+    the quote passes (the action words are checked by the reviewer)."""
+    plan = set(re.findall(r"[A-Za-z][A-Za-z&'.-]+", allocator_name))
+    names = {w for w in re.findall(r"\b[A-Z][A-Za-z&'.-]{2,}\b", summary) if w not in _STOP and w not in plan}
+    nums = {n.replace(",", "") for n in re.findall(r"\$?\d[\d,.]*", summary) if len(n.strip("$.,")) >= 2}
+    if not names and not nums:
+        return True
+    q = _norm(quote)
+    qn = q.replace(",", "")
+    return any(n.lower() in q for n in names) or any(n.lower().strip("$") in qn for n in nums)
 
 
 def _date(s: str, today: date) -> date | None:
@@ -204,6 +226,9 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
         summary = s.summary.strip()[:300]
         if not lint(summary).ok or detect(summary):
             drop(f"signal lint: {lint(summary).banned_found}")
+            continue
+        if not supports(summary, s.quote, meta["display_name"]):
+            drop("signal quote does not support summary")
             continue
         eid = evidence(s.page, s.quote, s.confidence)
         if eid is None:

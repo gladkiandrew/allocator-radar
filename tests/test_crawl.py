@@ -50,3 +50,12 @@ def test_shared_page_assigns_by_plan_word():
     assert sorted(links["Pension-112664-Report.pdf"].allocator_ids) == ["fl-x-fire", "fl-x-police"]
     assert "Old-Minutes-01-15-2015.pdf" not in links  # older than 5 years
     assert "Parks-Plan.pdf" not in links  # not a pension document on a city page
+
+
+def test_foreign_plan_page():
+    fire = [{"allocator_id": "fl-hollywood-fire", "display_name": "Hollywood Firefighters' Pension", "template": "T-CP"}]
+    assert runner.foreign_plan_page("https://www.hollywoodfl.org/172/Police-Officers-Pension-Board", fire)
+    assert runner.foreign_plan_page("https://www.hollywoodfl.org/597/Employees-Retirement-Fund-Pension-Board", fire)
+    assert not runner.foreign_plan_page("https://www.hollywoodfl.org/164/Firefighters-Pension-Board", fire)
+    pf = [{"allocator_id": "fl-boca-pf", "display_name": "Boca Raton Police and Firefighters' Retirement System", "template": "T-CP"}]
+    assert not runner.foreign_plan_page("https://www.myboca.us/337/Police-Firefighters-Retirement-System", pf)
