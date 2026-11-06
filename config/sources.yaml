@@ -1,0 +1,67 @@
+# Florida source allowlist, from docs/AGENDA.md §2.3–2.4 (verified 2026-11-05/06).
+# The HTTP client refuses any host that is not listed here with verdict CRAWL/BULK/API.
+# MANUAL = a human reads it in a browser and may enter a dated, cited fact by hand,
+#          or drop a downloaded file into inbox/manual/. The system never fetches it.
+# DROP / HARD_REJECT = never fetched, never linked as a data source.
+#
+# robots.txt is re-checked live on every crawl regardless of the verdict below.
+
+verdicts:
+  # ---- Florida state level (§2.3) ----
+  - {id: FL1, name: "Florida SBA (FRS Pension Plan)", hosts: [www.sbafla.com, sbafla.com], verdict: MANUAL, reason: "Akamai 403 to every non-browser request; human downloads quarterly reports into inbox/manual/"}
+  - {id: FL2, name: "FL DMS Local Retirement Section", hosts: [www.dms.myflorida.com], verdict: CRAWL, render: playwright, reason: "client-rendered list of ~490 local plans; JS render is not a bot wall. Phase B"}
+  - {id: FL2-FS, name: "DMS actuarial fact sheets", hosts: [employer.frs.fl.gov], verdict: CRAWL, reason: "static PDFs at /forms/<PLANCODE>.pdf. Phase B"}
+  - {id: FL3, name: "F.S. 112.664", hosts: [www.leg.state.fl.us], verdict: CRAWL, reason: "reference statute; flsenate.gov returned 429, so use leg.state.fl.us"}
+  - {id: FL4, name: "Florida Auditor General", hosts: [flauditor.gov], verdict: CRAWL, reason: "e-filed local audits"}
+  - {id: FL5, name: "FL CFO LOGERx", hosts: [logerx.myfloridacfo.gov], verdict: CRAWL, reason: "local government AFRs (PARTIAL)"}
+  - {id: FL6, name: "Sunbiz corporate data files", hosts: [sftp.floridados.gov], verdict: MANUAL, reason: "SFTP credentials copied once by a human; Phase C+"}
+  - {id: FL7, name: "Sunbiz name search", hosts: [search.sunbiz.org], verdict: DROP, reason: "FL6 is the sanctioned bulk path"}
+  - {id: FL8, name: "MyFloridaMarketPlace VIP", hosts: [vendor.myfloridamarketplace.com], verdict: MANUAL, reason: "UNVERIFIED Angular SPA; pending a logged-out render check"}
+  - {id: FL9, name: "FMPTF (Florida League of Cities)", hosts: [retirement.flcities.com], verdict: CRAWL, crawl_delay: 10, reason: "robots Crawl-delay 10"}
+  - {id: FL10, name: "FPPTA plan data center", hosts: [fppta1984.fppta.org, www.fppta.org], verdict: DROP, reason: "members-only"}
+
+  # ---- South Florida plan sites (§2.4) ----
+  - {id: SF-FIPO, name: "Miami FIPO", hosts: [www.miamifipo.org, miamifipo.org], verdict: CRAWL, template: CUSTOM}
+  - {id: SF-GESE, name: "Miami GESE", hosts: [gese.org, www.gese.org], verdict: CRAWL, template: T-WP}
+  - {id: SF-MB, name: "City of Miami Beach", hosts: [www.miamibeachfl.gov], verdict: CRAWL, template: T-CITY}
+  - {id: SF-CG, name: "City of Coral Gables", hosts: [www.coralgables.com, coralgables.legistar.com], verdict: CRAWL, template: T-CITY}
+  - {id: SF-HIA, name: "City of Hialeah", hosts: [www.hialeahfl.gov, hialeahfl.gov], verdict: CRAWL, template: T-CP}
+  - {id: SF-FTLPF, name: "Fort Lauderdale Police & Fire", hosts: [ftlaudpfpension.com, www.ftlaudpfpension.com], verdict: CRAWL, template: T-WP}
+  - {id: SF-HWERF, name: "Hollywood Employees' Retirement Fund", hosts: [hollywoodpension.com, www.hollywoodpension.com], verdict: CRAWL, template: T-WP}
+  - {id: SF-HWPO, name: "Hollywood Police Officers' RS", hosts: [www.hollywoodpolicepensionfund.com, hollywoodpolicepensionfund.com], verdict: CRAWL, template: T-AIRO, render: playwright}
+  - {id: SF-HWFL, name: "City of Hollywood", hosts: [www.hollywoodfl.org, hollywoodfl.org], verdict: CRAWL, template: T-CP}
+  - {id: SF-PBPF, name: "Pompano Beach Police & Fire", hosts: [www.pbpfrs.org, pbpfrs.org], verdict: CRAWL, template: T-WP}
+  - {id: SF-PPFP, name: "Pembroke Pines Fire & Police", hosts: [www.pinespension.com, pinespension.com], verdict: CRAWL, template: T-WP}
+  - {id: SF-DAVIE, name: "Town of Davie", hosts: [fl-davie.civicplus.com, www.davie-fl.gov, davie-fl.gov], verdict: CRAWL, template: T-CP}
+  - {id: SF-CSP, name: "City of Coral Springs", hosts: [www.coralsprings.gov, coralsprings.gov], verdict: CRAWL, template: T-GOV}
+  - {id: SF-MIR, name: "City of Miramar", hosts: [www.miramarfl.gov, miramarfl.gov], verdict: CRAWL, template: T-GOV}
+  - {id: SF-BOCA, name: "City of Boca Raton", hosts: [www.myboca.us, myboca.us], verdict: CRAWL, template: T-CP}
+  - {id: SF-WPBPP, name: "West Palm Beach Police Pension", hosts: [www.wpbppf.com, wpbppf.com], verdict: CRAWL, template: T-AIRO, render: playwright}
+  - {id: SF-TOPB, name: "Town of Palm Beach", hosts: [www.townofpalmbeach.com, townofpalmbeach.com], verdict: CRAWL, template: T-CP}
+  - {id: SF-JUP, name: "Town of Jupiter", hosts: [jupiter.fl.us, www.jupiter.fl.us], verdict: CRAWL, template: T-CP}
+  - {id: SF-KW, name: "City of Key West", hosts: [cityofkeywest-fl.gov, www.cityofkeywest-fl.gov, keywest.legistar.com], verdict: CRAWL, template: T-CP}
+  - {id: SF-NMB, name: "City of North Miami Beach", hosts: [www.citynmb.com, citynmb.com], verdict: CRAWL, template: T-CP}
+  - {id: SF-RIV, name: "City of Riviera Beach", hosts: [www.rivierabch.com, rivierabch.com], verdict: CRAWL, template: T-CP}
+  - {id: SF-MDC, name: "Miami-Dade County Legistar", hosts: [miamidade.legistar.com, webapi.legistar.com], verdict: API, reason: "Legistar API works without a token for Miami-Dade"}
+
+  # ---- Blocked to non-browser clients (§2.4) -> MANUAL ----
+  - {id: SF-BLOCKED, name: "Akamai/Cloudflare-fronted city sites", hosts: [www.plantation.org, www.delraybeachfl.gov, www.sunrisefl.gov, www.wpb.org, www.fortlauderdale.gov, lakeworthbeachfl.gov], verdict: MANUAL, reason: "blocked to non-browser clients; never evaded"}
+  - {id: SF-TRC, name: "The Resource Centers (TPA)", hosts: [www.resourcecenters.com, resourcecenters.com], verdict: DROP, reason: "Cloudflare managed challenge; robots Disallow: / to ClaudeBot and anthropic-ai"}
+
+  # ---- Phase C: FL endowments, foundations, hospitals (§2.2) ----
+  - {id: F1, name: "IRS 990-series e-file XML", hosts: [www.irs.gov, apps.irs.gov], verdict: BULK, reason: "Phase C"}
+  - {id: F3, name: "IRS EO BMF", hosts: [www.irs.gov], verdict: BULK, reason: "Phase C; DROP street/ICO/ZIP at load"}
+  - {id: F4, name: "ProPublica Nonprofit Explorer API", hosts: [projects.propublica.org], verdict: API, reason: "Phase C; API path only; cite ProPublica; DROP org address"}
+
+  # ---- Manual-only (Touchpoint 4 fact entry) ----
+  - {id: P1, name: "Pensions & Investments", hosts: [www.pionline.com, pionline.com], verdict: MANUAL, reason: "403 bot wall"}
+  - {id: C5, name: "Dahab Associates", hosts: [www.dahab.com, dahab.com], verdict: MANUAL, reason: "posts live client RFPs; human checks weekly"}
+  - {id: R1, name: "NFA BASIC", hosts: [www.nfa.futures.org], verdict: MANUAL, reason: "robots Disallow /basicnet/; no redistribution"}
+  - {id: P2, name: "Chief Investment Officer RSS", hosts: [www.ai-cio.com], verdict: RSS, reason: "headline, link, date only"}
+
+  # ---- Hard rejects: never ingest, link, or scrape (AGENDA §1.3) ----
+  - {id: HARD, name: "Licensed databases and login-walled products", hosts: [www.preqin.com, www.evestment.com, www.withintelligence.com, www.hfr.com, www.barclayhedge.com, pitchbook.com, www.fundfire.com, www.dakota.com, www.linkedin.com, emma.msrb.org, brokercheck.finra.org, go.boarddocs.com, primegov.com], verdict: HARD_REJECT}
+
+# Robots user-agent tokens we ALSO check, because fetched text is sent to an LLM.
+# If any of them is disallowed for a path, we treat the path as disallowed (D-A07).
+robots_also_honor: [ClaudeBot, anthropic-ai, Claude-User, Claude-SearchBot]

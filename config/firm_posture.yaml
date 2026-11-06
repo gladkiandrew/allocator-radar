@@ -1,0 +1,7 @@
+# Regulatory posture of whoever uses the exports. Affects ONLY export disclaimers
+# and how strict the language lint is. It never unlocks data or features.
+#   ria      -> SEC Marketing Rule 206(4)-1 disclaimer
+#   cpo_cta  -> NFA Compliance Rule 2-29 disclaimer
+#   both     -> both disclaimers + strictest lint (default)
+#   none     -> generic disclaimer, base lint
+posture: both

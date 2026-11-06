@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Florida allocators</h1>
+<p class="sub">Readiness comes from approved signals in public documents. Each row shows the signal, its date and its source.
+  <a href="/how">How tiers are set</a>.</p>
+
+<div class="filters">
+  <a href="/" class="{{ 'on' if not tier }}">All {{ counts.total }}</a>
+  {% for t in tiers %}<a href="/?tier={{ t }}" class="{{ 'on' if tier == t }}">{{ t|title }} {{ counts[t] }}</a>{% endfor %}
+  <a href="/export.csv" class="hide-sm">Export CSV (approved only)</a>
+</div>
+
+{% if not rows %}
+<div class="card">No allocators yet. The registry has not been loaded and approved. Go to <a href="/registry">Registry</a>.</div>
+{% else %}
+<div class="scroll">
+<table class="stack">
+  <thead><tr>
+    <th>Allocator</th><th>Readiness</th><th>Why (latest approved signal)</th><th class="hide-sm">Consultant</th><th class="hide-sm">Coverage</th>
+  </tr></thead>
+  <tbody>
+  {% for a in rows %}{% set r = a.readiness %}
+  <tr>
+    <td><a href="/a/{{ a.allocator_id }}"><strong>{{ a.display_name }}</strong></a><br>
+      <span class="muted">{{ a.jurisdiction_city or '' }}{% if a.access == 'MANUAL' %} · manual source{% endif %}</span></td>
+    <td><span class="tier {{ r.tier }}">{{ r.tier }}</span>
+      {% if r.coverage_stale and r.tier not in ('STALE',) %}<br><span class="muted" style="font-size:12px">coverage stale</span>{% endif %}</td>
+    <td class="why">
+      {% if r.reasons %}{% set s = r.reasons[0] %}
+        <span class="date">{{ s.event_date }}</span>{{ s.summary }}
+        {% for e in s.evidence[:1] %} <a class="cite" href="{{ cite_href(e) }}" target="_blank" rel="noopener">[{{ (e.doc_title or 'source')|truncate(28) }}{% if e.page %} p.{{ e.page }}{% endif %}]</a>{% endfor %}
+        {% if r.reasons|length > 1 %}<br><a class="muted" href="/a/{{ a.allocator_id }}#signals">+{{ r.reasons|length - 1 }} more qualifying</a>{% endif %}
+      {% elif r.tier == 'STALE' %}<span class="muted">{{ 'No documents fetched yet.' if not a.last_fetched else 'No new document in ' ~ stale_days ~ ' days.' }}</span>
+      {% else %}<span class="muted">No qualifying approved signal in window.</span>{% endif %}
+      {% if a.pending %}<br><span class="pending">{{ a.pending|length }} pending review</span>{% endif %}
+    </td>
+    <td class="hide-sm">{% if a.consultant %}{{ a.consultant.consultant }}<br><span class="muted mono">as of {{ a.consultant.as_of }}</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+    <td class="hide-sm"><span class="mono">{{ a.n_docs }} docs</span><br><span class="muted mono">{{ a.last_fetched.strftime('%Y-%m-%d') if a.last_fetched else 'never fetched' }}</span></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,58 @@
+# THE WALL — machine-checked rules. Changing this file requires the repo owner's review.
+banned_column_pattern: "(email|phone|mobile|fax|address|street|zip|linkedin|twitter|handle|dob|ssn)"
+
+# Only these HTTP methods ever leave the crawler.
+crawler_methods: [GET, HEAD]
+
+# Hosts allowed to receive a POST: the LLM provider only (public documents only).
+post_allowed_hosts: [api.anthropic.com]
+
+# Packages that must never appear in the lockfile (outbound messaging, form
+# automation, social clients, people-data vendors).
+banned_packages:
+  - aiosmtplib
+  - yagmail
+  - sendgrid
+  - mailgun
+  - mailjet-rest
+  - postmarker
+  - boto3-ses
+  - twilio
+  - vonage
+  - plivo
+  - mechanize
+  - mechanicalsoup
+  - robobrowser
+  - selenium
+  - undetected-chromedriver
+  - playwright-stealth
+  - cloudscraper
+  - linkedin-api
+  - python-linkedin
+  - tweepy
+  - instaloader
+  - facebook-sdk
+  - slack-sdk
+  - hubspot-api-client
+  - simple-salesforce
+  - apollo-io
+  - clearbit
+
+# Python modules that must never be imported by src/.
+banned_imports:
+  - smtplib
+  - email.mime
+  - imaplib
+  - poplib
+  - ftplib
+  - telnetlib
+  - mechanize
+  - selenium
+  - requests   # all HTTP goes through radar.net.client
+  - urllib.request
+  - aiohttp
+
+# Only these modules may construct an HTTP client.
+http_client_modules:
+  - radar/net/client.py
+  - radar/llm/provider.py

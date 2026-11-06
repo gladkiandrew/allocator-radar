@@ -1,0 +1,41 @@
+[project]
+name = "allocator-radar"
+version = "0.1.0"
+description = "Which Florida institutional allocators are getting ready to deploy capital, with a cited reason. Public records only."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "TBD" }
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "jinja2>=3.1",
+    "pydantic>=2.8",
+    "pydantic-settings>=2.4",
+    "duckdb>=1.1",
+    "httpx>=0.27",
+    "pyyaml>=6",
+    "cryptography>=43",
+    "python-multipart>=0.0.9",
+    "anthropic>=0.60",
+    "pdfplumber>=0.11.10",
+    "gliner>=0.2.30",
+    "protobuf>=7.36.2",
+    "sentencepiece>=0.2.3",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "fpdf2>=2.7"]
+
+[project.scripts]
+radar = "radar.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/radar"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["live: runs against the live store (nightly)"]

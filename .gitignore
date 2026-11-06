@@ -1,0 +1,9 @@
+data/
+inbox/manual/*
+!inbox/manual/README.md
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.key

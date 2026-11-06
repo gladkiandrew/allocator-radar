@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}How this works · Allocator Radar{% endblock %}
+{% block body %}
+<h1>How this works</h1>
+<p class="sub">Each allocator gets one readiness tier. A tier is not a score or an opinion. It comes from the rules below,
+  applied to signals that a person has approved. Every signal cites a public document and a page.</p>
+
+<h2>Rules (config/readiness_rules.yaml)</h2>
+<div class="scroll"><table>
+  <thead><tr><th>Tier</th><th>Window</th><th>Signal types that set it</th><th>Meaning</th></tr></thead>
+  <tbody>
+  {% for t in rules.tiers %}
+  <tr><td><span class="tier {{ t.tier }}">{{ t.tier }}</span></td>
+      <td class="mono">{{ t.window_days }} days</td>
+      <td class="mono">{% for st in t.signal_types %}{{ st }}{% if t.qualifiers and t.qualifiers.get(st) %} ({{ t.qualifiers[st]|join(', ') }} only){% endif %}<br>{% endfor %}</td>
+      <td>{{ t.meaning }}</td></tr>
+  {% endfor %}
+  <tr><td><span class="tier WATCHING">WATCHING</span></td><td class="mono">—</td><td class="muted">none of the above</td>
+      <td>We fetched a new document in the last {{ rules.coverage.stale_after_days }} days. No qualifying approved signal is in window.</td></tr>
+  <tr><td><span class="tier STALE">STALE</span></td><td class="mono">{{ rules.coverage.stale_after_days }} days</td><td class="muted">coverage</td>
+      <td>{{ rules.coverage.meaning }} This shows where coverage is thin. It says nothing about the allocator.</td></tr>
+  </tbody>
+</table></div>
+<p class="muted">Tiers are checked top to bottom, and the first match wins. The window is counted back from today, using the
+  date printed on the source (the meeting, notice or filing date). The date we fetched the document is never used.</p>
+
+<h2>What counts</h2>
+<ul>
+  <li>Only <strong>approved</strong> signals change a tier. New signals appear as <span class="pending">pending review</span> until a reviewer approves or rejects them.</li>
+  <li>A signal comes from one of two places. The extractor reads a fetched public document and quotes the page. Or a person enters a fact from a manual-only source, with its URL and date.</li>
+  <li>Nothing exports until it is approved. The CSV export contains approved signals only.</li>
+</ul>
+
+<h2>The Wall</h2>
+<ul>
+  <li><strong>No contact details anywhere.</strong> No model has an email, phone, address, or social-profile field. People appear only as name and title, as printed in public documents.</li>
+  <li><strong>Scrubber first.</strong> Every piece of text is scrubbed before it reaches the language model, the search index or any table. Contact-shaped text becomes <span class="mono">[REDACTED-CONTACT]</span>.</li>
+  <li><strong>No outbound capability.</strong> The crawler sends GET and HEAD requests only, to an allowlist of hosts. It honors robots.txt and stops at any bot wall. The system cannot send email or messages, and it cannot submit forms.</li>
+  <li><strong>Tested every night.</strong> Wall tests sweep every stored text column. They also run a canary packet full of fake contact details through the pipeline and require that none of it is stored.</li>
+</ul>
+
+<h2>Language</h2>
+<p>Summaries use factual verbs (reported, approved, voted, issued, awarded, terminated, placed on watch). A lint rejects
+  evaluative words before anything is stored.</p>
+{% endblock %}
