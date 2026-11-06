@@ -34,6 +34,21 @@ plans:
   - {id: fl-keywest-ge, name: "Key West General Employees' Pension", type: PUBLIC_PENSION_LOCAL, city: Key West, url: "https://www.cityofkeywest-fl.gov/555", template: T-CP, source: SF-KW}
   - {id: fl-nmb-pf, name: "North Miami Beach Police and Fire Pension", type: POLICE_FIRE, city: North Miami Beach, url: "https://www.citynmb.com/", template: T-CP, source: SF-NMB}
   - {id: fl-riviera, name: "Riviera Beach pension plans", type: PUBLIC_PENSION_LOCAL, city: Riviera Beach, url: "https://www.rivierabch.com/", template: T-CP, source: SF-RIV}
+  # Added 2026-11-06 (AGENDA §2.4 "not located yet", found by the research pass; re-verified by discovery)
+  - {id: fl-miami-eort, name: "City of Miami Elected Officers' Retirement Trust", type: PUBLIC_PENSION_LOCAL, city: Miami, url: "https://archive.miami.gov/finance/EORT/", template: MANUAL, source: SF-MIAEORT}
+  - {id: fl-northmiami-general, name: "Clair T. Singerman Employees Retirement System (North Miami)", type: PUBLIC_PENSION_LOCAL, city: North Miami, url: "https://northmiamipension.com/home/notices/", template: T-WP, source: SF-NMPEN, shared_page: true}
+  - {id: fl-northmiami-police, name: "North Miami Police Pension Plan", type: POLICE_FIRE, city: North Miami, url: "https://northmiamipension.com/home/notices/", template: T-WP, source: SF-NMPEN, shared_page: true}
+  - {id: fl-nmb-general, name: "Retirement Plan for General Employees of the City of North Miami Beach", type: PUBLIC_PENSION_LOCAL, city: North Miami Beach, url: "https://www.citynmb.com/481/General-Employees-Retirement-Board", template: T-CP, source: SF-NMB}
+  - {id: fl-pompano-general, name: "Pompano Beach General Employees Retirement System", type: PUBLIC_PENSION_LOCAL, city: Pompano Beach, url: "https://pompgers.org/", template: CUSTOM, source: SF-PGERS}
+  - {id: fl-davie-police, name: "Town of Davie Police Pension Plan", type: POLICE_FIRE, city: Davie, url: "https://www.davie-fl.gov/191/Pension-Plan-Information", template: T-CP, source: SF-DAVIE}
+  - {id: fl-hallandale-police-fire, name: "Hallandale Beach Police Officers' and Firefighters' Pension Plan", type: POLICE_FIRE, city: Hallandale Beach, url: "https://www.hallandalebeachfl.gov/925/Defined-Benefit-Plans", template: T-CP, source: SF-HALL, shared_page: true}
+  - {id: fl-hallandale-general, name: "Hallandale Beach General/Not-Represented Employees Pension Plan", type: PUBLIC_PENSION_LOCAL, city: Hallandale Beach, url: "https://www.hallandalebeachfl.gov/925/Defined-Benefit-Plans", template: T-CP, source: SF-HALL, shared_page: true}
+  - {id: fl-hallandale-management, name: "Hallandale Beach Professional/Management Employees Pension Plan", type: PUBLIC_PENSION_LOCAL, city: Hallandale Beach, url: "https://www.hallandalebeachfl.gov/925/Defined-Benefit-Plans", template: T-CP, source: SF-HALL, shared_page: true}
+  - {id: fl-pbgardens-fire, name: "City of Palm Beach Gardens Firefighters' Pension Fund", type: POLICE_FIRE, city: Palm Beach Gardens, url: "https://www.pbgfl.gov/629/Financial-Reports", template: T-CP, source: SF-PBG, shared_page: true}
+  - {id: fl-pbgardens-police, name: "City of Palm Beach Gardens Police Officers' Pension Fund", type: POLICE_FIRE, city: Palm Beach Gardens, url: "https://www.pbgfl.gov/629/Financial-Reports", template: T-CP, source: SF-PBG, shared_page: true}
+  - {id: fl-boynton-police, name: "Boynton Beach Police Officers' Pension Fund", type: POLICE_FIRE, city: Boynton Beach, url: "https://www.boynton-beach.org/365/Pension-Reports", template: T-CP, source: SF-BOYN, shared_page: true}
+  - {id: fl-boynton-fire, name: "Boynton Beach Municipal Firefighters' Pension Trust Fund", type: POLICE_FIRE, city: Boynton Beach, url: "https://www.boynton-beach.org/365/Pension-Reports", template: T-CP, source: SF-BOYN, shared_page: true}
+  - {id: fl-boynton-general, name: "Boynton Beach General Employees' Pension Fund", type: PUBLIC_PENSION_LOCAL, city: Boynton Beach, url: "https://www.boynton-beach.org/365/Pension-Reports", template: T-CP, source: SF-BOYN, shared_page: true}
   - {id: fl-sba-frs, name: "Florida Retirement System Pension Plan (State Board of Administration)", type: PUBLIC_PENSION_STATE, city: Tallahassee, url: "https://www.sbafla.com/", template: MANUAL, source: FL1}
 
 # Sponsors whose sites block non-browser clients (AGENDA §2.4). Listed so the gap is

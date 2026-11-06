@@ -44,6 +44,14 @@ verdicts:
   - {id: SF-RIV, name: "City of Riviera Beach", hosts: [www.rivierabch.com, rivierabch.com], verdict: CRAWL, template: T-CP}
   - {id: SF-MDC, name: "Miami-Dade County Legistar", hosts: [miamidade.legistar.com, webapi.legistar.com], verdict: API, reason: "Legistar API works without a token for Miami-Dade"}
 
+  # ---- Added 2026-11-06 from the plan-site research pass (official plan or city sites) ----
+  - {id: SF-NMPEN, name: "North Miami pension plans (691 + 748 plans)", hosts: [northmiamipension.com, www.northmiamipension.com], verdict: CRAWL, template: T-WP}
+  - {id: SF-PGERS, name: "Pompano Beach General Employees RS", hosts: [pompgers.org, www.pompgers.org], verdict: CRAWL, template: CUSTOM}
+  - {id: SF-HALL, name: "City of Hallandale Beach", hosts: [www.hallandalebeachfl.gov, hallandalebeachfl.gov, cohb.org, www.cohb.org], verdict: CRAWL, template: T-CP}
+  - {id: SF-PBG, name: "City of Palm Beach Gardens", hosts: [www.pbgfl.gov, pbgfl.gov], verdict: CRAWL, template: T-CP}
+  - {id: SF-BOYN, name: "City of Boynton Beach", hosts: [www.boynton-beach.org, boynton-beach.org], verdict: CRAWL, template: T-CP}
+  - {id: SF-MIAEORT, name: "City of Miami file archive (EORT)", hosts: [archive.miami.gov], verdict: MANUAL, reason: "403 to automated clients (research pass 2026-11-06)"}
+
   # ---- Blocked to non-browser clients (§2.4) -> MANUAL ----
   - {id: SF-BLOCKED, name: "Akamai/Cloudflare-fronted city sites", hosts: [www.plantation.org, www.delraybeachfl.gov, www.sunrisefl.gov, www.wpb.org, www.fortlauderdale.gov, lakeworthbeachfl.gov], verdict: MANUAL, reason: "blocked to non-browser clients; never evaded"}
   - {id: SF-TRC, name: "The Resource Centers (TPA)", hosts: [www.resourcecenters.com, resourcecenters.com], verdict: DROP, reason: "Cloudflare managed challenge; robots Disallow: / to ClaudeBot and anthropic-ai"}

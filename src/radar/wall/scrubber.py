@@ -106,7 +106,17 @@ def _gliner():
     except ImportError:
         log.warning("GLiNER not installed; scrubber runs regex only")
         return None
-    return GLiNER.from_pretrained("urchade/gliner_multi_pii-v1")
+    model = GLiNER.from_pretrained("urchade/gliner_multi_pii-v1")
+    try:
+        import torch
+
+        if torch.backends.mps.is_available():
+            model = model.to("mps")
+        elif torch.cuda.is_available():
+            model = model.to("cuda")
+    except Exception as e:  # CPU is fine, just slower
+        log.info("GLiNER stays on CPU: %s", e)
+    return model
 
 
 def _gliner_spans(text: str) -> list[tuple[int, int]]:
@@ -114,8 +124,9 @@ def _gliner_spans(text: str) -> list[tuple[int, int]]:
     if model is None or not text.strip():
         return []
     spans: list[tuple[int, int]] = []
-    # GLiNER has a short context window; walk the text in overlapping windows.
-    window, step = 1200, 1000
+    # GLiNER reads at most 384 tokens per window; numbers and punctuation tokenize densely, so
+    # windows are kept well under that (no silent truncation) and overlap so no span is cut in half.
+    window, step = 600, 500
     for off in range(0, max(len(text), 1), step):
         chunk = text[off : off + window]
         if not chunk.strip():
