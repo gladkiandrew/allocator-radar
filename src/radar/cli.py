@@ -23,6 +23,9 @@ def main(argv: list[str] | None = None) -> int:
     ep = sub.add_parser("extract", help="run the extraction agent over prefiltered pages not yet extracted")
     ep.add_argument("--only", nargs="*", help="allocator ids")
     ep.add_argument("--limit", type=int, default=0, help="max documents this run (0 = all)")
+    np_ = sub.add_parser("nightly", help="registry policy -> crawl -> extract -> policy approvals -> index -> wall")
+    np_.add_argument("--max-docs", type=int, default=40)
+    sub.add_parser("hash-password", help="print the sha256 for RADAR_AUTH_PASSWORD_HASH (reads the password from stdin)")
     sub.add_parser("approve-pending", help="apply config/review_policy.yaml to pending signals (and the registry)")
     sub.add_parser("index", help="add newly parsed (scrubbed) pages to the LanceDB search index")
     dp = sub.add_parser("discover", help="discovery agent: registry/seed_florida.yaml -> registry/florida.yaml")
@@ -70,6 +73,32 @@ def main(argv: list[str] | None = None) -> int:
         for sha, aid in todo:
             st = extractor.extract_document(sha, aid)
             print(json.dumps({"doc": sha[:12], "allocator": aid, **st}))
+    elif args.cmd == "nightly":
+        import json
+        from radar import db, review, search
+        from radar.crawl import runner
+        from radar.extract import extractor
+        from radar.registry import approve as reg
+        from radar.wall import live
+        db.init_db()
+        reg.auto_approve_if_policy()
+        try:
+            for st in runner.run(max_docs=args.max_docs):
+                print(json.dumps(st))
+        except PermissionError as e:
+            print(f"crawl skipped: {e}")
+        with db.connect() as con:
+            todo = extractor.pending_documents(con)
+        for sha, aid in todo:
+            print(json.dumps({"doc": sha[:12], "allocator": aid, **extractor.extract_document(sha, aid)}))
+        print(f"policy approvals: {review.approve_pending()}")
+        print(f"indexed: {search.index_new()}")
+        return live.main()
+    elif args.cmd == "hash-password":
+        import getpass
+        import hashlib
+        pw = getpass.getpass("password: ") if sys.stdin.isatty() else sys.stdin.readline().rstrip("\n")
+        print(hashlib.sha256(pw.encode()).hexdigest())
     elif args.cmd == "approve-pending":
         from radar import db, review
         from radar.registry import approve as reg

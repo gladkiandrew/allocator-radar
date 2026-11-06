@@ -1,0 +1,7 @@
+data/
+.venv/
+.env
+secrets/
+inbox/manual/*
+**/__pycache__
+.pytest_cache/

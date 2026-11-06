@@ -13,7 +13,7 @@ tags: [project, allocator-radar, plan, hedge-fund-bd]
 > **VERIFIED** = loaded and read this session (raw sweep evidence in `verification/`; terms
 > quoted by research agents with the URL they read). **PENDING** items are queued in
 > `NEXT-SESSION.md`. Nothing here is asserted from memory without a marker. **Not yet approved
-> by Andrew** — the build does not start until §10 is answered.
+> by the owner** — superseded: §10 was answered in docs/BRIEF.md (2026-11-06).
 >
 > Companion files: `DECISIONS.md` (every assumption made without asking) ·
 > `NEXT-SESSION.md` (handoff) · `verification/` (raw evidence).

@@ -109,3 +109,23 @@ are the irreversible ones, which went to the repo owner.
 - **D-A25 Known limitation.** A document that belongs to several plans (a combined 112.664 report)
   is extracted once and attributed to one of them. The fix is per-(document, plan) extraction,
   planned for Phase B.
+- **D-A26 Owner auto-approve policy (owner's instruction, 2026-11-06).** The owner asked for all
+  signals to be approved without manual clicks. `config/review_policy.yaml` turns on
+  auto-approval for signals, manual facts and registry versions. Every approval is stamped
+  `auto-approve (owner policy 2026-11-06)` in `signals.reviewed_by` and in `audit_log`, never as if
+  a person clicked. Every machine validator still runs first. The review page stays open for
+  after-the-fact reject or correct. Turn it off with `auto_approve: false`. Accepted trade-off: an
+  extraction error can reach the main table and exports without a person seeing it first.
+- **D-A27 frs.fl.gov / employer.frs.fl.gov are MANUAL.** The Akamai edge stalls requests that
+  carry our declared UA (an HTTP/2 stream reset or read timeout), while a browser gets through. That
+  is a bot wall in effect, and we never change identity to pass it. The statewide DMS data on those
+  hosts (Appendix A plan list, the fact sheets, the annual report) enters only through
+  `inbox/manual/statewide/`. The DMS pages themselves (dms.myflorida.com) render fine.
+- **D-A28 The Census ASPP unit file is a 67-plan Florida sample, not the full list.** It is
+  allowlisted (F9) but does not replace the DMS plan list for Phase B.
+- **D-A29 Deploy.** A single Docker image runs both the app and the nightly worker, and includes
+  the Claude Code CLI. In containers, subscription auth comes from `CLAUDE_CODE_OAUTH_TOKEN`
+  (`claude setup-token`). Compose binds the app to 127.0.0.1 with basic auth on. The lake key is
+  mounted read-only from `./secrets/`.
+- **D-A30 Public-repo hygiene.** No person's or employer's name appears in the code, config or
+  docs. The license is left for the owner to choose before the repo goes public.

@@ -10,7 +10,7 @@ verdicts:
   # ---- Florida state level (§2.3) ----
   - {id: FL1, name: "Florida SBA (FRS Pension Plan)", hosts: [www.sbafla.com, sbafla.com], verdict: MANUAL, reason: "Akamai 403 to every non-browser request; human downloads quarterly reports into inbox/manual/"}
   - {id: FL2, name: "FL DMS Local Retirement Section", hosts: [www.dms.myflorida.com], verdict: CRAWL, render: playwright, reason: "client-rendered list of ~490 local plans; JS render is not a bot wall. Phase B"}
-  - {id: FL2-FS, name: "DMS actuarial fact sheets", hosts: [employer.frs.fl.gov], verdict: CRAWL, reason: "static PDFs at /forms/<PLANCODE>.pdf. Phase B"}
+  - {id: FL2-FS, name: "DMS actuarial fact sheets", hosts: [employer.frs.fl.gov, frs.fl.gov], verdict: MANUAL, reason: "Akamai edge stalls requests carrying our declared UA (2026-11-06); never evaded. A person downloads frs.fl.gov/forms/Actuarial_Fact_Sheets.pdf into inbox/manual/"}
   - {id: FL3, name: "F.S. 112.664", hosts: [www.leg.state.fl.us], verdict: CRAWL, reason: "reference statute; flsenate.gov returned 429, so use leg.state.fl.us"}
   - {id: FL4, name: "Florida Auditor General", hosts: [flauditor.gov], verdict: CRAWL, reason: "e-filed local audits"}
   - {id: FL5, name: "FL CFO LOGERx", hosts: [logerx.myfloridacfo.gov], verdict: CRAWL, reason: "local government AFRs (PARTIAL)"}
@@ -52,6 +52,9 @@ verdicts:
   - {id: F1, name: "IRS 990-series e-file XML", hosts: [www.irs.gov, apps.irs.gov], verdict: BULK, reason: "Phase C"}
   - {id: F3, name: "IRS EO BMF", hosts: [www.irs.gov], verdict: BULK, reason: "Phase C; DROP street/ICO/ZIP at load"}
   - {id: F4, name: "ProPublica Nonprofit Explorer API", hosts: [projects.propublica.org], verdict: API, reason: "Phase C; API path only; cite ProPublica; DROP org address"}
+
+  # ---- Phase B: statewide plan list ----
+  - {id: F9, name: "Census Annual Survey of Public Pensions (unit file)", hosts: [www2.census.gov], verdict: BULK, crawl_delay: 15, reason: "AGENDA F9: public domain; robots Crawl-delay 15. Statewide FL plan list (names, assets) for the Phase B coverage map"}
 
   # ---- Manual-only (Touchpoint 4 fact entry) ----
   - {id: P1, name: "Pensions & Investments", hosts: [www.pionline.com, pionline.com], verdict: MANUAL, reason: "403 bot wall"}

@@ -3,7 +3,7 @@
 Same pattern as the crew runtimes: the app's LLM calls go through `claude -p` on the owner's
 Claude subscription, run as the VPS service user. No API key.
 
-1. As the service user (e.g. `dispatcher`), confirm the CLI is logged in to the subscription:
+1. As the service user that runs the app, confirm the CLI is logged in to the subscription:
    `claude auth status` → `"authMethod": "claude.ai"`. If not, `claude login`. For a headless
    or containerized runtime, use `claude setup-token` and export `CLAUDE_CODE_OAUTH_TOKEN`.
 2. `git clone` the repo, `uv sync`, `cp .env.example .env`, and set:

@@ -1,0 +1,26 @@
+# Local or VPS. Put it behind your tunnel/reverse proxy; never expose port 8000 publicly without auth.
+services:
+  app:
+    build: .
+    env_file: .env
+    environment:
+      RADAR_AUTH_MODE: basic            # login required off-localhost
+    ports: ["127.0.0.1:8000:8000"]
+    volumes:
+      - radar-data:/data
+      - ./secrets:/secrets:ro           # lake.key lives here (never in git)
+      - ./inbox/manual:/data/inbox/manual
+    restart: unless-stopped
+
+  worker:                               # nightly: crawl -> extract -> approvals policy -> index -> wall
+    build: .
+    env_file: .env                      # needs CLAUDE_CODE_OAUTH_TOKEN (from `claude setup-token`)
+    command: ["sh", "-c", "while true; do uv run --no-sync radar nightly; sleep 86400; done"]
+    volumes:
+      - radar-data:/data
+      - ./secrets:/secrets:ro
+      - ./inbox/manual:/data/inbox/manual
+    restart: unless-stopped
+
+volumes:
+  radar-data:
