@@ -78,3 +78,13 @@ are the irreversible ones, which went to the repo owner.
   adjudication, Docling tables.
 - **D-A18 Wall sweep and URL columns.** In URL columns, a digit run in a filename is not treated
   as a phone number. Email, mailto and social-profile patterns are still checked there.
+- **D-A19 LLM runs on the owner's Claude subscription (owner's instruction, 2026-11-06).** The
+  default backend is `claude_code`: headless `claude -p` through the one provider adapter.
+  Structured output uses `--json-schema` and is validated against the same Pydantic schema. The
+  call runs in an empty directory with `--tools ""`, `--strict-mcp-config`, `--setting-sources ""`
+  and `--no-session-persistence`. `ANTHROPIC_API_KEY` and `ANTHROPIC_AUTH_TOKEN` are stripped from
+  its environment, so it can never fall through to API billing. The `anthropic` (API key) backend
+  is kept but is not the default. `--bare` is not used, because it forces API-key auth. Each call
+  writes a `POST api.anthropic.com` egress row (purpose `llm`) and an audit row with tokens and the
+  list-price estimate the CLI reports. Usage counts against the plan's limits, so extraction runs
+  sequentially. The same pattern runs on the VPS (see `deploy/VPS.md`).

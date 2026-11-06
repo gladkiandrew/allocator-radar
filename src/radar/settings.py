@@ -38,7 +38,11 @@ class Settings(BaseSettings):
     min_host_delay_s: float = 10.0
 
     # LLM. Model names live here (config), never in code.
-    llm_backend: Literal["anthropic", "local"] = "anthropic"
+    # claude_code = headless `claude -p` on the owner's Claude subscription (default; local Mac and VPS).
+    # anthropic   = Anthropic API key (ANTHROPIC_API_KEY). local = OpenAI-compatible stub.
+    llm_backend: Literal["claude_code", "anthropic", "local"] = "claude_code"
+    claude_bin: str = "claude"
+    llm_timeout_s: int = 900
     llm_model: str = "claude-opus-5-5"
     llm_effort: Literal["low", "medium", "high", "xhigh", "max"] = "medium"
     llm_local_base_url: str = "http://127.0.0.1:8080/v1"  # OpenAI-compatible (stub)
