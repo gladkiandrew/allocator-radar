@@ -46,7 +46,7 @@ allocators:
     documents: 1
     by_type:
       OTHER: 1
-    suggested: false
+    suggested: true
 - allocator_id: fl-miami-gese
   display_name: Miami General Employees' and Sanitation Employees' Retirement Trust
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -70,13 +70,13 @@ allocators:
     documents: 2
     by_type:
       OTHER: 2
-    suggested: false
+    suggested: true
   - url: https://gese.org/publications/summary-of-investment-returns/
     label: Summary of Investment Returns Summary of Investment Returns
     documents: 2
     by_type:
       OTHER: 2
-    suggested: false
+    suggested: true
   - url: https://gese.org/board-meetings/2026/
     label: 2026 Board Meeting Dates 2026 Board Meetings
     documents: 12
@@ -222,7 +222,7 @@ allocators:
     documents: 1
     by_type:
       OTHER: 1
-    suggested: false
+    suggested: true
   - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/announcements-2/
     label: Announcements
     documents: 3
@@ -252,7 +252,7 @@ allocators:
     documents: 1
     by_type:
       OTHER: 1
-    suggested: false
+    suggested: true
 - allocator_id: fl-miamibeach-erp
   display_name: Miami Beach Employees' Retirement Plan
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -686,7 +686,7 @@ allocators:
     documents: 1
     by_type:
       OTHER: 1
-    suggested: false
+    suggested: true
   - url: https://www.pbpfrs.org/pension-related-news/
     label: Pension Related News
     documents: 3
@@ -960,25 +960,25 @@ allocators:
     documents: 1
     by_type:
       OTHER: 1
-    suggested: false
+    suggested: true
   - url: https://www.myboca.us/343/Police-Firefighters-Retirement-System-Pr
     label: Police / Firefighters Retirement System Provisions
     documents: 1
     by_type:
       OTHER: 1
-    suggested: false
+    suggested: true
   - url: https://www.myboca.us/955/Pension-Benefit-Links
     label: Pension Benefit Links
     documents: 1
     by_type:
       OTHER: 1
-    suggested: false
+    suggested: true
   - url: https://www.myboca.us/277/Retirement-Systems
     label: Retirement Systems
     documents: 1
     by_type:
       OTHER: 1
-    suggested: false
+    suggested: true
 - allocator_id: fl-boca-ge
   display_name: Boca Raton General Employees' Pension Plan
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -1003,7 +1003,7 @@ allocators:
     documents: 1
     by_type:
       OTHER: 1
-    suggested: false
+    suggested: true
   - url: https://www.myboca.us/326/Pension-Plan-Policies-Forms-Reports
     label: Pension Plan Policies / Forms / Reports
     documents: 14
@@ -1018,19 +1018,19 @@ allocators:
     documents: 1
     by_type:
       OTHER: 1
-    suggested: false
+    suggested: true
   - url: https://www.myboca.us/954/Pension-Benefit-Links
     label: Pension Benefit Links
     documents: 1
     by_type:
       OTHER: 1
-    suggested: false
+    suggested: true
   - url: https://www.myboca.us/277/Retirement-Systems
     label: Retirement Systems
     documents: 1
     by_type:
       OTHER: 1
-    suggested: false
+    suggested: true
 - allocator_id: fl-wpb-police
   display_name: West Palm Beach Police Pension Fund
   allocator_type: POLICE_FIRE
@@ -1054,7 +1054,7 @@ allocators:
     documents: 2
     by_type:
       OTHER: 2
-    suggested: false
+    suggested: true
 - allocator_id: fl-palmbeach-rs
   display_name: Town of Palm Beach Retirement System
   allocator_type: PUBLIC_PENSION_LOCAL

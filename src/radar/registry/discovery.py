@@ -60,7 +60,7 @@ def suggest(p: dict) -> bool:
     typed = sum(n for k, n in p["by_type"].items() if k != "OTHER")
     if not p["documents"] or NOT_SUGGEST.search(p["url"]):
         return False
-    return p["label"] == "plan page" or bool(SUGGEST.search(f"{p['label']} {p['url']}") and (typed or p["documents"] >= 3))
+    return p["label"] == "plan page" or bool(SUGGEST.search(f"{p['label']} {p['url']}")) or typed >= 3
 
 
 def resuggest(path: Path) -> None:
