@@ -4,9 +4,18 @@
 <p class="sub">Readiness comes from approved signals in public documents. Each row shows the signal, its date and its source.
   <a href="/how">How tiers are set</a>.</p>
 
+<form class="filters" method="get" action="/" style="align-items:center">
+  <label style="margin:0;color:var(--fg)">Strategy
+    <select name="strategy" onchange="this.form.submit()" style="width:auto;margin-left:4px">
+      <option value="all" {{ 'selected' if strategy == 'all' }}>All strategies</option>
+      <option value="hf" {{ 'selected' if strategy == 'hf' }}>Hedge fund / diversifying / managed futures / multi-strat / quant / absolute return</option>
+      {% for b in buckets %}<option value="{{ b }}" {{ 'selected' if strategy == b }}>{{ b|replace('_',' ')|title }}</option>{% endfor %}
+    </select></label>
+  {% if tier %}<input type="hidden" name="tier" value="{{ tier }}">{% endif %}
+</form>
 <div class="filters">
-  <a href="/" class="{{ 'on' if not tier }}">All {{ counts.total }}</a>
-  {% for t in tiers %}<a href="/?tier={{ t }}" class="{{ 'on' if tier == t }}">{{ t|title }} {{ counts[t] }}</a>{% endfor %}
+  <a href="/?strategy={{ strategy }}" class="{{ 'on' if not tier }}">All {{ counts.total }}</a>
+  {% for t in tiers %}<a href="/?tier={{ t }}&strategy={{ strategy }}" class="{{ 'on' if tier == t }}">{{ t|title }} {{ counts[t] }}</a>{% endfor %}
   <a href="/gaps">Coverage gaps {{ n_gaps }}</a>
   <a href="/export.csv" class="hide-sm">Export CSV (approved only)</a>
 </div>
@@ -28,9 +37,11 @@
       {% if r.coverage_stale and r.tier not in ('STALE',) %}<br><span class="muted" style="font-size:12px">coverage stale</span>{% endif %}</td>
     <td class="why">
       {% if r.reasons %}{% set s = r.reasons[0] %}
-        <span class="date">{{ s.event_date }}</span>{{ s.summary }}
-        <span class="muted mono" style="font-size:11px">{{ 'auto-approved' if s.review_status == 'auto_approved' else 'approved by you' }}</span>
+        <span class="date">{{ s.event_date }}{% if s.date_basis %} <span title="date basis">({{ s.date_basis|replace('_',' ') }})</span>{% endif %}</span>{{ s.summary }}
         {% for e in s.evidence[:1] %} <a class="cite" href="{{ cite_href(e) }}" target="_blank" rel="noopener">[{{ (e.doc_title or 'source')|truncate(28) }}{% if e.page %} p.{{ e.page }}{% endif %}]</a>{% endfor %}
+        <br><span class="muted mono" style="font-size:11.5px">{% if s.hf_relevant %}<span class="tier PREPARING" style="font-size:10.5px">HF</span> {% endif %}{{ (s.bucket or 'OTHER')|replace('_',' ')|lower }}{% if not s.bucket_label %} (inferred){% endif %}
+          · {{ 'auto-approved' if s.review_status == 'auto_approved' else 'approved by you' }}
+          · next meeting {{ a.next_meeting or 'not published' }}</span>
         {% if r.reasons|length > 1 %}<br><a class="muted" href="/a/{{ a.allocator_id }}#signals">+{{ r.reasons|length - 1 }} more qualifying</a>{% endif %}
       {% elif r.tier == 'STALE' %}<span class="muted">{{ 'No documents fetched yet.' if not a.last_fetched else 'No new document in ' ~ stale_days ~ ' days.' }}</span>
       {% else %}<span class="muted">No qualifying approved signal in window.</span>{% endif %}

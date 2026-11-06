@@ -50,15 +50,35 @@ def create_app() -> FastAPI:
         return templates.TemplateResponse(request, name, ctx)
 
     @app.get("/", response_class=HTMLResponse)
-    def index(request: Request, tier: str | None = None):
+    def index(request: Request, tier: str | None = None, strategy: str = "all"):
+        from radar.buckets import HF_BUCKETS
+
         with db.connect() as con:
             everything = queries.allocator_table(con)
         rows = [r for r in everything if not r["bar_reasons"]]  # main-table minimum bar (config/main_table.yaml)
+        buckets = sorted({s.get("bucket") for r in rows for s in r["readiness"].reasons if s.get("bucket")})
+
+        def matches(s):
+            if strategy == "all":
+                return True
+            if strategy == "hf":
+                return bool(s.get("hf_relevant")) or s.get("bucket") in HF_BUCKETS
+            return s.get("bucket") == strategy
+
+        if strategy != "all":  # keep plans whose qualifying signals match; show the matching signal first
+            kept = []
+            for r in rows:
+                hits = [s for s in r["readiness"].reasons if matches(s)]
+                if hits:
+                    r["readiness"].reasons = hits
+                    kept.append(r)
+            rows = kept
         counts = {t: sum(1 for r in rows if r["readiness"].tier == t) for t in TIER_ORDER}
         counts["total"] = len(rows)
         shown = [r for r in rows if not tier or r["readiness"].tier == tier]
         return render(request, "index.html", rows=shown, tiers=TIER_ORDER, tier=tier, counts=counts,
-                      n_gaps=len(everything) - len(rows),
+                      strategy=strategy, buckets=buckets,
+                      n_gaps=sum(1 for r in everything if r["bar_reasons"]),
                       stale_days=readiness_config()["coverage"]["stale_after_days"])
 
     @app.get("/gaps", response_class=HTMLResponse)

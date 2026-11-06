@@ -34,7 +34,8 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("report", help="main table vs coverage gaps, with coverage % per allocator")
     sub.add_parser("sba", help="ingest + parse the FL SBA reports in inbox/manual/fl-sba-frs/")
     sub.add_parser("auto-approve", help="run the tiered auto-approval rules over pending signals")
-    sub.add_parser("scan-searches", help="search-focused extraction over main-table plans' last 12 months of agendas/minutes/RFPs")
+    ss = sub.add_parser("scan-searches", help="search-focused extraction over the last 12 months of agendas/minutes/RFPs")
+    ss.add_argument("--gaps", action="store_true", help="scan gaps-page plans that have documents (default: main table)")
     fp = sub.add_parser("reextract", help="force re-extraction of one document, all pages")
     fp.add_argument("sha_prefix"); fp.add_argument("--max-pages", type=int, default=64)
     sub.add_parser("index", help="add newly parsed (scrubbed) pages to the LanceDB search index")
@@ -226,13 +227,16 @@ def main(argv: list[str] | None = None) -> int:
         db.init_db()
         since = date.today() - timedelta(days=365)
         with db.connect() as con:
-            main = [a for a in queries.allocator_table(con) if not a["bar_reasons"]]
+            rows = queries.allocator_table(con)
+            main = [a for a in rows if (bool(a["bar_reasons"]) and a["n_docs"] > 0) == args.gaps
+                    and (args.gaps or not a["bar_reasons"])]
             todo = []
             for a in main:
                 for h in coverage.held_documents(con, a["allocator_id"]):
                     if h["kind"] in ("AGENDA", "MINUTES", "RFP") and h["dated"] and h["dated"] >= since:
                         todo.append((h["sha256"], a["allocator_id"]))
-        print(f"{len(main)} main-table plans, {len(todo)} agendas/minutes/RFPs from the last 12 months", flush=True)
+        print(f"{len(main)} {'gaps-page' if args.gaps else 'main-table'} plans, {len(todo)} agendas/minutes/RFPs "
+              f"from the last 12 months", flush=True)
 
         def one(item):
             st = extractor.extract_document(item[0], item[1], search_scan=True, max_pages=20)

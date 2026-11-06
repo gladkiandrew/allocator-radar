@@ -59,15 +59,18 @@ def allocator_table(con) -> list[dict]:
         r["allocator_id"]: r
         for r in db.rows(
             con,
-            """SELECT allocator_id, arg_max(consultant_name_as_disclosed, as_of) AS consultant, max(as_of) AS as_of
-               FROM consultant_engagements GROUP BY allocator_id""",
+            """SELECT c.allocator_id, string_agg(DISTINCT c.consultant_name_as_disclosed, ', ') AS consultant, m.as_of
+               FROM consultant_engagements c
+               JOIN (SELECT allocator_id, max(as_of) AS as_of FROM consultant_engagements GROUP BY 1) m
+                 ON m.allocator_id = c.allocator_id AND m.as_of = c.as_of
+               GROUP BY c.allocator_id, m.as_of""",
         )
     }
     from radar.resolve import canonical_map
 
     cmap = canonical_map(con, "consultant")
-    for c in consultants.values():
-        c["consultant"] = cmap.get(c["consultant"], c["consultant"])
+    for c in consultants.values():  # several consultants on the same date (e.g. per asset class) are all shown
+        c["consultant"] = ", ".join(sorted({cmap.get(x.strip(), x.strip()) for x in c["consultant"].split(",")}))
     sigs_by: dict[str, list[dict]] = defaultdict(list)
     for s in signals_for(con):
         sigs_by[s["allocator_id"]].append(s)
@@ -78,7 +81,10 @@ def allocator_table(con) -> list[dict]:
         r = compute(sigs, d.get("last_new_document"))
         from radar import coverage
 
+        fut = con.execute("SELECT min(as_of) FROM plan_facts WHERE allocator_id = ? AND fact_kind = 'NEXT_MEETING' "
+                          "AND as_of >= current_date", [a["allocator_id"]]).fetchone()[0]
         a.update(
+            next_meeting=fut,
             coverage_pct=coverage.checklist(con, a["allocator_id"])["pct"],
             bar_reasons=coverage.bar(con, a),
             readiness=r,
