@@ -32,6 +32,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("reparse-scanned", help="re-parse documents that have scanned (empty) pages, with local OCR")
     sub.add_parser("resolve", help="entity resolution for firm names (auto-alias + merge queue)")
     sub.add_parser("report", help="main table vs coverage gaps, with coverage % per allocator")
+    sub.add_parser("sba", help="ingest + parse the FL SBA reports in inbox/manual/fl-sba-frs/")
     sub.add_parser("index", help="add newly parsed (scrubbed) pages to the LanceDB search index")
     dp = sub.add_parser("discover", help="discovery agent: registry/seed_florida.yaml -> registry/florida.yaml")
     dp.add_argument("--resuggest", action="store_true", help="recompute suggested pages only (no fetching)")
@@ -168,6 +169,34 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  {r['coverage_pct']:3d}% | {r['n_docs']:3d} | {r['display_name']}")
                 for why in r["bar_reasons"]:
                     print(f"        - {why}")
+    elif args.cmd == "sba":
+        import json
+        from radar import db
+        from radar.extract import extractor, sba
+        db.init_db()
+        files = sba.ingest_inbox("human")
+        print(f"ingested {len(files)} files")
+        report = {"signals": 0, "hf": 0, "holdings": 0, "failed": [], "llm_docs": []}
+        for f in files:
+            if f["kind"] == "NEW_INVESTMENTS":
+                st = sba.parse_new_investments(f["sha"], f["doc_date"], f["file"])
+                sba.mark_extracted(f["sha"])
+                report["signals"] += st["signals"]; report["hf"] += st["hf"]; report["failed"] += st["failed"]
+                print(json.dumps({"file": f["file"], **{k: v for k, v in st.items() if k != "failed"}}))
+            elif f["kind"] == "SI_PERFORMANCE":
+                st = sba.parse_si_table(f["sha"], f["doc_date"], f["file"])
+                report["holdings"] += st["holdings"]; report["failed"] += st["failed"]
+                if st["tabular"]:
+                    sba.mark_extracted(f["sha"])
+                else:
+                    report["llm_docs"].append(f)
+                print(json.dumps({"file": f["file"], **{k: v for k, v in st.items() if k != "failed"}}))
+            else:
+                report["llm_docs"].append(f)
+        for f in report["llm_docs"]:
+            st = extractor.extract_document(f["sha"], "fl-sba-frs")
+            print(json.dumps({"file": f["file"], "extractor": st}))
+        print(json.dumps({k: v for k, v in report.items() if k != "llm_docs"}, default=str, indent=1))
     elif args.cmd == "index":
         from radar import db, search
         db.init_db()

@@ -25,7 +25,7 @@ def test_phone_variants():
 
 
 def test_money_and_dates_not_flagged():
-    for s in ["$1,234,567.89", "2025-2026", "12/31/2025", "FY 2025", "3,456,789", "Account 12345678",
+    for s in ["Fl-Statues-112.664-2015-Compliance-Report", "F.S. 112.664-2015", "$1,234,567.89", "2025-2026", "12/31/2025", "FY 2025", "3,456,789", "Account 12345678",
               "June 30, 2026", "returns of 7.25% vs 6.90%"]:
         assert detect(s) == [], s
 
@@ -46,3 +46,10 @@ def test_gliner_pass_on_canary():
     for tok in CANARY_TOKENS:
         assert tok.lower() not in out.lower(), tok
     assert "Request for Proposals" in out
+
+
+def test_firm_names_with_street_words_survive():
+    for txt in ["Hedge Funds 2.0 King Street Capital LP $2,114,468.15", "Water Street Partners Fund II",
+                "200 Park Avenue Investors LP"]:
+        assert scrub(txt, use_gliner=False).text == txt, txt
+    assert detect("Mailing: 4471 Canary Lane, Suite 9")  # a real street still goes

@@ -87,9 +87,9 @@ def bar(con, allocator: dict, today: date | None = None) -> list[str]:
     cfg = load_yaml("main_table.yaml")
     today = today or date.today()
     reasons = []
-    if allocator.get("access") == "MANUAL":
-        reasons.append(f"manual-only source: {allocator.get('access_reason') or 'no automated access'}")
     held = held_documents(con, allocator["allocator_id"])
+    if allocator.get("access") == "MANUAL" and not held:  # manual-only plans qualify through the manual inbox
+        reasons.append(f"manual-only source with no files in the manual inbox yet: {allocator.get('access_reason') or ''}".rstrip(": "))
     if len(held) < cfg["min_documents"]:
         reasons.append(f"{len(held)} documents fetched (minimum {cfg['min_documents']})")
     recent = today - timedelta(days=cfg["recent_document_days"])

@@ -297,9 +297,11 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
             link("signal", existing[0], eid)
             continue
         sid = new_id()
+        from radar.buckets import hf_relevant
         con.execute(
-            "INSERT INTO signals VALUES (?, ?, ?, ?, ?, now(), ?, 'new', 'MACHINE', ?, NULL, NULL, NULL)",
-            [sid, aid, s.signal_type, q, d, summary, key])
+            "INSERT INTO signals (signal_id, allocator_id, signal_type, qualifier, event_date, observed_at, summary, "
+            "review_status, origin, dedupe_key, hf_relevant) VALUES (?, ?, ?, ?, ?, now(), ?, 'new', 'MACHINE', ?, ?)",
+            [sid, aid, s.signal_type, q, d, summary, key, hf_relevant(None, summary)])
         link("signal", sid, eid)
         if auto_actor:
             con.execute("UPDATE signals SET review_status = 'approved', reviewed_by = ?, reviewed_at = now(), "

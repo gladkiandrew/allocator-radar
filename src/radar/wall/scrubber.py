@@ -33,8 +33,9 @@ _STREET_SUFFIX = (
 PATTERNS: dict[str, re.Pattern[str]] = {
     "email": re.compile(r"[A-Za-z0-9._%+\-]+\s?(?:@|\(at\)|\[at\])\s?[A-Za-z0-9.\-]+\.[A-Za-z]{2,}"),
     "mailto": re.compile(r"mailto:\S+", re.I),
+    # North American numbers: area code and exchange never start with 0 or 1 (so "112.664-2015" is not a phone).
     "phone": re.compile(
-        r"(?<![\d$.,])(?:\+?1[\s.\-]?)?(?:\(\d{3}\)\s?|\d{3}[\s.\-])\d{3}[\s.\-]\d{4}"
+        r"(?<![\d$.,])(?:\+?1[\s.\-]?)?(?:\([2-9]\d{2}\)\s?|[2-9]\d{2}[\s.\-])[2-9]\d{2}[\s.\-]\d{4}"
         r"(?:\s?(?:x|ext\.?|extension)\s?\d{1,5})?(?![\d,])",
         re.I,
     ),
@@ -65,12 +66,27 @@ class Hit:
     text: str
 
 
+# A "street" followed by a firm word is a firm name ("King Street Capital", "Water Street Partners"), and a
+# number that is the tail of a decimal ("Hedge Funds 2.0 King Street ...") is not a house number.
+_FIRM_AFTER = re.compile(r"\s*(Capital|Partners|Management|Advisors|Advisers|Fund|Funds|Investors|Investment|Group|"
+                         r"Associates|Asset|Securities|Holdings|LP|L\.P\.|LLC|Ltd)\b")
+
+
+def _street_is_firm(text: str, m: re.Match) -> bool:
+    before = text[max(0, m.start() - 2):m.start()]
+    if re.search(r"\d\.$", before) or re.search(r"\.\d?$", before):
+        return True
+    return bool(_FIRM_AFTER.match(text, m.end()))
+
+
 def detect(text: str) -> list[Hit]:
     """Regex detector. Returns every contact-shaped span. Used by tests/wall."""
     hits: list[Hit] = []
     for kind, pat in PATTERNS.items():
         for m in pat.finditer(text):
             if m.group(0).strip() == REDACTED:
+                continue
+            if kind == "street" and _street_is_firm(text, m):
                 continue
             hits.append(Hit(kind, m.start(), m.end(), m.group(0)))
     return hits

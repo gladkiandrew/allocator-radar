@@ -287,6 +287,12 @@ def connect(*, timeout_s: float = 60.0) -> Iterator[duckdb.DuckDBPyConnection]:
 
 
 MIGRATIONS = [
+    "ALTER TABLE document_urls ADD COLUMN IF NOT EXISTS retrieved_by VARCHAR",  # 'human' for manual-inbox files
+    "ALTER TABLE signals ADD COLUMN IF NOT EXISTS manager_name VARCHAR",         # as printed
+    "ALTER TABLE signals ADD COLUMN IF NOT EXISTS amount_usd DOUBLE",            # as printed
+    "ALTER TABLE signals ADD COLUMN IF NOT EXISTS bucket_label VARCHAR",         # the source's own label, verbatim
+    "ALTER TABLE signals ADD COLUMN IF NOT EXISTS bucket VARCHAR",               # StrategyBucket crosswalk
+    "ALTER TABLE signals ADD COLUMN IF NOT EXISTS hf_relevant BOOLEAN",          # hedge fund / absolute return / diversifying / managed futures / multi-strat
     "ALTER TABLE documents ADD COLUMN IF NOT EXISTS doc_kind VARCHAR",       # content-based type
     "ALTER TABLE documents ADD COLUMN IF NOT EXISTS content_date DATE",      # first dated phrase on page 1
 ]

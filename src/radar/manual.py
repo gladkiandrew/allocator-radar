@@ -52,9 +52,11 @@ def add_fact(f: ManualFact, actor: str) -> str:
         con.execute("BEGIN")
         con.execute("INSERT INTO evidence VALUES (?, NULL, ?, NULL, ?, 'manual-entry', '1', NULL, now(), 1.0, 'MANUAL')",
                     [eid, f.source_url, f.fact])
-        con.execute("INSERT INTO signals VALUES (?, ?, ?, ?, ?, now(), ?, 'new', 'MANUAL', NULL, NULL, NULL, ?)",
+        from radar.buckets import hf_relevant
+        con.execute("INSERT INTO signals (signal_id, allocator_id, signal_type, qualifier, event_date, observed_at, summary, "
+                    "review_status, origin, review_note, hf_relevant) VALUES (?, ?, ?, ?, ?, now(), ?, 'new', 'MANUAL', ?, ?)",
                     [sid, f.allocator_id, f.signal_type.value, f.qualifier or None, f.event_date, f.fact,
-                     f"source {f.source_id}; entered by {actor}"])
+                     f"source {f.source_id}; entered by {actor}", hf_relevant(None, f.fact)])
         con.execute("INSERT INTO row_evidence VALUES ('signal', ?, ?)", [sid, eid])
         db.audit(con, actor, "manual_fact", sid, detail={"source_id": f.source_id, "url": f.source_url})
         con.execute("COMMIT")
