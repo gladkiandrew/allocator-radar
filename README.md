@@ -138,4 +138,4 @@ inbox. Phase B has collected every Florida local plan into the registry (the app
 Florida; see Scope). Phase C would add Florida endowments, foundations and hospitals, from IRS 990
 data.
 
-License: to be chosen before the repository is made public.
+License: [MIT](LICENSE).
