@@ -6,6 +6,6 @@ set -euo pipefail
 HOST="${RADAR_VPS:-ubuntu@15.204.172.174}"
 cd "$(dirname "$0")/.."
 ssh "$HOST" 'mkdir -p ~/allocator-radar/data && (sudo systemctl stop allocator-radar 2>/dev/null || true)'
-rsync -az --info=progress2 data/radar.duckdb "$HOST:allocator-radar/data/radar.duckdb"
-rsync -az --delete --info=progress2 data/lance/ "$HOST:allocator-radar/data/lance/"
+rsync -az data/radar.duckdb "$HOST:allocator-radar/data/radar.duckdb"
+rsync -az --delete data/lance/ "$HOST:allocator-radar/data/lance/"
 ssh "$HOST" 'sudo systemctl start allocator-radar 2>/dev/null || echo "service not installed yet: run deploy/setup-public-site.sh on the VPS"'
