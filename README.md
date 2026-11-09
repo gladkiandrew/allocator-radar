@@ -1,13 +1,48 @@
 # Allocator Radar
 
-A prospecting list of South Florida public pension plans. It shows which ones are getting ready to
-put money to work, and the dated public document behind each one.
+[![CI](https://github.com/gladkiandrew/allocator-radar/actions/workflows/ci.yml/badge.svg)](https://github.com/gladkiandrew/allocator-radar/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-> **Built in 3 days by Andrew Gladki, AI engineer.** I want to work on the institutional business
-> development team of a large financial institution. This project shows what I would bring to that
-> team: AI engineering, data analytics, an understanding of how institutional capital moves, and
-> the ability to take a complex, open-ended problem to an accurate, working solution quickly. The
-> app's **About** page tells the full story.
+**Which South Florida public pension plans are getting ready to put money to work, and the public
+document that says so.**
+
+Pension boards record their investment decisions in their own paperwork: a vote to search for a
+new private-credit manager, a raised target allocation, a newly adopted asset-liability study. All
+of it is public record, but it is spread across hundreds of agenda packets, minutes and investment
+reports that nobody reads in full. Allocator Radar reads them. It puts each plan in one of four
+readiness tiers and links every tier to the dated page of the document that set it.
+
+For an institutional business development team, that answers two questions: which plans to call
+this month, and what in the public record shows why.
+
+> **Built in 3 days by Andrew Gladki, Financial AI Engineer.** I want to work on the institutional
+> business development team of a large financial institution. This project shows what I would
+> bring to that team: AI engineering, data analytics, an understanding of how institutional capital
+> moves, and the ability to take a complex, open-ended problem to an accurate, working solution
+> quickly. I pair the engineering with very capable communication and sales ability. The app's
+> **About** page tells the full story.
+
+## Screenshots
+
+From a local run on 2026-11-09: 79 South Florida plans in scope, 939 public documents read, 218
+cited signals.
+
+![Home: readiness tiers, coverage figures and the plans deploying or preparing now](docs/screenshots/home.png)
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/plan-brief.png" alt="A plan brief: tier, latest qualifying signal, and key facts, each with a cited source page"></td>
+    <td width="50%"><img src="docs/screenshots/signal-timeline-dark.png" alt="Signal timeline in dark mode: each signal with its date, type, citation and the quoted source text"></td>
+  </tr>
+  <tr>
+    <td>A plan brief. The tier, the signal that set it, and each fact with its source document and page.</td>
+    <td>The signal timeline (dark mode). Every signal quotes the passage it came from.</td>
+  </tr>
+</table>
+
+![About page](docs/screenshots/about.png)
+
+## What you see
 
 The main screen is one table. Each row is a plan with a readiness tier: **DEPLOYING**,
 **PREPARING**, **WATCHING** or **STALE**. Next to the tier is the signal that set it, the date it
@@ -75,21 +110,75 @@ These rules hold in every configuration.
 The full source inventory and legal analysis are in `docs/AGENDA.md` (§2 and §7). The product brief
 is in `docs/BRIEF.md`. Every build decision is logged in `DECISIONS.md`.
 
-## Run it locally
+## Quick start
 
-You need macOS or Linux, [uv](https://docs.astral.sh/uv/), and the
-[Claude Code](https://claude.com/claude-code) CLI logged in to your Claude subscription
-(`claude auth status`).
+You need macOS or Linux and [uv](https://docs.astral.sh/uv/). uv installs Python 3.12 for you.
 
 ```bash
-uv sync
-uv run playwright install chromium     # only for JavaScript-rendered plan sites
-uv run radar init
-uv run radar discover                  # discovery agent -> registry/florida.yaml
-uv run radar serve                     # http://localhost:8000 -> Registry -> Approve
-uv run radar nightly                   # crawl -> extract -> approvals policy -> index -> wall
-make test                              # unit + wall tests (make wall adds the slow model-based ones)
+git clone https://github.com/gladkiandrew/allocator-radar.git
+cd allocator-radar
+uv sync                 # Python 3.12 + dependencies, pinned by uv.lock
+uv run radar init       # creates the local DuckDB database in data/
+uv run radar serve      # http://localhost:8000
+make test               # unit + wall tests: no network, no keys, no LLM
 ```
+
+The repository holds the code and the plan registry (`registry/florida.yaml`). It does not include
+the crawled documents or the database, so a fresh install starts empty. The web app, the tests,
+crawling and PDF parsing all run without a language model. Only **extraction**, the step that turns
+document pages into cited signals, calls one.
+
+### Filling it with data
+
+Extraction needs the [Claude Code](https://claude.com/claude-code) CLI logged in to a Claude
+subscription (`claude auth status`). To use the Anthropic API instead, copy `.env.example` to
+`.env` and set `RADAR_LLM_BACKEND=anthropic` and `ANTHROPIC_API_KEY`.
+
+1. Open **Registry** (http://localhost:8000/registry) and approve the plan list. This loads the
+   plans from `registry/florida.yaml` and queues their listing pages for the crawler.
+2. Crawl one plan: `uv run radar crawl --only fl-pompano-pf`. The crawler is slow on purpose: at
+   least 10 seconds between requests to the same host.
+3. Extract signals from what was fetched: `uv run radar extract --only fl-pompano-pf`.
+4. Approve the signals on **Signal review**, or run `uv run radar approve-pending` to apply
+   `config/review_policy.yaml` (see the review policy below).
+
+The full pipeline, for every approved plan:
+
+```bash
+uv run playwright install chromium     # only for JavaScript-rendered plan sites
+uv run radar discover                  # optional: rebuild registry/florida.yaml from registry/seed_florida.yaml
+uv run radar nightly                   # crawl -> extract -> approvals policy -> index -> wall
+uv run radar status                    # one-shot summary: plans, tiers, signals, documents
+make wall                              # wall tests including the slow model-based ones (downloads GLiNER)
+```
+
+Scanned PDFs are read with local OCR: Apple Vision on macOS, Tesseract on Linux (install the
+`tesseract` binary). `uv run radar --help` lists every command.
+
+### Tests and CI
+
+`make test` runs the unit and wall tests. Each test gets its own temporary data directory, database
+and encryption key, so the suite needs no `data/`, no key file and no model. GitHub Actions runs the
+same command on every push and pull request (`.github/workflows/ci.yml`). The slow GLiNER tests are
+opt-in (`make wall`).
+
+## Stack
+
+Python 3.12 and uv · FastAPI with Jinja templates and HTMX · DuckDB (SQL kept Postgres-portable) ·
+pdfplumber with local OCR for scanned pages · regex plus a GLiNER model for PII scrubbing · LanceDB
+hybrid search (BM25 full text plus vectors) over scrubbed pages · Claude through headless
+`claude -p` or the Anthropic API, behind one adapter.
+
+| Path | What it holds |
+|---|---|
+| `src/radar/crawl/`, `net/` | allowlisted, robots-aware fetcher (GET/HEAD only) |
+| `src/radar/parse/`, `extract/` | PDF parsing, keyword prefilter, LLM extraction of cited signals |
+| `src/radar/readiness.py` | tier rules applied to approved signals |
+| `src/radar/wall/` | scrubber, evaluative-language lint, canary and live sweeps |
+| `src/radar/web/` | the FastAPI app, templates and static assets |
+| `config/` | readiness rules, sources allowlist, scope, review policy, wall config |
+| `registry/` | the Florida plan list and the pages to crawl |
+| `tests/` | unit tests and the wall tests (`tests/wall/`) |
 
 ## The people in the loop
 
