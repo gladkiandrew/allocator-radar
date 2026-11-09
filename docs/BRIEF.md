@@ -27,6 +27,8 @@ trustworthy prospecting list.
 - LLM: Claude via the Anthropic API for extraction, adjudication and summary lint. ONE provider adapter
   with "anthropic" as the only implemented backend; a stub for "local" (OpenAI-compatible endpoint). No
   model-specific code anywhere else. Public documents only ever go into prompts.
+  *(Later superseded by DECISIONS.md D-A19: the default backend is now `claude_code`, the headless
+  `claude` CLI on a Claude subscription; `anthropic` remains as an alternative.)*
 - Hosting: local first (uvicorn). Designed from day one to deploy behind a login on a subdomain (Docker,
   env-configured, Postgres-ready but DuckDB by default). No firm data, ever — this is public-record data
   only and the repo will be made public later. Nothing in the codebase or data should assume or reference
