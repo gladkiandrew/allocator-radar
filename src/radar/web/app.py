@@ -39,6 +39,9 @@ def uniq_cites(evs: list[dict]) -> list[dict]:
 templates.env.filters["uniq_cites"] = uniq_cites
 
 
+PUBLIC_HIDDEN = ("/review", "/manual", "/records", "/registry", "/inbox", "/export")
+
+
 def _scope_stats(con, ids: list[str]) -> dict:
     """Documents read and cited signals for the plans in scope."""
     if not ids:
@@ -56,12 +59,27 @@ def create_app() -> FastAPI:
     db.init_db()
     app = FastAPI(title="Allocator Radar", docs_url=None, redoc_url=None, dependencies=[Depends(require_user)])
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
+    from radar.settings import get_settings
+
+    public = get_settings().public_mode
+    templates.env.globals["public"] = public
+    if public:
+        from fastapi.responses import PlainTextResponse
+
+        @app.middleware("http")
+        async def read_only(request: Request, call_next):
+            path = request.url.path
+            if request.method not in ("GET", "HEAD"):
+                return PlainTextResponse("This is a read-only public site.", status_code=403)
+            if path.startswith(PUBLIC_HIDDEN):
+                return PlainTextResponse("Not available on the public site.", status_code=404)
+            return await call_next(request)
 
     def render(request: Request, name: str, **ctx) -> HTMLResponse:
         from radar import scope
 
         with db.connect() as con:
-            ctx.setdefault("nav", {"pending": queries.pending_count(con)})
+            ctx.setdefault("nav", {"pending": 0 if public else queries.pending_count(con)})
         ctx.setdefault("scope", scope.config())
         return templates.TemplateResponse(request, name, ctx)
 
@@ -141,7 +159,18 @@ def create_app() -> FastAPI:
 
     @app.get("/doc/{sha}")
     def doc(sha: str):
-        if not (len(sha) == 64 and all(c in "0123456789abcdef" for c in sha)) or not lake.exists(sha):
+        if not (len(sha) == 64 and all(c in "0123456789abcdef" for c in sha)):
+            raise HTTPException(404)
+        if public:  # never serve our cached copies publicly: send the reader to the original source
+            from fastapi.responses import RedirectResponse
+
+            with db.connect() as con:
+                row = con.execute("SELECT url FROM document_urls WHERE sha256 = ? ORDER BY first_seen LIMIT 1",
+                                  [sha]).fetchone()
+            if not row:
+                raise HTTPException(404)
+            return RedirectResponse(row[0], status_code=302)
+        if not lake.exists(sha):
             raise HTTPException(404)
         with db.connect() as con:
             meta = con.execute("SELECT content_type FROM documents WHERE sha256 = ?", [sha]).fetchone()

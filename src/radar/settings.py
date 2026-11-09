@@ -60,6 +60,9 @@ class Settings(BaseSettings):
     auth_user: str = "owner"
     auth_password_hash: str | None = None  # sha256 hex of the password
     reviewer: str = "owner"  # reviewer = repo owner (AGENDA §10 Q11)
+    # Public read-only site (D-B14): GET only; review queue, tools and export hidden; pending signals
+    # hidden; /doc/<sha> redirects to the original public URL instead of serving the encrypted lake.
+    public_mode: bool = False
 
     @property
     def duckdb_path(self) -> Path:

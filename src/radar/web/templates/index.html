@@ -100,7 +100,7 @@
           </div>
         {% elif r.tier == 'STALE' %}<span class="muted">{{ 'No documents fetched yet.' if not a.last_fetched else 'No new document in ' ~ stale_days ~ ' days.' }}</span>
         {% else %}<span class="muted">No qualifying signal in the window. Coverage is current.</span>{% endif %}
-        {% if a.pending %}<div style="margin-top:6px"><span class="pending">{{ a.pending|length }} pending review</span></div>{% endif %}
+        {% if a.pending and not public %}<div style="margin-top:6px"><span class="pending">{{ a.pending|length }} pending review</span></div>{% endif %}
       </td>
       <td class="hide-sm">{% if a.consultant %}{{ a.consultant.consultant }}<div class="faint mono" style="font-size:11px;margin-top:3px">as of {{ a.consultant.as_of }}</div>{% else %}<span class="faint">—</span>{% endif %}</td>
       <td class="hide-sm cov"><span class="bar" aria-hidden="true"><i style="width:{{ [a.coverage_pct, 100]|min }}%"></i></span><span class="mono">{{ a.coverage_pct }}%</span>

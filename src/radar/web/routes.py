@@ -32,6 +32,10 @@ def register(app: FastAPI, render) -> None:
             a = queries.allocator_brief(con, allocator_id)
         if a is None:
             raise HTTPException(404)
+        from radar.settings import get_settings
+
+        if get_settings().public_mode:  # the public site shows approved signals only
+            a["signals"] = [s for s in a["signals"] if s["review_status"] in ("approved", "auto_approved")]
         return render(request, "allocator.html", a=a)
 
     @app.get("/a/{allocator_id}/search", response_class=HTMLResponse)

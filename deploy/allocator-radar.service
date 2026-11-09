@@ -1,0 +1,23 @@
+# Public read-only Allocator Radar (allocator.amagna.co). Binds localhost only; the Cloudflare
+# tunnel is the only way in. Install: sudo cp deploy/allocator-radar.service /etc/systemd/system/
+[Unit]
+Description=Allocator Radar (public read-only)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/allocator-radar
+Environment=RADAR_PUBLIC_MODE=true
+Environment=RADAR_AUTH_MODE=none
+Environment=RADAR_FLAG_GLINER=false
+Environment=PATH=/home/ubuntu/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/ubuntu/.local/bin/uv run --no-sync radar serve --host 127.0.0.1 --port 4710
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

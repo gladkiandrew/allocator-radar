@@ -39,3 +39,22 @@ def test_strategy_filter_and_row_fields():
         con.execute("UPDATE signals SET review_status='auto_approved', bucket='FUND_OF_HEDGE_FUNDS', hf_relevant=true, date_basis='document_date'")
     c = TestClient(create_app())
     assert c.get("/?strategy=hf").status_code == 200 and c.get("/?strategy=REAL_ESTATE").status_code == 200
+
+
+def test_public_mode_is_read_only(monkeypatch):
+    from radar import settings as S
+    monkeypatch.setenv("RADAR_PUBLIC_MODE", "true")
+    S.get_settings.cache_clear()
+    try:
+        c = TestClient(create_app())
+        home = c.get("/")
+        assert home.status_code == 200 and 'href="/review"' not in home.text and "Tools" not in home.text
+        for path in ("/review", "/manual", "/records", "/registry", "/export.csv"):
+            assert c.get(path).status_code == 404, path
+        assert c.post("/review/x", data={"decision": "approved"}).status_code == 403
+        assert c.post("/registry/approve", data={"version": "x"}).status_code == 403
+        assert c.get("/about").status_code == 200 and c.get("/how").status_code == 200
+        assert c.get("/doc/" + "0" * 64, follow_redirects=False).status_code == 404
+    finally:
+        monkeypatch.delenv("RADAR_PUBLIC_MODE")
+        S.get_settings.cache_clear()
