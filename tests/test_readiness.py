@@ -45,3 +45,9 @@ def test_future_dated_signal_ignored():
 def test_service_provider_rfp_does_not_deploy():
     assert compute([sig("RFP_ISSUED", 5, q="service_provider")], NOW, TODAY).tier == "WATCHING"
     assert compute([sig("RFP_ISSUED", 5, q="consultant")], NOW, TODAY).tier == "WATCHING"
+
+
+def test_search_scheduled_deploys_for_manager_only():
+    assert compute([sig("SEARCH_SCHEDULED", 20)], NOW, TODAY).tier == "DEPLOYING"
+    assert compute([sig("SEARCH_SCHEDULED", 20, q="service_provider")], NOW, TODAY).tier == "WATCHING"
+    assert compute([sig("SEARCH_SCHEDULED", 95)], NOW, TODAY).tier == "WATCHING"

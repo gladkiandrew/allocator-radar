@@ -43,6 +43,7 @@ class AllocatorType(StrEnum):
 
 class SignalType(StrEnum):
     SEARCH_OPENED = "SEARCH_OPENED"
+    SEARCH_SCHEDULED = "SEARCH_SCHEDULED"  # an agenda schedules manager/consultant interviews, presentations or an RFP review
     RFP_ISSUED = "RFP_ISSUED"
     FINALISTS_NAMED = "FINALISTS_NAMED"
     MANDATE_AWARDED = "MANDATE_AWARDED"

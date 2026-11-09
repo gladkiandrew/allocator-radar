@@ -37,7 +37,7 @@ MAX_PAGES_PER_DOC = 15
 PAGES_PER_CALL = 6
 
 SignalTypeLit = Literal[
-    "SEARCH_OPENED", "RFP_ISSUED", "FINALISTS_NAMED", "MANDATE_AWARDED", "MANDATE_FUNDED",
+    "SEARCH_OPENED", "SEARCH_SCHEDULED", "RFP_ISSUED", "FINALISTS_NAMED", "MANDATE_AWARDED", "MANDATE_FUNDED",
     "MANAGER_TERMINATED", "MANAGER_ON_WATCH", "WATCH_REMOVED", "REDEMPTION_APPROVED", "COMMITMENT_MADE",
     "TARGET_ALLOCATION_CHANGED", "IPS_AMENDED", "ASSET_LIABILITY_STUDY", "PACING_PLAN_ADOPTED",
     "CONSULTANT_CHANGED", "CIO_CHANGED", "REBALANCE_APPROVED", "FEE_RENEGOTIATED",
@@ -129,9 +129,11 @@ the page is the record of that meeting or report. Format YYYY-MM-DD.
 a manager or consultant selected/hired/awarded, funded, terminated, placed on or removed from watch, a target \
 allocation changed (give increase or decrease), an IPS amended or adopted, an asset-liability or pacing study \
 adopted or accepted, a consultant changed, a CIO changed, a rebalance or redemption approved, a fee renegotiated. \
-An agenda line that only lists a topic for discussion is not a signal, unless it records a decision or announces \
-an open solicitation.
-- For SEARCH_OPENED / RFP_ISSUED / FINALISTS_NAMED / MANDATE_AWARDED set qualifier to manager (investment \
+An agenda line that only lists a general topic for discussion is not a signal, unless it records a decision or announces \
+an open solicitation. EXCEPTION, SEARCH_SCHEDULED: an agenda (or minutes) that schedules a search step is a signal: \
+interviews or finalist presentations by named candidate managers or consultants, an RFP or search-response review, \
+or a "manager search" / "consultant search" item. Use the meeting date for event_date and quote the agenda line.
+- For SEARCH_OPENED / SEARCH_SCHEDULED / RFP_ISSUED / FINALISTS_NAMED / MANDATE_AWARDED set qualifier to manager (investment \
 manager), consultant (investment consultant), or service_provider (legal, actuary, custodian, auditor, other).
 - Summaries: one sentence, factual verbs only (reported, disclosed, approved, voted, issued, awarded, selected, \
 terminated, placed on watch, removed from watch, increased ... from X to Y, decreased ... from X to Y, committed, \
@@ -401,7 +403,7 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
     return stats
 
 
-SEARCH_SCAN_VERSION = "search-scan-1"
+SEARCH_SCAN_VERSION = "search-scan-2"  # v2 adds SEARCH_SCHEDULED
 CONSULTANT_SCAN_VERSION = "consultant-scan-1"
 CONSULTANT_VOCAB = re.compile(
     r"investment consultant|performance consultant|investment monitor|consultant|consulting|"
@@ -421,7 +423,9 @@ SEARCH_FOCUS = """
 
 This pass is a focused scan for SEARCHES. On these pages, look specifically for investment-manager and investment-consultant
 searches: an RFP or RFQ issued or approved for issue, a search opened or authorized, responses received, a short list or
-finalists named, interviews scheduled or held, a manager or consultant selected or hired. Set the qualifier precisely
+finalists named, interviews scheduled or held, a manager or consultant selected or hired. Agenda items that SCHEDULE a
+search step (candidate interviews or presentations, RFP response review, a manager/consultant search item) are
+SEARCH_SCHEDULED, dated by the meeting date. Set the qualifier precisely
 (manager / consultant / service_provider). Return other signal types only if clearly stated; facts, mandates and officers may
 be left empty in this pass."""
 

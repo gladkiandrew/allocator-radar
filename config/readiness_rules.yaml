@@ -11,9 +11,10 @@
 tiers:
   - tier: DEPLOYING
     window_days: 90
-    meaning: "A search or RFP is open, finalists were named, or a mandate was awarded."
+    meaning: "A search or RFP is open (or scheduled on an agenda), finalists were named, or a mandate was awarded."
     signal_types:
       - SEARCH_OPENED
+      - SEARCH_SCHEDULED   # owner 2026-11-09: an agenda schedules interviews / presentations / RFP review for a hire
       - RFP_ISSUED
       - FINALISTS_NAMED
       - MANDATE_AWARDED
@@ -23,6 +24,7 @@ tiers:
     # `consultant` to the lists below).
     qualifiers:
       SEARCH_OPENED: [manager]
+      SEARCH_SCHEDULED: [manager]
       RFP_ISSUED: [manager]
       FINALISTS_NAMED: [manager]
       MANDATE_AWARDED: [manager]

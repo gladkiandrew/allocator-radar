@@ -260,3 +260,9 @@ are the irreversible ones, which went to the repo owner.
 - **D-B08 Deep discovery.** `--deep` renders every page in the browser and follows a second level of
   links, for NO_LISTING_PAGES and THIN plans. It is GET-only and checks robots.txt like normal
   discovery.
+- **D-B09 SEARCH_SCHEDULED (owner, 2026-11-09).** This signal comes from an agenda or minutes
+  item that schedules a search step: candidate manager or consultant interviews or presentations, an
+  RFP-response review, or a manager or consultant search item. It counts toward DEPLOYING (90 days)
+  only for manager hires, the same qualifier as the other search types. It is dated by the meeting
+  date. It goes through the same auto-approval rules: the quote must match the page and the date
+  must be printed in the source. The search scan is now `search-scan-2`.

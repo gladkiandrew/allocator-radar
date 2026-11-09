@@ -37,6 +37,8 @@ def main(argv: list[str] | None = None) -> int:
     ss = sub.add_parser("scan-searches", help="search-focused extraction over the last 12 months of agendas/minutes/RFPs")
     ss.add_argument("--gaps", action="store_true", help="scan gaps-page plans that have documents (default: main table)")
     ss.add_argument("--only", nargs="*", help="scan these plan ids (any bar status)")
+    ss.add_argument("--all", action="store_true", help="scan every plan in the registry")
+    ss.add_argument("--workers", type=int, default=5)
     pp = sub.add_parser("pipeline", help="discover -> registry policy -> crawl -> extract -> search scan -> auto-approve -> index")
     pp.add_argument("--only", nargs="+")
     pp.add_argument("--only-file", nargs="+", help="files of whitespace-separated plan ids (avoids shell word-splitting)")
@@ -247,7 +249,9 @@ def main(argv: list[str] | None = None) -> int:
         since = date.today() - timedelta(days=365)
         with db.connect() as con:
             rows = queries.allocator_table(con)
-            if args.only:
+            if args.all:
+                main = rows
+            elif args.only:
                 main = [a for a in rows if a["allocator_id"] in args.only]
             else:
                 main = [a for a in rows if (bool(a["bar_reasons"]) and a["n_docs"] > 0) == args.gaps
@@ -257,7 +261,7 @@ def main(argv: list[str] | None = None) -> int:
                 for h in coverage.held_documents(con, a["allocator_id"]):
                     if h["kind"] in ("AGENDA", "MINUTES", "RFP") and h["dated"] and h["dated"] >= since:
                         todo.append((h["sha256"], a["allocator_id"]))
-        print(f"{len(main)} {'gaps-page' if args.gaps else 'main-table'} plans, {len(todo)} agendas/minutes/RFPs "
+        print(f"{len(main)} {'all' if args.all else 'gaps-page' if args.gaps else 'main-table'} plans, {len(todo)} agendas/minutes/RFPs "
               f"from the last 12 months", flush=True)
 
         def one(item):
