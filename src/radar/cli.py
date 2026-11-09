@@ -41,6 +41,7 @@ def main(argv: list[str] | None = None) -> int:
     pp.add_argument("--only", nargs="+")
     pp.add_argument("--only-file", nargs="+", help="files of whitespace-separated plan ids (avoids shell word-splitting)")
     pp.add_argument("--workers", type=int, default=5)
+    pp.add_argument("--deep", action="store_true", help="deep discovery (render + second link level)")
     fp = sub.add_parser("reextract", help="force re-extraction of one document, all pages")
     fp.add_argument("sha_prefix"); fp.add_argument("--max-pages", type=int, default=64)
     ip = sub.add_parser("import-seed", help="import a research-pass YAML into the seed list and allowlist")
@@ -52,6 +53,8 @@ def main(argv: list[str] | None = None) -> int:
     dp = sub.add_parser("discover", help="discovery agent: registry/seed_florida.yaml -> registry/florida.yaml")
     dp.add_argument("--resuggest", action="store_true", help="recompute suggested pages only (no fetching)")
     dp.add_argument("--only", nargs="*", help="re-discover only these plan ids; keep the rest of the registry")
+    dp.add_argument("--only-file", nargs="*", help="files of plan ids")
+    dp.add_argument("--deep", action="store_true", help="render every page (JS lists) and follow a second link level")
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -72,7 +75,11 @@ def main(argv: list[str] | None = None) -> int:
             path = get_settings().registry_dir / "florida.yaml"
             discovery.resuggest(path)
         else:
-            path = discovery.run(only=set(args.only) if args.only else None)
+            from pathlib import Path as _P
+            ids = set(args.only or [])
+            for f in args.only_file or []:
+                ids |= set(_P(f).read_text().split())
+            path = discovery.run(only=ids or None, deep=args.deep)
         print(f"wrote {path} (version {discovery.version(path)[:12]})")
     elif args.cmd == "crawl":
         import json
@@ -266,7 +273,7 @@ def main(argv: list[str] | None = None) -> int:
         ids = [i for i in ids for i in i.split()]  # a single argument holding many ids is split too
         if not ids:
             raise SystemExit("pipeline: no plan ids")
-        steps = [["discover", "--only", *ids], ["approve-pending"], ["crawl", "--only", *ids],
+        steps = [["discover", "--only", *ids] + (["--deep"] if args.deep else []), ["approve-pending"], ["crawl", "--only", *ids],
                  ["extract", "--only", *ids, "--workers", str(args.workers)], ["scan-searches", "--only", *ids],
                  ["auto-approve"], ["index"]]
         for st in steps:

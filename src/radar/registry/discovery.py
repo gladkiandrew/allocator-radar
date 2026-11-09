@@ -97,7 +97,8 @@ def _summarize_docs(links) -> dict:
     return {"documents": len(docs), "by_type": dict(sorted(kinds.items()))}
 
 
-def discover_plan(client: PoliteClient, seed: dict) -> dict:
+def discover_plan(client: PoliteClient, seed: dict, deep: bool = False) -> dict:
+    """deep: render every page with the browser (JS-built document lists) and follow a second level of links."""
     out = {
         "allocator_id": seed["id"],
         "display_name": seed["name"],
@@ -124,7 +125,7 @@ def discover_plan(client: PoliteClient, seed: dict) -> dict:
         if not allowed:
             out["access"], out["access_reason"] = "MANUAL", "robots.txt disallows the plan page"
             return out
-        rendered = seed["template"] == "T-AIRO"
+        rendered = seed["template"] == "T-AIRO" or deep
         if rendered:
             from radar.net.render import render
 
@@ -153,8 +154,12 @@ def discover_plan(client: PoliteClient, seed: dict) -> dict:
                 l.url = u
                 cands.append(l)
         cands.sort(key=lambda l: -len(STRONG.findall(f"{l.text} {l.url}")))
+        budget = MAX_CANDIDATES * (2 if deep else 1)
         # Shared city pages (several plans on one page) and CivicPlus sites: stay close to the plan page.
-        for l in cands[:MAX_CANDIDATES]:
+        i = 0
+        while i < len(cands) and i < budget:
+            l = cands[i]
+            i += 1
             try:
                 if rendered:
                     final, html = render(client, l.url)
@@ -168,6 +173,17 @@ def discover_plan(client: PoliteClient, seed: dict) -> dict:
                 continue
             _, sub = parse_links(rr.text, rr.url)
             s = _summarize_docs(sub)
+            if deep and not s["documents"]:  # second level: follow this page's own pension/document links
+                for l2 in sub:
+                    u2 = _norm_url(l2.url)
+                    if (u2 in seen or is_document(u2) or SKIP.search(u2) or NOISE.search(u2) or PERSON_PAGE.search(u2)
+                            or not _same_site(u2, seed["url"])):
+                        continue
+                    hint = CITY_HINT if seed["template"] in CITY_TEMPLATES else PAGE_HINT
+                    if hint.search(f"{l2.text} {u2}"):
+                        seen.add(u2)
+                        l2.url = u2
+                        cands.append(l2)
             if s["documents"] and _norm_url(rr.url) not in {_norm_url(p["url"]) for p in pages}:
                 pages.append({"url": rr.url, "label": (l.text or l.context)[:80], **s})
         if seed.get("legistar"):  # T-LEG board on the Legistar Web API
@@ -194,7 +210,8 @@ def discover_plan(client: PoliteClient, seed: dict) -> dict:
     return out
 
 
-def run(seed_path: Path | None = None, out_path: Path | None = None, only: set[str] | None = None) -> Path:
+def run(seed_path: Path | None = None, out_path: Path | None = None, only: set[str] | None = None,
+        deep: bool = False) -> Path:
     s = get_settings()
     seed_path = seed_path or s.registry_dir / "seed_florida.yaml"
     out_path = out_path or s.registry_dir / "florida.yaml"
@@ -222,7 +239,7 @@ def run(seed_path: Path | None = None, out_path: Path | None = None, only: set[s
                                 "allocator_type": p["type"]})
                     continue
                 log.info("discovering %s", p["id"])
-                r = discover_plan(client, p)
+                r = discover_plan(client, p, deep=deep)
                 done[p["url"]] = r
                 res.append(r)
             return res
