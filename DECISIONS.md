@@ -284,3 +284,8 @@ are the irreversible ones, which went to the repo owner.
   Source Serif 4, JetBrains Mono; SIL OFL) are served from `static/fonts/`, so a page makes no
   third-party requests. New About page with the author and the mission. The workbench pages
   (manual fact, records requests, registry, export) moved under a Tools menu.
+- **D-B14 Public read-only site (allocator.amagna.co).** The shareable site runs with
+  `RADAR_PUBLIC_MODE=true`. It accepts GET only, hides the review queue, the tools and the export,
+  and shows approved signals only. Citations redirect to the original public document rather than
+  to the encrypted lake, so the lake and its key never leave the owner's machine. Crawling, review
+  and approval stay on the owner's machine; the site gets a data snapshot (`deploy/push-snapshot.sh`).
