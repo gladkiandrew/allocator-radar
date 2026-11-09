@@ -266,3 +266,7 @@ are the irreversible ones, which went to the repo owner.
   only for manager hires, the same qualifier as the other search types. It is dated by the meeting
   date. It goes through the same auto-approval rules: the quote must match the page and the date
   must be printed in the source. The search scan is now `search-scan-2`.
+- **D-B10 SEARCH_SCHEDULED may be future-dated (up to 90 days).** An agenda is posted before its
+  meeting. A scheduled interview for next week shows a search that is open now, so its meeting date
+  can be up to 90 days ahead and still counts (`future_days` in the readiness rules). Every other
+  type keeps D-A12: future-dated signals never count.

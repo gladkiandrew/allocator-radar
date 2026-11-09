@@ -32,7 +32,9 @@ def decide(signal_id: str, decision: str, actor: str, *, note: str | None = None
             upd["qualifier"] = qualifier or None
         if event_date and event_date != str(before["event_date"]):
             d = date.fromisoformat(event_date)
-            if d > date.today():
+            from datetime import timedelta as _td
+            ahead = 90 if (signal_type or before["signal_type"]) == "SEARCH_SCHEDULED" else 0
+            if d > date.today() + _td(days=ahead):
                 raise ReviewError("event date is in the future")
             upd["event_date"] = d
         if summary is not None and summary.strip() != before["summary"]:

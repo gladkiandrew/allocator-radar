@@ -51,3 +51,9 @@ def test_search_scheduled_deploys_for_manager_only():
     assert compute([sig("SEARCH_SCHEDULED", 20)], NOW, TODAY).tier == "DEPLOYING"
     assert compute([sig("SEARCH_SCHEDULED", 20, q="service_provider")], NOW, TODAY).tier == "WATCHING"
     assert compute([sig("SEARCH_SCHEDULED", 95)], NOW, TODAY).tier == "WATCHING"
+
+
+def test_search_scheduled_upcoming_meeting_counts_now():
+    assert compute([sig("SEARCH_SCHEDULED", -10)], NOW, TODAY).tier == "DEPLOYING"   # meeting in 10 days
+    assert compute([sig("SEARCH_SCHEDULED", -120)], NOW, TODAY).tier == "WATCHING"   # too far ahead
+    assert compute([sig("RFP_ISSUED", -5)], NOW, TODAY).tier == "WATCHING"           # other types: no future dates

@@ -277,7 +277,8 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
         con.execute("INSERT INTO row_evidence VALUES (?, ?, ?) ON CONFLICT DO NOTHING", [kind, row_id, eid])
 
     for s in res.signals:
-        d = _date(s.event_date, today)
+        # A posted agenda schedules a FUTURE meeting: SEARCH_SCHEDULED may carry a meeting date up to 90 days ahead.
+        d = _date(s.event_date, today + timedelta(days=90) if s.signal_type == "SEARCH_SCHEDULED" else today)
         if d is None:
             drop(f"signal date {s.event_date!r}")
             continue

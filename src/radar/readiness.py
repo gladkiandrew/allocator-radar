@@ -44,7 +44,9 @@ def compute(signals: list[dict], last_new_document: datetime | None, today: date
     approved = [s for s in signals if s["review_status"] in COUNTING_STATUSES]
     for rule in cfg["tiers"]:
         window_start = today - timedelta(days=rule["window_days"])
-        hits = [s for s in approved if _matches(rule, s) and window_start <= s["event_date"] <= today]
+        ahead = rule.get("future_days", {})  # e.g. SEARCH_SCHEDULED: an agenda for an upcoming meeting counts now
+        hits = [s for s in approved if _matches(rule, s)
+                and window_start <= s["event_date"] <= today + timedelta(days=ahead.get(s["signal_type"], 0))]
         if hits:
             hits.sort(key=lambda s: s["event_date"], reverse=True)
             return Readiness(rule["tier"], hits, rule["meaning"].strip(), last_new_document, coverage_stale)
