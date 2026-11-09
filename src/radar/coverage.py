@@ -139,9 +139,14 @@ def gap_category(con, a: dict) -> tuple[str, str, str]:
             """SELECT count(DISTINCT du.sha256) FROM document_urls du JOIN documents d USING (sha256)
                WHERE du.allocator_id = ? AND NOT EXISTS (SELECT 1 FROM extraction_runs r
                      WHERE r.sha256 = du.sha256 AND r.extractor_version = ?)""", [aid, EXTRACTOR_VERSION]).fetchone()[0]
+        page_hosts = [r[0] for r in con.execute(
+            "SELECT DISTINCT regexp_extract(url, '^https?://([^/]+)', 1) FROM allocator_pages WHERE allocator_id = ?",
+            [aid]).fetchall()]
+        attempted = any(con.execute("SELECT 1 FROM audit_log WHERE action = 'crawl_host' AND subject = ? LIMIT 1",
+                                    [h]).fetchone() for h in page_hosts)
         if pages == 0:
             cat = "NO_LISTING_PAGES"
-        elif (crawled == 0 and n_docs == 0) or unextracted:
+        elif (not attempted and n_docs == 0) or unextracted:
             cat = "PROCESSING"
         elif "documents fetched" in reasons:
             cat = "THIN"
