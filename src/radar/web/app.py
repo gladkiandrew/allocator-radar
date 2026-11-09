@@ -16,14 +16,28 @@ from radar.web.auth import require_user
 
 HERE = Path(__file__).parent
 templates = Jinja2Templates(directory=HERE / "templates")
-def cite_href(e: dict) -> str:
-    """A citation always lands on the page of the PDF: our cached copy if we hold it."""
+def public_href(url: str | None) -> str | None:
+    """A URL a reader can open: http(s) only. Manually added files (manual://...) have no public address."""
+    return url if url and url.startswith(("https://", "http://")) else None
+
+
+def cite_href(e: dict) -> str | None:
+    """A citation always lands on the page of the PDF: our cached copy if we hold it.
+
+    The public site never serves our cached copies, so it links straight to the original public URL,
+    and returns None when there is none (the template then shows the citation as text)."""
+    if templates.env.globals.get("public"):
+        url = public_href(e.get("source_url"))
+        return url + (f"#page={e['page']}" if e.get("page") else "") if url else None
     if e.get("document_sha256"):
         return f"/doc/{e['document_sha256']}" + (f"#page={e['page']}" if e.get("page") else "")
     return e["source_url"]
 
 
 templates.env.globals["cite_href"] = cite_href
+templates.env.globals["public_href"] = public_href
+NO_URL = "Added to the record by hand from a document that has no public URL on file"
+templates.env.globals["no_url_title"] = NO_URL
 
 
 def uniq_cites(evs: list[dict]) -> list[dict]:

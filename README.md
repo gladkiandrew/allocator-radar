@@ -216,9 +216,16 @@ queue and the export show.
 
 ## Deploy
 
-`docker compose up -d` runs the app (login required) and a nightly worker. Put it behind your own
-tunnel or reverse proxy on a subdomain. Server notes are in `deploy/VPS.md`. DuckDB is the default
-store; the SQL is kept portable so it can move to Postgres.
+**Public site.** [allocator.amagna.co](https://allocator.amagna.co/) is a static snapshot on
+Cloudflare Workers, with no server and no tunnel. `make deploy-public` renders the public read-only
+pages to `dist/` (`radar export-static`), runs the wall check on them (`radar wall-static dist`: no
+contact details, no links to review, export or tools), then runs `npx wrangler deploy`
+(`wrangler.jsonc`). Run `npx wrangler login` once first. Crawling and review stay on your machine;
+redeploy to refresh the data.
+
+**Full app.** `docker compose up -d` runs the app (login required) and a nightly worker. Put it
+behind your own tunnel or reverse proxy on a subdomain. Server notes are in `deploy/VPS.md`. DuckDB
+is the default store; the SQL is kept portable so it can move to Postgres.
 
 ## Status
 

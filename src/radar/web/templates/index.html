@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% macro cite(e) %}<a class="cite" href="{{ cite_href(e) }}" target="_blank" rel="noopener" title="{{ e.quote or '' }}">{{ (e.doc_title or 'source')|truncate(26) }}{% if e.page %} · p.{{ e.page }}{% endif %}</a>{% endmacro %}
+{% macro cite(e) %}{% set h = cite_href(e) %}{% if h %}<a class="cite" href="{{ h }}" target="_blank" rel="noopener" title="{{ e.quote or '' }}">{{ (e.doc_title or 'source')|truncate(26) }}{% if e.page %} · p.{{ e.page }}{% endif %}</a>{% else %}<span class="cite" title="{{ no_url_title }}">{{ (e.doc_title or 'source')|truncate(26) }}{% if e.page %} · p.{{ e.page }}{% endif %} · manual source</span>{% endif %}{% endmacro %}
 {% block body %}
 
 <section class="hero rise" aria-labelledby="hero-title">
@@ -58,6 +58,15 @@
       <a href="/?strategy={{ strategy }}#allocators" class="{{ 'on' if not tier }}">All <span class="n">{{ counts.total }}</span></a>
       {% for t in tiers %}<a href="/?tier={{ t }}&strategy={{ strategy }}#allocators" class="{{ 'on' if tier == t }}">{{ t|title }} <span class="n">{{ counts[t] }}</span></a>{% endfor %}
     </div>
+    {% if static_site %}{# a static snapshot has no query strings: each strategy view is its own page #}
+    <label class="select-wrap" for="strategy">Strategy
+      <select id="strategy" onchange="location.href=this.options[this.selectedIndex].getAttribute('data-href')">
+        {% set tq = '&tier=' ~ tier if tier else '' %}
+        <option data-href="/?strategy=all{{ tq }}#allocators" {{ 'selected' if strategy == 'all' }}>All strategies</option>
+        <option data-href="/?strategy=hf{{ tq }}#allocators" {{ 'selected' if strategy == 'hf' }}>Hedge fund &amp; diversifying</option>
+        {% for b in buckets %}<option data-href="/?strategy={{ b }}{{ tq }}#allocators" {{ 'selected' if strategy == b }}>{{ b|replace('_',' ')|title }}</option>{% endfor %}
+      </select></label>
+    {% else %}
     <form method="get" action="/#allocators">
       <label class="select-wrap" for="strategy">Strategy
         <select id="strategy" name="strategy" onchange="this.form.submit()">
@@ -67,12 +76,12 @@
         </select></label>
       {% if tier %}<input type="hidden" name="tier" value="{{ tier }}">{% endif %}
       <noscript><button type="submit">Apply</button></noscript>
-    </form>
+    </form>{% endif %}
   </div>
   {% if strategy == 'hf' %}<p class="muted small" style="margin:-4px 0 10px">Hedge fund preset: hedge fund, diversifying, managed futures, multi-strategy, quant and absolute return signals.</p>{% endif %}
 
   {% if not rows %}
-  <div class="card empty">{% if n_gaps %}No plan matches this view. Try <a href="/">all strategies</a>, or see <a href="/gaps">Coverage gaps</a>.{% else %}No allocators yet. The registry has not been loaded and approved. Go to <a href="/registry">Registry</a>.{% endif %}</div>
+  <div class="card empty">{% if n_gaps %}No plan matches this view. Try <a href="/">all strategies</a>, or see <a href="/gaps">Coverage gaps</a>.{% elif public %}No allocators yet.{% else %}No allocators yet. The registry has not been loaded and approved. Go to <a href="/registry">Registry</a>.{% endif %}</div>
   {% else %}
   <div class="table-card"><div class="scroll">
   <table class="stack">

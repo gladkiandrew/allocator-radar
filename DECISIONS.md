@@ -289,3 +289,14 @@ are the irreversible ones, which went to the repo owner.
   and shows approved signals only. Citations redirect to the original public document rather than
   to the encrypted lake, so the lake and its key never leave the owner's machine. Crawling, review
   and approval stay on the owner's machine; the site gets a data snapshot (`deploy/push-snapshot.sh`).
+- **D-B15 Public site as a static snapshot on Cloudflare Workers (supersedes the VPS half of D-B14).**
+  `radar export-static --out dist/` renders the public-mode app in-process (no HTTP client, no server) to
+  plain HTML: the main table and every tier × strategy view as its own page, every brief on the main table
+  and the gaps page, How it works, About and Coverage gaps, with internal links rewritten to relative paths.
+  It shows approved and auto-approved signals, each labeled. Citations link to the original public URL;
+  documents added by hand (`manual://`) have no public URL, so their citations show as text marked
+  "manual source". Live document search is left out (it needs a server). `radar wall-static dist` must pass
+  before deploy: no contact-shaped text, no mailto/email/social links, no link to /review, /export, the tools
+  or /doc/, no non-public link schemes, no posting forms, no data/key files. `make deploy-public` runs
+  export -> wall -> `npx wrangler deploy` (`wrangler.jsonc`: static assets, custom domain allocator.amagna.co).
+  No VPS, no tunnel.

@@ -69,7 +69,10 @@
 <h2>What counts</h2>
 <div class="card prose">
   <ul style="margin:0">
-    <li>Only <strong>approved</strong> signals change a tier. A new signal shows as <span class="pending">pending review</span> until it is approved or rejected.</li>
+    <li>Only <strong>approved</strong> signals change a tier: approved by a person, or auto-approved under the four checks
+      above. A new signal shows as <span class="pending">pending review</span> until it is approved or rejected.</li>
+    {% if public %}<li>This public site shows approved signals only, and labels each one <span class="tag ok">approved by a person</span>
+      or <span class="tag">auto-approved</span>. Pending and rejected signals are never shown here.</li>{% endif %}
     <li>A signal comes from one of two places. Either the extractor reads a fetched public document and quotes the page, or a person enters a fact from a manual-only source, with its URL and date.</li>
     <li>Summaries use factual verbs: reported, approved, voted, issued, awarded, terminated, placed on watch. A lint rejects evaluative words before anything is stored.</li>
     <li>The CSV export contains only signals a person has approved.</li>

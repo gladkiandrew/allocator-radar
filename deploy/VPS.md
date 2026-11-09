@@ -17,6 +17,9 @@ Claude subscription, run as the VPS service user. No API key.
 
 ## Public read-only site: allocator.amagna.co (D-B14)
 
+> **Superseded by D-B15:** the public site is now a static snapshot on Cloudflare Workers.
+> Run `make deploy-public` on the Mac (after `npx wrangler login` once). The VPS steps below are kept for reference.
+
 The shareable site runs in **public mode** (`RADAR_PUBLIC_MODE=true`): GET only, no review queue,
 no tools, no export, approved signals only, and `/doc/<sha>` redirects to the original public URL.
 So the VPS needs neither the encrypted lake nor its key, nor a Claude login.

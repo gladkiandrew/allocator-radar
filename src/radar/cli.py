@@ -16,6 +16,10 @@ def main(argv: list[str] | None = None) -> int:
     sp.add_argument("--port", type=int, default=8000)
     sp.add_argument("--reload", action="store_true")
     sub.add_parser("wall", help="run the live wall checks (nightly)")
+    xp = sub.add_parser("export-static", help="render the public read-only site to plain HTML (for a static host)")
+    xp.add_argument("--out", default="dist", help="output directory (replaced)")
+    wp = sub.add_parser("wall-static", help="wall check on a static snapshot before deploy: contact patterns, admin links")
+    wp.add_argument("dir", nargs="?", default="dist")
     cp = sub.add_parser("crawl", help="crawl approved allocators' listing pages and fetch documents")
     cp.add_argument("--only", nargs="*", help="allocator ids")
     cp.add_argument("--templates", nargs="*", help="e.g. T-WP T-CP")
@@ -392,6 +396,14 @@ def main(argv: list[str] | None = None) -> int:
     elif args.cmd == "wall":
         from radar.wall import live
         return live.main()
+    elif args.cmd == "export-static":
+        import json
+        from radar import db, static_export
+        db.init_db()
+        print(json.dumps(static_export.export(args.out)))
+    elif args.cmd == "wall-static":
+        from radar.wall import static_site
+        return static_site.main(args.dir)
     return 0
 
 

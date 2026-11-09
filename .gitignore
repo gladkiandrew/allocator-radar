@@ -9,3 +9,6 @@ __pycache__/
 *.key
 secrets/
 registry/*.lock
+dist/
+.wrangler/
+node_modules/

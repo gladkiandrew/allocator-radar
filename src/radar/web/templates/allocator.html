@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ a.display_name }} · Allocator Radar{% endblock %}
-{% macro cites(evs) %}{% for e in (evs|uniq_cites)[:2] %}<a class="cite" href="{{ cite_href(e) }}" target="_blank" rel="noopener" title="{{ e.quote }}">{{ (e.doc_title or 'source')|truncate(24) }}{% if e.page %} · p.{{ e.page }}{% endif %}</a>{% endfor %}{% endmacro %}
+{% macro cites(evs) %}{% for e in (evs|uniq_cites)[:2] %}{% set h = cite_href(e) %}{% if h %}<a class="cite" href="{{ h }}" target="_blank" rel="noopener" title="{{ e.quote }}">{{ (e.doc_title or 'source')|truncate(24) }}{% if e.page %} · p.{{ e.page }}{% endif %}</a>{% else %}<span class="cite" title="{{ no_url_title }}">{{ (e.doc_title or 'source')|truncate(24) }}{% if e.page %} · p.{{ e.page }}{% endif %} · manual source</span>{% endif %}{% endfor %}{% endmacro %}
 {% macro money(v) %}{% if v is not none %}${{ '{:,.0f}'.format(v) }}{% endif %}{% endmacro %}
 {% block body %}{% set r = a.readiness %}{% set f = a.facts %}{% set reason_ids = r.reasons|map(attribute='signal_id')|list %}
 <p class="crumb"><a href="/">← All allocators</a></p>
@@ -42,7 +42,7 @@
 
 <nav class="jump" aria-label="On this page">
   <a href="#signals">Signals</a><a href="#allocation">Allocation</a><a href="#managers">Managers</a><a href="#coverage">Coverage</a>
-  <a href="#officers">Officers</a><a href="#search">Search</a><a href="#documents">Documents</a>
+  <a href="#officers">Officers</a>{% if not static_site %}<a href="#search">Search</a>{% endif %}<a href="#documents">Documents</a>
 </nav>
 
 <h2 id="signals">Signal timeline <span class="count">{{ a.signals|length }}</span></h2>
@@ -86,7 +86,7 @@
   {% for it in a.coverage['items'] %}
   <tr><td>{{ it.label }}{% if it.detail %}<div class="faint mono" style="font-size:11px">{{ it.detail }}</div>{% endif %}</td>
     <td>{% if it.status == 'ok' %}<span class="tag ok">✓ held</span>{% elif it.status == 'partial' %}<span class="tag warn">partial</span>{% elif it.status == 'missing' %}<span class="tag bad">missing</span>{% else %}<span class="faint small">not published</span>{% endif %}</td>
-    <td class="hide-sm">{% if it.newest %}<a href="/doc/{{ it.newest.sha256 }}" target="_blank" rel="noopener">{{ it.newest.title|truncate(34) }}</a> <span class="faint mono" style="font-size:11px">{{ it.newest.dated or '' }}</span>{% else %}<span class="faint">—</span>{% endif %}</td></tr>
+    <td class="hide-sm">{% if it.newest %}{% if public and not public_href(it.newest.url) %}<span title="{{ no_url_title }}">{{ it.newest.title|truncate(34) }}</span>{% else %}<a href="{{ it.newest.url if public else '/doc/' ~ it.newest.sha256 }}" target="_blank" rel="noopener">{{ it.newest.title|truncate(34) }}</a>{% endif %} <span class="faint mono" style="font-size:11px">{{ it.newest.dated or '' }}</span>{% else %}<span class="faint">—</span>{% endif %}</td></tr>
   {% endfor %}</tbody></table></div></div>
 <p class="faint small">"Not published" means not found on the plan's approved listing pages. "Missing" means listed there but not fetched yet.</p>
 </section>
@@ -108,13 +108,13 @@
 </tbody></table></div></div>
 <p class="faint small">Names and titles only, exactly as the documents print them. No contact details are stored.</p>{% endif %}
 
-<h2 id="search">Search this plan's documents</h2>
+{% if not static_site %}<h2 id="search">Search this plan's documents</h2>
 <div class="search-field">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
   <input type="search" name="q" aria-label="Search this plan's documents" placeholder="e.g. hedge fund, RFP, absolute return, watch list" hx-get="/a/{{ a.allocator_id }}/search"
     hx-trigger="keyup changed delay:400ms, search" hx-target="#search-results">
 </div>
-<div id="search-results" aria-live="polite" style="margin-top:10px"></div>
+<div id="search-results" aria-live="polite" style="margin-top:10px"></div>{% endif %}
 
 <h2 id="documents">Documents we watch <span class="count">{{ a.documents|length }}</span></h2>
 {% if a.pages %}<p class="muted small">Listing pages: {% for p in a.pages %}<a href="{{ p.url }}" target="_blank" rel="noopener noreferrer">{{ p.label or p.url|truncate(40) }}</a>{{ ', ' if not loop.last }}{% endfor %}</p>{% endif %}
@@ -122,8 +122,8 @@
 <div class="table-card"><div class="scroll"><table class="stack">
   <thead><tr><th scope="col">Document</th><th scope="col">Type</th><th scope="col">Dated</th><th scope="col" class="hide-sm">Fetched</th><th scope="col" class="hide-sm">Pages</th></tr></thead>
   <tbody>{% for d in a.documents %}
-  <tr><td><a href="/doc/{{ d.sha256 }}" target="_blank" rel="noopener">{{ d.title|truncate(70) }}</a>
-      <div class="faint small"><a class="faint" href="{{ d.url }}" target="_blank" rel="noopener noreferrer">original ↗</a>{% if d.provenance != 'CRAWL' %} · {{ d.provenance|lower }}{% endif %}</div></td>
+  <tr><td>{% if public and not public_href(d.url) %}<span title="{{ no_url_title }}">{{ d.title|truncate(70) }}</span>{% else %}<a href="{{ d.url if public else '/doc/' ~ d.sha256 }}" target="_blank" rel="noopener">{{ d.title|truncate(70) }}</a>{% endif %}
+      {% if not public or d.provenance != 'CRAWL' %}<div class="faint small">{% if not public %}<a class="faint" href="{{ d.url }}" target="_blank" rel="noopener noreferrer">original ↗</a>{% endif %}{% if d.provenance != 'CRAWL' %}{{ ' · ' if not public }}{{ d.provenance|lower }}{% endif %}</div>{% endif %}</td>
     <td><span class="tag">{{ d.doc_type }}</span></td>
     <td class="mono">{{ d.doc_date or '—' }}</td>
     <td class="mono hide-sm">{{ d.last_fetched.strftime('%Y-%m-%d') }}</td>

@@ -21,7 +21,7 @@
   <tr><td class="plan"><a class="pname" href="/a/{{ a.allocator_id }}">{{ a.display_name }}</a><div class="where">{{ a.jurisdiction_city }}{% if a.county and a.county != 'Statewide' %} · {{ a.county }}{% endif %}</div></td>
     <td><span class="tier {{ a.readiness.tier }}">{{ a.readiness.tier }}</span>
       {% if a.readiness.reasons %}{% set s = a.readiness.reasons[0] %}<div class="small" style="margin-top:6px;max-width:42ch"><span class="mono">{{ s.event_date }}</span> {{ s.summary|truncate(100) }}
-        {% for e in s.evidence[:1] %}<a class="cite" href="{{ cite_href(e) }}" target="_blank" rel="noopener">p.{{ e.page }}</a>{% endfor %}</div>{% endif %}</td>
+        {% for e in s.evidence[:1] %}{% set h = cite_href(e) %}{% if h %}<a class="cite" href="{{ h }}" target="_blank" rel="noopener">p.{{ e.page }}</a>{% else %}<span class="cite" title="{{ no_url_title }}">p.{{ e.page }} · manual source</span>{% endif %}{% endfor %}</div>{% endif %}</td>
     <td class="small"><ul style="margin:0;padding-left:16px">{% for r in a.bar_reasons %}<li style="margin:2px 0">{{ r }}</li>{% endfor %}</ul></td>
     <td class="hide-sm cov"><span class="bar" aria-hidden="true"><i style="width:{{ [a.coverage_pct, 100]|min }}%"></i></span><span class="mono">{{ a.coverage_pct }}%</span><div class="faint mono" style="font-size:11px;margin-top:4px">{{ a.n_docs }} docs</div></td></tr>
   {% endfor %}</tbody></table></div></div>
