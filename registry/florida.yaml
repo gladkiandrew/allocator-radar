@@ -2,7 +2,7 @@
 # Edits are allowed before approval; any edit changes the version hash and needs re-approval.
 region: florida
 phase: A
-generated_at: '2026-11-09T18:04:47+00:00'
+generated_at: '2026-11-09T18:09:37+00:00'
 generated_by: discovery agent (radar discover)
 seed: registry/seed_florida.yaml
 allocators:
@@ -6854,6 +6854,178 @@ allocators:
   site_title: null
   robots: null
   document_pages: []
+- allocator_id: fl-east-lake-tarpon-fire-district-fire
+  display_name: East Lake Tarpon Special Fire Control District Firefighters' Retirement System
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: East Lake Tarpon Fire District
+  jurisdiction_state: FL
+  home_url: https://www.elfr.org/pension-plan
+  template: T-CITY
+  source_id: PB-www-elfr-org
+  access: AUTO
+  access_reason: null
+  site_title: Pension Plan - East Lake Fire Rescue
+  robots: allowed
+  document_pages:
+  - url: https://www.elfr.org/pension-plan
+    label: plan page
+    documents: 56
+    by_type:
+      ACTUARIAL: 2
+      DISCLOSURE_112664: 1
+      FINANCIAL: 2
+      MINUTES: 44
+      OTHER: 7
+    suggested: true
+- allocator_id: fl-keys-energy-services-plan
+  display_name: Utility Board of the City of Key West (Keys Energy Services) Pension Plan
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Keys Energy Services
+  jurisdiction_state: FL
+  home_url: https://www.keysenergy.com/pension-board
+  template: T-CITY
+  source_id: PB-www-keysenergy-com
+  access: MANUAL
+  access_reason: robots.txt disallows the plan page
+  site_title: null
+  robots: disallowed
+  document_pages: []
+- allocator_id: fl-greater-naples-fire-district-fire
+  display_name: Greater Naples Fire Rescue District Firefighters' Pension Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Greater Naples Fire District
+  jurisdiction_state: FL
+  home_url: https://greaternaplesfire.org/resources/documents/
+  template: T-WP
+  source_id: PB-greaternaplesfire-org
+  access: AUTO
+  access_reason: null
+  site_title: Documents – Greater Naples Fire Rescue District
+  robots: allowed
+  document_pages:
+  - url: https://greaternaplesfire.org/resources/documents/
+    label: plan page
+    documents: 172
+    by_type:
+      ACTUARIAL: 1
+      AGENDA: 82
+      DISCLOSURE_112664: 2
+      FINANCIAL: 7
+      MINUTES: 51
+      OTHER: 26
+      PERFORMANCE: 2
+      RFP: 1
+    suggested: true
+  - url: https://greaternaplesfire.org/resources/meeting-room-application/
+    label: Meeting Room Request
+    documents: 2
+    by_type:
+      OTHER: 2
+    suggested: true
+- allocator_id: fl-south-walton-fire-district-fire
+  display_name: South Walton Fire District Firefighters' Retirement System
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: South Walton Fire District
+  jurisdiction_state: FL
+  home_url: https://southwaltonfire.gov/192/Retirement-Information
+  template: T-CP
+  source_id: PB-southwaltonfire-gov
+  access: AUTO
+  access_reason: null
+  site_title: Retirement Information | SWFD, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://southwaltonfire.gov/192/Retirement-Information
+    label: plan page
+    documents: 4
+    by_type:
+      ACTUARIAL: 1
+      OTHER: 3
+    suggested: true
+  - url: https://southwaltonfire.gov/AgendaCenter
+    label: Agendas & Minutes
+    documents: 26
+    by_type:
+      MINUTES: 26
+    suggested: false
+  - url: https://southwaltonfire.gov/218/Board-Meetings
+    label: Board Meetings
+    documents: 1
+    by_type:
+      AGENDA: 1
+    suggested: true
+- allocator_id: fl-north-river-fire-district-fire
+  display_name: North River Fire District Firefighters' Pension Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: North River Fire District
+  jurisdiction_state: FL
+  home_url: https://www.nrfd.org/pension
+  template: T-CITY
+  source_id: PB-www-nrfd-org
+  access: AUTO
+  access_reason: no document links found on the plan page or its listing pages
+  site_title: Pension Information | nrfd
+  robots: allowed
+  document_pages:
+  - url: https://www.nrfd.org/pension
+    label: plan page
+    documents: 0
+    by_type: {}
+    suggested: false
+- allocator_id: fl-holley-navarre-fire-district-fire
+  display_name: Holley-Navarre Fire District Firefighters' Pension Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Holley-Navarre Fire District
+  jurisdiction_state: FL
+  home_url: https://www.hnfd.org/pension-board-of-trustees
+  template: T-CITY
+  source_id: PB-www-hnfd-org
+  access: MANUAL
+  access_reason: host hnfd.org is not on the allowlist (config/sources.yaml)
+  site_title: null
+  robots: allowed
+  document_pages: []
+- allocator_id: fl-okaloosa-island-fire-district-fire
+  display_name: Okaloosa Island Fire District Firefighters' Pension Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Okaloosa Island Fire District
+  jurisdiction_state: FL
+  home_url: https://okaloosaislandfire.com/pension-meetings/
+  template: T-WP
+  source_id: PB-okaloosaislandfire-com
+  access: MANUAL
+  access_reason: 'fetch failed: ConnectError: [Errno 51] Network is unreachable'
+  site_title: Pension Meetings – Okaloosa Island Fire Department
+  robots: allowed
+  document_pages: []
+- allocator_id: fl-east-niceville-fire-district-fire
+  display_name: East Niceville Fire District Firefighters' Pension Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: East Niceville Fire District
+  jurisdiction_state: FL
+  home_url: https://enfd.specialdistrict.org/pension-fund-documents
+  template: T-CITY
+  source_id: PB-enfd-specialdistrict-org
+  access: AUTO
+  access_reason: null
+  site_title: Pension Fund Documents - East Niceville Fire District
+  robots: allowed
+  document_pages:
+  - url: https://enfd.specialdistrict.org/pension-fund-documents
+    label: plan page
+    documents: 3
+    by_type:
+      AGENDA: 2
+      DISCLOSURE_112664: 1
+    suggested: true
+  - url: https://enfd.specialdistrict.org/board-meetings
+    label: Board Meetings
+    documents: 21
+    by_type:
+      AGENDA: 12
+      MINUTES: 8
+      OTHER: 1
+    suggested: true
 - allocator_id: fl-sba-frs
   display_name: Florida Retirement System Pension Plan (State Board of Administration)
   allocator_type: PUBLIC_PENSION_STATE
