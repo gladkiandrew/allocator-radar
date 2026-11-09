@@ -42,6 +42,8 @@ def main(argv: list[str] | None = None) -> int:
     pp.add_argument("--workers", type=int, default=5)
     fp = sub.add_parser("reextract", help="force re-extraction of one document, all pages")
     fp.add_argument("sha_prefix"); fp.add_argument("--max-pages", type=int, default=64)
+    ip = sub.add_parser("import-seed", help="import a research-pass YAML into the seed list and allowlist")
+    ip.add_argument("path"); ip.add_argument("--batch", required=True)
     sub.add_parser("index", help="add newly parsed (scrubbed) pages to the LanceDB search index")
     dp = sub.add_parser("discover", help="discovery agent: registry/seed_florida.yaml -> registry/florida.yaml")
     dp.add_argument("--resuggest", action="store_true", help="recompute suggested pages only (no fetching)")
@@ -260,6 +262,15 @@ def main(argv: list[str] | None = None) -> int:
         for st in steps:
             print(f"== radar {st[0]}", flush=True)
             subprocess.run([sys.executable, "-m", "radar.cli", *st], check=False)
+    elif args.cmd == "import-seed":
+        import json
+        from pathlib import Path
+        from radar.registry import importer
+        from radar.settings import sources_config
+        out = importer.import_entries(importer.load_entries(Path(args.path)), args.batch)
+        sources_config.cache_clear()
+        print(json.dumps(out, indent=1))
+        Path(f"data/phaseb_{args.batch}.txt").write_text(" ".join(out["added"] + out["manual"]))
     elif args.cmd == "index":
         from radar import db, search
         db.init_db()
