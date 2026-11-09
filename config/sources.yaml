@@ -171,6 +171,33 @@ verdicts:
   - {id: PB-okaloosaislandfire-com, name: "Okaloosa Island Fire District (Okaloosa Island Fire District Firefighters' Pensi", hosts: [okaloosaislandfire.com], verdict: CRAWL}
   - {id: PB-enfd-specialdistrict-org, name: "East Niceville Fire District (East Niceville Fire District Firefighters' Pension", hosts: [enfd.specialdistrict.org], verdict: CRAWL}
 
+  # ---- Phase B import municipal2 ----
+  - {id: PB-cityofbradenton-com, name: "Bradenton (Bradenton Police Officers' Retirement System)", hosts: [cityofbradenton.com], verdict: CRAWL}
+  - {id: PB-www-ctsfl-us, name: "Tarpon Springs (Tarpon Springs Firefighters' Pension Board)", hosts: [www.ctsfl.us], verdict: CRAWL}
+  - {id: PB-www-stpetebeach-org, name: "St. Pete Beach (St. Pete Beach Police Officers' Retirement System)", hosts: [www.stpetebeach.org], verdict: CRAWL}
+  - {id: PB-www-longboatkey-org, name: "Longboat Key (Longboat Key Consolidated Retirement System)", hosts: [www.longboatkey.org], verdict: CRAWL}
+  - {id: PB-www-cityofmarcoisland-co, name: "Marco Island (Marco Island Police Officers' Pension Board)", hosts: [www.cityofmarcoisland.com], verdict: CRAWL}
+  - {id: PB-www-melbournebeachfl-org, name: "Melbourne Beach (Melbourne Beach Police Pension Fund)", hosts: [www.melbournebeachfl.org], verdict: CRAWL}
+  - {id: PB-www-westmelbourne-org, name: "West Melbourne (West Melbourne Police Officers' Retirement Board of Trustees)", hosts: [www.westmelbourne.org], verdict: CRAWL}
+  - {id: PB-www-msvfl-gov, name: "Miami Shores (Miami Shores Village General Employees Pension Board)", hosts: [www.msvfl.gov], verdict: CRAWL}
+  - {id: PB-www-somifl-gov, name: "South Miami (City of South Miami Pension Plan)", hosts: [www.somifl.gov], verdict: CRAWL}
+  - {id: PB-www-lantana-org, name: "Lantana (Lantana Firefighters' Pension Fund)", hosts: [www.lantana.org], verdict: CRAWL}
+  - {id: PB-www-lakemaryfl-com, name: "Lake Mary (Lake Mary Firefighters' Pension Board)", hosts: [www.lakemaryfl.com], verdict: MANUAL, reason: "documents only on resourcecenters.com (do-not-crawl)"}
+  - {id: PB-www-cityofflaglerbeach-c, name: "Flagler Beach (Flagler Beach Police Officers' Retirement Plan)", hosts: [www.cityofflaglerbeach.com], verdict: CRAWL}
+  - {id: PB-www-townofbelleair-com, name: "Belleair (Belleair Police Retirement Plan)", hosts: [www.townofbelleair.com], verdict: CRAWL}
+  - {id: PB-www-myindianshores-com, name: "Indian Shores (Indian Shores Police Pension Board)", hosts: [www.myindianshores.com], verdict: CRAWL}
+  - {id: PB-www-mysouthpasadena-com, name: "South Pasadena (South Pasadena Firefighters' Retirement System)", hosts: [www.mysouthpasadena.com], verdict: CRAWL}
+  - {id: PB-www-cityofstarke-org, name: "Starke (Starke Police Pension Fund)", hosts: [www.cityofstarke.org], verdict: CRAWL}
+  - {id: PB-www-ladylakefl-gov, name: "Lady Lake (Lady Lake Police Officers' Pension Plan)", hosts: [www.ladylakefl.gov], verdict: CRAWL}
+  - {id: PB-www-mylakealfred-com, name: "Lake Alfred (Lake Alfred Police and Fire Retirement Board)", hosts: [www.mylakealfred.com], verdict: CRAWL}
+  - {id: PB-www-belleviewfl-org, name: "Belleview (Belleview Police Pension Board)", hosts: [www.belleviewfl.org], verdict: CRAWL}
+  - {id: PB-www-satellitebeach-org, name: "Satellite Beach (Satellite Beach Firefighters and Police Pension Plan)", hosts: [www.satellitebeach.org], verdict: MANUAL, reason: "expired TLS certificate; never bypassed"}
+  - {id: PB-www-madeirabeachfl-gov, name: "Madeira Beach (Madeira Beach Pension Boards)", hosts: [www.madeirabeachfl.gov], verdict: MANUAL, reason: "403 to the research pass"}
+  - {id: PB-www-indialantic-com, name: "Indialantic (Indialantic Pension Boards)", hosts: [www.indialantic.com], verdict: MANUAL, reason: "403 to the research pass"}
+  - {id: PB-www-myquincy-net, name: "Quincy (Quincy Pension Boards)", hosts: [www.myquincy.net], verdict: MANUAL, reason: "403 to the research pass"}
+  - {id: PB-www-crystalriverfl-org, name: "Crystal River (Crystal River Pension Boards)", hosts: [www.crystalriverfl.org], verdict: MANUAL, reason: "403 to the research pass"}
+  - {id: PB-www-cityofhialeahgardens, name: "Hialeah Gardens (Hialeah Gardens Police Pension)", hosts: [www.cityofhialeahgardens.com], verdict: MANUAL, reason: "403 to the research pass"}
+
   # ---- Blocked to non-browser clients (§2.4) -> MANUAL ----
   - {id: SF-BLOCKED, name: "Akamai/Cloudflare-fronted city sites", hosts: [www.plantation.org, www.delraybeachfl.gov, www.sunrisefl.gov, www.wpb.org, www.fortlauderdale.gov, lakeworthbeachfl.gov], verdict: MANUAL, reason: "blocked to non-browser clients; never evaded"}
   - {id: SF-TRC, name: "The Resource Centers (TPA)", hosts: [www.resourcecenters.com, resourcecenters.com], verdict: DROP, reason: "Cloudflare managed challenge; robots Disallow: / to ClaudeBot and anthropic-ai"}
