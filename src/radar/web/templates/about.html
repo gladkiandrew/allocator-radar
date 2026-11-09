@@ -7,14 +7,14 @@
   <div class="about-hero">
     <div>
       <p class="eyebrow">About this project</p>
-      <h1 id="about-title">Allocator Radar was built in 3 days by Andrew Gladki, Financial AI Engineer.</h1>
+      <h1 id="about-title">Allocator Radar was built by Andrew Gladki, Financial AI Engineer.</h1>
       <p>One question drives it: which {{ scope.label }} institutional allocators are getting ready to put capital to
         work, and where does the public record say so? Every answer is a dated signal with a link to the page it
         came from.</p>
       <p class="sig">Andrew Gladki · Financial AI Engineer · communication and sales</p>
     </div>
     <div class="stat-stack" aria-label="Project figures">
-      <div class="s"><div class="v">3 days</div><div class="l">from empty repository to working product</div></div>
+      <div class="s"><div class="v">{{ total.plans }}</div><div class="l">Florida plans in the registry</div></div>
       <div class="s"><div class="v">{{ local.plans }}</div><div class="l">{{ scope.label }} plans in scope</div></div>
       <div class="s"><div class="v">{{ '{:,}'.format(local.documents) }}</div><div class="l">public documents read for them</div></div>
       <div class="s"><div class="v">{{ '{:,}'.format(local.signals) }}</div><div class="l">cited signals behind the tiers</div></div>
@@ -78,8 +78,8 @@
   </article>
   <article class="pillar">
     <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg></div>
-    <h3>Fast and accurate</h3>
-    <p>Three days from a written brief to a working product, with accuracy built in rather than added at the end.</p>
+    <h3>Accurate by design</h3>
+    <p>From a written brief to a working product, with accuracy built in rather than added at the end.</p>
     <ul>
       <li>No invented numbers: gaps are labeled as gaps</li>
       <li>A person approves anything before it can be exported</li>
@@ -89,10 +89,10 @@
   </article>
 </div>
 
-<h2>How the 3 days went</h2>
+<h2>How it was built</h2>
 <div class="days">
   <article class="day">
-    <div class="n">Day 1</div>
+    <div class="n">Stage 1</div>
     <h3>Foundation and the Wall</h3>
     <ul>
       <li>Registry of plans and the public pages where each one posts documents</li>
@@ -101,7 +101,7 @@
     </ul>
   </article>
   <article class="day">
-    <div class="n">Day 2</div>
+    <div class="n">Stage 2</div>
     <h3>Reading and ranking</h3>
     <ul>
       <li>Model extraction with quote-on-page and summary checks</li>
@@ -110,7 +110,7 @@
     </ul>
   </article>
   <article class="day">
-    <div class="n">Day 3</div>
+    <div class="n">Stage 3</div>
     <h3>Scale and delivery</h3>
     <ul>
       <li>Discovery across Florida: {{ total.plans }} plans registered, {{ '{:,}'.format(total.documents) }} documents held</li>

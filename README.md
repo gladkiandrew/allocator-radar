@@ -15,7 +15,7 @@ readiness tiers and links every tier to the dated page of the document that set 
 For an institutional business development team, that answers two questions: which plans to call
 this month, and what in the public record shows why.
 
-> **Built in 3 days by Andrew Gladki, Financial AI Engineer.** I want to work on the institutional
+> **Built by Andrew Gladki, Financial AI Engineer.** I want to work on the institutional
 > business development team of a large financial institution. This project shows what I would
 > bring to that team: AI engineering, data analytics, an understanding of how institutional capital
 > moves, and the ability to take a complex, open-ended problem to an accurate, working solution
