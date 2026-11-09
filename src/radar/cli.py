@@ -45,6 +45,9 @@ def main(argv: list[str] | None = None) -> int:
     fp.add_argument("sha_prefix"); fp.add_argument("--max-pages", type=int, default=64)
     ip = sub.add_parser("import-seed", help="import a research-pass YAML into the seed list and allowlist")
     ip.add_argument("path"); ip.add_argument("--batch", required=True)
+    sub.add_parser("gaps", help="coverage gaps grouped by primary cause, with the next action for each")
+    cs = sub.add_parser("consultant-scan", help="targeted extraction of service providers for gap plans missing a consultant")
+    cs.add_argument("--workers", type=int, default=3)
     sub.add_parser("index", help="add newly parsed (scrubbed) pages to the LanceDB search index")
     dp = sub.add_parser("discover", help="discovery agent: registry/seed_florida.yaml -> registry/florida.yaml")
     dp.add_argument("--resuggest", action="store_true", help="recompute suggested pages only (no fetching)")
@@ -278,6 +281,45 @@ def main(argv: list[str] | None = None) -> int:
         sources_config.cache_clear()
         print(json.dumps(out, indent=1))
         Path(f"data/phaseb_{args.batch}.txt").write_text(" ".join(out["added"] + out["manual"]))
+    elif args.cmd == "gaps":
+        from collections import defaultdict
+        from radar import coverage, db, queries
+        db.init_db()
+        with db.connect() as con:
+            rows = [r for r in queries.allocator_table(con) if r["bar_reasons"]]
+            groups = defaultdict(list)
+            for r in rows:
+                cat, desc, action = coverage.gap_category(con, r)
+                groups[cat].append(r)
+        print(f"COVERAGE GAPS: {len(rows)}")
+        for cat, desc, action in coverage.GAP_CATEGORIES:
+            g = groups.get(cat, [])
+            print(f"\n{cat}: {len(g)}  -- {desc}\n   next: {action}")
+            for r in sorted(g, key=lambda r: r["display_name"])[:200]:
+                print(f"   - {r['display_name'][:70]}  ({r['n_docs']} docs; {r['readiness'].tier})")
+    elif args.cmd == "consultant-scan":
+        import json
+        from concurrent.futures import ThreadPoolExecutor
+        from radar import coverage, db, queries
+        from radar.extract import extractor
+        db.init_db()
+        with db.connect() as con:
+            todo = []
+            for a in queries.allocator_table(con):
+                if not any("consultant not identified" in x for x in a["bar_reasons"]):
+                    continue
+                docs = sorted(coverage.held_documents(con, a["allocator_id"]),
+                              key=lambda h: (h["kind"] not in ("PERFORMANCE", "IPS", "DISCLOSURE_112664", "FINANCIAL"),
+                                             -(h["dated"].toordinal() if h["dated"] else 0)))
+                todo += [(h["sha256"], a["allocator_id"]) for h in docs[:4]]  # the 4 most likely documents per plan
+        print(f"{len(todo)} documents across plans missing a consultant", flush=True)
+
+        def one(item):
+            st = extractor.extract_document(item[0], item[1], consultant_scan=True, max_pages=6)
+            print(json.dumps({"doc": item[0][:12], "allocator": item[1], **st}), flush=True)
+
+        with ThreadPoolExecutor(max_workers=args.workers) as ex:
+            list(ex.map(one, todo))
     elif args.cmd == "index":
         from radar import db, search
         db.init_db()

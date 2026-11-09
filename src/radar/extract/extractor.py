@@ -402,6 +402,18 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
 
 
 SEARCH_SCAN_VERSION = "search-scan-1"
+CONSULTANT_SCAN_VERSION = "consultant-scan-1"
+CONSULTANT_VOCAB = re.compile(
+    r"investment consultant|performance consultant|investment monitor|consultant|consulting|"
+    r"andco|mariner|graystone|bogdahn|burgess chambers|segal marco|meketa|captrust|callan|nepc|dahab|"
+    r"southeastern advisory|thistle|sawgrass|aon|mercer|marquette|wilshire|asset consulting group|"
+    r"actuar|custodian|custody", re.I)
+CONSULTANT_FOCUS = """
+
+This pass is a focused scan for the plan's SERVICE PROVIDERS. Return facts only: INVESTMENT_CONSULTANT (the firm that
+monitors the plan's investments or prepares its investment performance reports, as printed), ACTUARY, CUSTODIAN and
+AUDITOR, each with the firm name in label and a quote that contains that firm name. Use the document date for as_of when the
+page states no other date. Signals, mandates and officers may be left empty."""
 SEARCH_VOCAB = re.compile(r"request for (proposals?|qualifications?|information)|\brfp\b|\brfq\b|\bsearch\b|finalist|"
                           r"interview|solicitation|semi-?finalist|short ?list|selection committee|evaluation committee|"
                           r"proposals? (were )?received|responses? (were )?received|selected|hire|engage(d|ment)? (of|a|an|the)", re.I)
@@ -415,11 +427,11 @@ be left empty in this pass."""
 
 
 def extract_document(sha: str, allocator_id: str, provider=None, all_pages: bool = False, *, max_pages: int | None = None,
-                     force: bool = False, search_scan: bool = False) -> dict:
+                     force: bool = False, search_scan: bool = False, consultant_scan: bool = False) -> dict:
     """all_pages: send every page with text (holdings lists the vocabularies do not select).
     force: re-extract even if this extractor version already ran (dedupe keys prevent duplicate rows).
     search_scan: search-focused pass, tracked under its own version tag."""
-    version = SEARCH_SCAN_VERSION if search_scan else EXTRACTOR_VERSION
+    version = CONSULTANT_SCAN_VERSION if consultant_scan else SEARCH_SCAN_VERSION if search_scan else EXTRACTOR_VERSION
     provider = provider or get_provider()
     today = date.today()
     with db.connect() as con:
@@ -433,7 +445,7 @@ def extract_document(sha: str, allocator_id: str, provider=None, all_pages: bool
         cap = max_pages or MAX_PAGES_PER_DOC
         if force:
             con.execute("DELETE FROM extraction_runs WHERE sha256 = ? AND extractor_version = ?", [sha, version])
-        if all_pages or search_scan:
+        if all_pages or search_scan or consultant_scan:
             con.execute("DELETE FROM extraction_runs WHERE sha256 = ? AND extractor_version = ? AND status = 'none'",
                         [sha, version])
             done = con.execute("SELECT 1 FROM extraction_runs WHERE sha256 = ? AND extractor_version = ? LIMIT 1",
@@ -441,10 +453,13 @@ def extract_document(sha: str, allocator_id: str, provider=None, all_pages: bool
             pages = db.rows(con, "SELECT page_no, text_scrubbed, prefilter_terms FROM pages WHERE sha256 = ? ORDER BY page_no", [sha])
             if search_scan:
                 pages = [p for p in pages if SEARCH_VOCAB.search(p["text_scrubbed"])]
+            if consultant_scan:  # the pages that name providers most often, cover pages first
+                pages = sorted([p for p in pages if CONSULTANT_VOCAB.search(p["text_scrubbed"])],
+                               key=lambda p: (-len(CONSULTANT_VOCAB.findall(p["text_scrubbed"])), p["page_no"]))
             todo = [] if done else [p for p in pages if len(p["text_scrubbed"]) > 200][:cap]
         else:
             todo = _pages_to_extract(con, sha)
-    system = SYSTEM + (SEARCH_FOCUS if search_scan else "")
+    system = SYSTEM + (SEARCH_FOCUS if search_scan else "") + (CONSULTANT_FOCUS if consultant_scan else "")
     total = {"pages": len(todo), "calls": 0, "signals": 0, "mandates": 0, "officers": 0, "consultants": 0, "facts": 0,
              "dropped": 0}
     if not todo:  # nothing qualifies on this document: mark it done for this extractor version
@@ -459,7 +474,8 @@ def extract_document(sha: str, allocator_id: str, provider=None, all_pages: bool
         user = _user_prompt(meta, batch)
         try:
             res, call = provider.complete(system=system, user=user, schema=XResult,
-                                          purpose="search-scan" if search_scan else "extract")
+                                          purpose="consultant-scan" if consultant_scan else
+                                          "search-scan" if search_scan else "extract")
         except ProviderError as e:
             log.warning("extraction failed for %s: %s", sha[:12], e)
             with db.connect() as con:

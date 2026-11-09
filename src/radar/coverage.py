@@ -103,3 +103,51 @@ def bar(con, allocator: dict, today: date | None = None) -> list[str]:
         if not has:
             reasons.append("investment consultant not identified in fetched documents")
     return reasons
+
+
+# ---------------- gap categories (one primary cause per plan, in the order they should be fixed) ----------------
+GAP_CATEGORIES = [
+    ("MANUAL_SOURCE", "Blocked to automated clients (bot wall, robots.txt, or documents only on a do-not-crawl host)",
+     "Drop downloaded files into inbox/manual/<plan id>/ or track a Chapter 119 records request."),
+    ("PROCESSING", "Crawl or extraction for this plan has not finished yet",
+     "Nothing to do: the running pipeline will fill it in."),
+    ("NO_LISTING_PAGES", "Discovery found no document listing pages on the plan's site",
+     "Deeper discovery (JS render, sitemap) or a better starting URL for the plan."),
+    ("THIN", "Fewer than 3 documents fetched after crawling",
+     "Deeper discovery on the plan's site; check for an agenda portal (CivicClerk, Granicus, Legistar)."),
+    ("NOT_POSTING_RECENT", "The plan's posted documents are all older than 6 months",
+     "Check its agenda portal for newer meetings; otherwise a records request for recent minutes."),
+    ("CONSULTANT_UNIDENTIFIED", "Documents are current but no investment consultant was cited yet",
+     "Consultant scan (targeted extraction of the pages that name the consultant)."),
+]
+_CAT = {c[0]: c for c in GAP_CATEGORIES}
+
+
+def gap_category(con, a: dict) -> tuple[str, str, str]:
+    """(category, description, next action) for a plan below the main-table bar."""
+    from radar.extract.extractor import EXTRACTOR_VERSION
+
+    aid = a["allocator_id"]
+    reasons = " | ".join(a.get("bar_reasons") or [])
+    n_docs = a.get("n_docs") or 0
+    if a.get("access") == "MANUAL" and n_docs == 0:
+        cat = "MANUAL_SOURCE"
+    else:
+        pages = con.execute("SELECT count(*) FROM allocator_pages WHERE allocator_id = ?", [aid]).fetchone()[0]
+        crawled = con.execute("SELECT count(*) FROM document_links WHERE allocator_id = ?", [aid]).fetchone()[0]
+        unextracted = con.execute(
+            """SELECT count(DISTINCT du.sha256) FROM document_urls du JOIN documents d USING (sha256)
+               WHERE du.allocator_id = ? AND NOT EXISTS (SELECT 1 FROM extraction_runs r
+                     WHERE r.sha256 = du.sha256 AND r.extractor_version = ?)""", [aid, EXTRACTOR_VERSION]).fetchone()[0]
+        if pages == 0:
+            cat = "NO_LISTING_PAGES"
+        elif (crawled == 0 and n_docs == 0) or unextracted:
+            cat = "PROCESSING"
+        elif "documents fetched" in reasons:
+            cat = "THIN"
+        elif "no document dated" in reasons:
+            cat = "NOT_POSTING_RECENT"
+        else:
+            cat = "CONSULTANT_UNIDENTIFIED"
+    _, desc, action = _CAT[cat]
+    return cat, desc, action

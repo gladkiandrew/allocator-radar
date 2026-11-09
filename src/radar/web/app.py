@@ -85,10 +85,16 @@ def create_app() -> FastAPI:
     def gaps(request: Request):
         from radar.registry import approve as reg
 
+        from radar import coverage
+
         with db.connect() as con:
             rows = [r for r in queries.allocator_table(con) if r["bar_reasons"]]  # sorted: DEPLOYING/PREPARING first
+            for r in rows:
+                r["gap_cat"], r["gap_desc"], r["gap_action"] = coverage.gap_category(con, r)
+        groups = [(c, d, act, [r for r in rows if r["gap_cat"] == c]) for c, d, act in coverage.GAP_CATEGORIES]
         data, _ = reg.load()
-        return render(request, "gaps.html", rows=rows, sponsors=(data or {}).get("manual_only_sponsors", []))
+        return render(request, "gaps.html", rows=rows, groups=groups,
+                      sponsors=(data or {}).get("manual_only_sponsors", []))
 
     @app.get("/how", response_class=HTMLResponse)
     def how(request: Request):

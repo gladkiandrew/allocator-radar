@@ -1,21 +1,26 @@
 {% extends "base.html" %}
 {% block title %}Coverage gaps · Allocator Radar{% endblock %}
 {% block body %}
-<h1>Coverage gaps</h1>
+<h1>Coverage gaps <span class="muted" style="font-weight:400">{{ rows|length }}</span></h1>
 <p class="sub">Plans in the registry that don't meet the main-table bar: at least 3 documents fetched, at least one dated in the
-  last 6 months, and the investment consultant identified (<span class="mono">config/main_table.yaml</span>). Each row says
-  why. A gap describes our coverage, not the plan. Plans here can still have a DEPLOYING or PREPARING signal; they are listed
-  first.</p>
+  last 6 months, and the investment consultant identified (<span class="mono">config/main_table.yaml</span>). Each plan
+  is filed under one primary cause, in the order causes should be fixed. A gap describes our coverage, not the plan.
+  A plan here can still carry a DEPLOYING or PREPARING signal.</p>
+<div class="filters">{% for c, d, act, g in groups %}<a href="#{{ c }}">{{ c|replace('_',' ')|title }} {{ g|length }}</a>{% endfor %}</div>
+{% for c, d, act, g in groups %}{% if g %}
+<h2 id="{{ c }}">{{ c|replace('_',' ')|title }} <span class="muted" style="font-weight:400">{{ g|length }}</span></h2>
+<p class="muted" style="margin:0 0 6px">{{ d }}. <strong style="color:var(--fg)">Next:</strong> {{ act }}</p>
 <div class="scroll"><table class="stack">
-  <thead><tr><th>Plan</th><th>Readiness</th><th>Why it is here</th><th class="hide-sm">Coverage</th></tr></thead>
-  <tbody>{% for a in rows %}
+  <thead><tr><th>Plan</th><th>Readiness</th><th>Also below the bar because</th><th class="hide-sm">Coverage</th></tr></thead>
+  <tbody>{% for a in g %}
   <tr><td><a href="/a/{{ a.allocator_id }}"><strong>{{ a.display_name }}</strong></a><br><span class="muted">{{ a.jurisdiction_city }}</span></td>
     <td><span class="tier {{ a.readiness.tier }}">{{ a.readiness.tier }}</span>
-      {% if a.readiness.reasons %}{% set s = a.readiness.reasons[0] %}<br><span style="font-size:12.5px"><span class="mono">{{ s.event_date }}</span> {{ s.summary|truncate(110) }}
+      {% if a.readiness.reasons %}{% set s = a.readiness.reasons[0] %}<br><span style="font-size:12.5px"><span class="mono">{{ s.event_date }}</span> {{ s.summary|truncate(100) }}
         {% for e in s.evidence[:1] %}<a class="cite" href="{{ cite_href(e) }}" target="_blank" rel="noopener">[p.{{ e.page }}]</a>{% endfor %}</span>{% endif %}</td>
-    <td style="font-size:13.5px"><ul style="margin:0;padding-left:18px">{% for r in a.bar_reasons %}<li>{{ r }}</li>{% endfor %}</ul></td>
+    <td style="font-size:13px"><ul style="margin:0;padding-left:18px">{% for r in a.bar_reasons %}<li>{{ r }}</li>{% endfor %}</ul></td>
     <td class="hide-sm mono">{{ a.coverage_pct }}% · {{ a.n_docs }} docs</td></tr>
   {% endfor %}</tbody></table></div>
+{% endif %}{% endfor %}
 {% if sponsors %}<h2>Sponsors blocked to automated clients</h2>
 <ul>{% for s in sponsors %}<li>{{ s.name }}. <span class="muted">{{ s.reason }}; documents only via the manual inbox</span></li>{% endfor %}</ul>{% endif %}
 {% endblock %}

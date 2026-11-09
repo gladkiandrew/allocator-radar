@@ -2,7 +2,7 @@
 # Edits are allowed before approval; any edit changes the version hash and needs re-approval.
 region: florida
 phase: A
-generated_at: '2026-11-09T17:10:53+00:00'
+generated_at: '2026-11-09T17:38:15+00:00'
 generated_by: discovery agent (radar discover)
 seed: registry/seed_florida.yaml
 allocators:
@@ -5337,6 +5337,1563 @@ allocators:
     documents: 0
     by_type: {}
     suggested: false
+- allocator_id: fl-palatka-general
+  display_name: City of Palatka General Employees' Retirement Plan
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Palatka
+  jurisdiction_state: FL
+  home_url: https://www.palatka-fl.gov/255/Pension-Funds
+  template: T-CP
+  source_id: PB-www-palatka-fl-gov
+  access: AUTO
+  access_reason: null
+  site_title: City of Palatka Pension Funds | Palatka, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.palatka-fl.gov/255/Pension-Funds
+    label: plan page
+    documents: 12
+    by_type:
+      ACTUARIAL: 9
+      OTHER: 3
+    suggested: true
+- allocator_id: fl-palatka-police
+  display_name: Palatka Police Officers' Retirement Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Palatka
+  jurisdiction_state: FL
+  home_url: https://www.palatka-fl.gov/255/Pension-Funds
+  template: T-CP
+  source_id: PB-www-palatka-fl-gov
+  access: AUTO
+  access_reason: null
+  site_title: City of Palatka Pension Funds | Palatka, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.palatka-fl.gov/255/Pension-Funds
+    label: plan page
+    documents: 12
+    by_type:
+      ACTUARIAL: 9
+      OTHER: 3
+    suggested: true
+- allocator_id: fl-palatka-fire
+  display_name: Palatka Firefighters' Pension Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Palatka
+  jurisdiction_state: FL
+  home_url: https://www.palatka-fl.gov/255/Pension-Funds
+  template: T-CP
+  source_id: PB-www-palatka-fl-gov
+  access: AUTO
+  access_reason: null
+  site_title: City of Palatka Pension Funds | Palatka, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.palatka-fl.gov/255/Pension-Funds
+    label: plan page
+    documents: 12
+    by_type:
+      ACTUARIAL: 9
+      OTHER: 3
+    suggested: true
+- allocator_id: fl-crestview-pf
+  display_name: Crestview Police Officers and Firefighters Retirement Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Crestview
+  jurisdiction_state: FL
+  home_url: https://www.cityofcrestview.org/247/Police-Firefighters-Retirement-Board
+  template: T-CP
+  source_id: PB-www-cityofcrestview-org
+  access: AUTO
+  access_reason: null
+  site_title: Police / Firefighters Retirement Board | Crestview, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right
+    Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.cityofcrestview.org/247/Police-Firefighters-Retirement-Board
+    label: plan page
+    documents: 3
+    by_type:
+      FINANCIAL: 1
+      OTHER: 2
+    suggested: true
+  - url: https://www.cityofcrestview.org/546/Agendas-Minutes
+    label: Agendas & Minutes
+    documents: 4
+    by_type:
+      OTHER: 4
+    suggested: true
+  - url: https://www.cityofcrestview.org/245/General-Employees-Retirement-Board
+    label: General Employee's Retirement Board
+    documents: 1
+    by_type:
+      FINANCIAL: 1
+    suggested: true
+- allocator_id: fl-milton-police
+  display_name: City of Milton Police Officers' Pension Trust Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Milton
+  jurisdiction_state: FL
+  home_url: https://www.miltonfl.org/353/Police-Pension-Board
+  template: T-CP
+  source_id: PB-www-miltonfl-org
+  access: AUTO
+  access_reason: null
+  site_title: Police Pension Board | Milton, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow Right
+    Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.miltonfl.org/353/Police-Pension-Board
+    label: plan page
+    documents: 17
+    by_type:
+      ACTUARIAL: 1
+      DISCLOSURE_112664: 1
+      OTHER: 14
+      PERFORMANCE: 1
+    suggested: true
+  - url: https://www.miltonfl.org/354/Fire-Pension-Board
+    label: Fire Pension Board
+    documents: 16
+    by_type:
+      DISCLOSURE_112664: 1
+      OTHER: 15
+    suggested: true
+  - url: https://www.miltonfl.org/355/General-Employees-Pension-Board
+    label: General Employees' Pension Board
+    documents: 9
+    by_type:
+      ACTUARIAL: 5
+      DISCLOSURE_112664: 2
+      OTHER: 2
+    suggested: true
+- allocator_id: fl-milton-fire
+  display_name: City of Milton Firefighters' Pension Trust Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Milton
+  jurisdiction_state: FL
+  home_url: https://www.miltonfl.org/354/Fire-Pension-Board
+  template: T-CP
+  source_id: PB-www-miltonfl-org
+  access: AUTO
+  access_reason: null
+  site_title: Fire Pension Board | Milton, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.miltonfl.org/354/Fire-Pension-Board
+    label: plan page
+    documents: 16
+    by_type:
+      DISCLOSURE_112664: 1
+      OTHER: 15
+    suggested: true
+  - url: https://www.miltonfl.org/355/General-Employees-Pension-Board
+    label: General Employees' Pension Board
+    documents: 9
+    by_type:
+      ACTUARIAL: 5
+      DISCLOSURE_112664: 2
+      OTHER: 2
+    suggested: true
+  - url: https://www.miltonfl.org/353/Police-Pension-Board
+    label: Police Pension Board
+    documents: 17
+    by_type:
+      ACTUARIAL: 1
+      DISCLOSURE_112664: 1
+      OTHER: 14
+      PERFORMANCE: 1
+    suggested: true
+- allocator_id: fl-milton-general
+  display_name: City of Milton General Employees' Pension Plan
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Milton
+  jurisdiction_state: FL
+  home_url: https://www.miltonfl.org/355/General-Employees-Pension-Board
+  template: T-CP
+  source_id: PB-www-miltonfl-org
+  access: AUTO
+  access_reason: null
+  site_title: General Employees' Pension Board | Milton, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.miltonfl.org/355/General-Employees-Pension-Board
+    label: plan page
+    documents: 9
+    by_type:
+      ACTUARIAL: 5
+      DISCLOSURE_112664: 2
+      OTHER: 2
+    suggested: true
+- allocator_id: fl-lynn-haven-general
+  display_name: Lynn Haven General Employees' Retirement System
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Lynn Haven
+  jurisdiction_state: FL
+  home_url: https://www.cityoflynnhaven.gov/558/Pension-Information
+  template: T-CP
+  source_id: PB-www-cityoflynnhaven-gov
+  access: AUTO
+  access_reason: null
+  site_title: Pension Information | Lynn Haven, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.cityoflynnhaven.gov/558/Pension-Information
+    label: plan page
+    documents: 34
+    by_type:
+      AGENDA: 1
+      DISCLOSURE_112664: 21
+      OTHER: 12
+    suggested: true
+  - url: https://www.cityoflynnhaven.gov/agendacenter
+    label: Agenda Center (Archives)
+    documents: 462
+    by_type:
+      AGENDA: 378
+      MINUTES: 84
+    suggested: false
+- allocator_id: fl-lynn-haven-police
+  display_name: Lynn Haven Police Officers' Retirement System
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Lynn Haven
+  jurisdiction_state: FL
+  home_url: https://www.cityoflynnhaven.gov/558/Pension-Information
+  template: T-CP
+  source_id: PB-www-cityoflynnhaven-gov
+  access: AUTO
+  access_reason: null
+  site_title: Pension Information | Lynn Haven, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.cityoflynnhaven.gov/558/Pension-Information
+    label: plan page
+    documents: 34
+    by_type:
+      AGENDA: 1
+      DISCLOSURE_112664: 21
+      OTHER: 12
+    suggested: true
+  - url: https://www.cityoflynnhaven.gov/agendacenter
+    label: Agenda Center (Archives)
+    documents: 462
+    by_type:
+      AGENDA: 378
+      MINUTES: 84
+    suggested: false
+- allocator_id: fl-lynn-haven-fire
+  display_name: Lynn Haven Firefighters' Retirement System
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Lynn Haven
+  jurisdiction_state: FL
+  home_url: https://www.cityoflynnhaven.gov/558/Pension-Information
+  template: T-CP
+  source_id: PB-www-cityoflynnhaven-gov
+  access: AUTO
+  access_reason: null
+  site_title: Pension Information | Lynn Haven, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.cityoflynnhaven.gov/558/Pension-Information
+    label: plan page
+    documents: 34
+    by_type:
+      AGENDA: 1
+      DISCLOSURE_112664: 21
+      OTHER: 12
+    suggested: true
+  - url: https://www.cityoflynnhaven.gov/agendacenter
+    label: Agenda Center (Archives)
+    documents: 462
+    by_type:
+      AGENDA: 378
+      MINUTES: 84
+    suggested: false
+- allocator_id: fl-niceville-plan
+  display_name: City of Niceville pension plans
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Niceville
+  jurisdiction_state: FL
+  home_url: https://www.niceville.org/
+  template: MANUAL
+  source_id: PB-www-niceville-org
+  access: MANUAL
+  access_reason: Cloudflare 525 to the research pass
+  site_title: null
+  robots: null
+  document_pages: []
+- allocator_id: fl-jacksonville-general-2
+  display_name: St. Johns River Power Park System Employees' Retirement Plan (JEA)
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Jacksonville
+  jurisdiction_state: FL
+  home_url: https://jea.com/about/investor_relations/financial_reports/sjrpp_pension
+  template: MANUAL
+  source_id: PB-jea-com
+  access: MANUAL
+  access_reason: jea.com served a CAPTCHA; never evaded
+  site_title: null
+  robots: null
+  document_pages: []
+- allocator_id: fl-dania-beach-general
+  display_name: City of Dania Beach General Employees' Pension Plan
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Dania Beach
+  jurisdiction_state: FL
+  home_url: https://www.daniabeachfl.gov/general-employees-pension-board
+  template: T-CP
+  source_id: PB-www-daniabeachfl-gov
+  access: AUTO
+  access_reason: no document links found on the plan page or its listing pages
+  site_title: General Employees Pension Board | Dania Beach, FL - Official Website
+  robots: allowed
+  document_pages:
+  - url: https://www.daniabeachfl.gov/general-employees-pension-board
+    label: plan page
+    documents: 0
+    by_type: {}
+    suggested: false
+- allocator_id: fl-dania-beach-pf
+  display_name: City of Dania Beach Police and Firefighters' Retirement System
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Dania Beach
+  jurisdiction_state: FL
+  home_url: https://www.daniabeachfl.gov/police-fire-pension-board
+  template: T-CP
+  source_id: PB-www-daniabeachfl-gov
+  access: AUTO
+  access_reason: no document links found on the plan page or its listing pages
+  site_title: Police & Fire Pension Board | Dania Beach, FL - Official Website
+  robots: allowed
+  document_pages:
+  - url: https://www.daniabeachfl.gov/police-fire-pension-board
+    label: plan page
+    documents: 0
+    by_type: {}
+    suggested: false
+- allocator_id: fl-bay-harbor-islands-general
+  display_name: Town of Bay Harbor Islands Employees Retirement System (General Employees)
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Bay Harbor Islands
+  jurisdiction_state: FL
+  home_url: https://bayharborislands-fl.gov/340/Pension-Plan
+  template: T-CP
+  source_id: PB-bayharborislands-fl-gov
+  access: AUTO
+  access_reason: null
+  site_title: Town of Bay Harbor Islands Employees Retirement System | Bay Harbor Islands, FLArrow LeftArrow RightSlideshow
+    Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://bayharborislands-fl.gov/340/Pension-Plan
+    label: plan page
+    documents: 16
+    by_type:
+      ACTUARIAL: 15
+      DISCLOSURE_112664: 1
+    suggested: true
+- allocator_id: fl-bay-harbor-islands-police
+  display_name: Town of Bay Harbor Islands Employees Retirement System (Police Officers)
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Bay Harbor Islands
+  jurisdiction_state: FL
+  home_url: https://bayharborislands-fl.gov/340/Pension-Plan
+  template: T-CP
+  source_id: PB-bayharborislands-fl-gov
+  access: AUTO
+  access_reason: null
+  site_title: Town of Bay Harbor Islands Employees Retirement System | Bay Harbor Islands, FLArrow LeftArrow RightSlideshow
+    Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://bayharborislands-fl.gov/340/Pension-Plan
+    label: plan page
+    documents: 16
+    by_type:
+      ACTUARIAL: 15
+      DISCLOSURE_112664: 1
+    suggested: true
+- allocator_id: fl-golden-beach-general
+  display_name: Town of Golden Beach Employees' Pension Plan
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Golden Beach
+  jurisdiction_state: FL
+  home_url: https://goldenbeach.us/document-category/pension-board/
+  template: T-WP
+  source_id: PB-goldenbeach-us
+  access: AUTO
+  access_reason: null
+  site_title: 'Pension Board – Golden Beach: A Town Unlike Any Other'
+  robots: allowed
+  document_pages:
+  - url: https://goldenbeach.us/document-category/pension-board/
+    label: plan page
+    documents: 4
+    by_type:
+      AGENDA: 1
+      OTHER: 3
+    suggested: true
+  - url: https://goldenbeach.us/documents/
+    label: Documents
+    documents: 24
+    by_type:
+      AGENDA: 3
+      OTHER: 21
+    suggested: true
+  - url: https://goldenbeach.us/video-archive/
+    label: Meeting Video Archives
+    documents: 4
+    by_type:
+      AGENDA: 1
+      OTHER: 3
+    suggested: true
+  - url: https://goldenbeach.us/meeting-videos/
+    label: Attachments
+    documents: 4
+    by_type:
+      AGENDA: 1
+      OTHER: 3
+    suggested: true
+- allocator_id: fl-west-palm-beach-plan
+  display_name: Palm Tran, Inc. ATU Local 1577 Pension Plan
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: West Palm Beach
+  jurisdiction_state: FL
+  home_url: https://palmtran.sba-inc.com/meetings/
+  template: T-WP
+  source_id: PB-palmtran-sba-inc-com
+  access: AUTO
+  access_reason: null
+  site_title: Meetings – Palm Tran, Inc.
+  robots: allowed
+  document_pages:
+  - url: https://palmtran.sba-inc.com/meetings/
+    label: plan page
+    documents: 110
+    by_type:
+      MINUTES: 106
+      OTHER: 4
+    suggested: true
+  - url: https://palmtran.sba-inc.com/plan-documents-and-disclosures/
+    label: Plan Documents & Disclosures
+    documents: 9
+    by_type:
+      ACTUARIAL: 2
+      DISCLOSURE_112664: 6
+      FINANCIAL: 1
+    suggested: true
+  - url: https://palmtran.sba-inc.com/fund-performance/
+    label: Fund Performance
+    documents: 79
+    by_type:
+      PERFORMANCE: 79
+    suggested: true
+- allocator_id: fl-altamonte-springs-police
+  display_name: Altamonte Springs Police Officers' Pension Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Altamonte Springs
+  jurisdiction_state: FL
+  home_url: https://www.altamonte.org/773/Insurance-Retirement
+  template: T-CP
+  source_id: PB-www-altamonte-org
+  access: AUTO
+  access_reason: null
+  site_title: Insurance & Retirement | Altamonte Springs, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.altamonte.org/773/Insurance-Retirement
+    label: plan page
+    documents: 12
+    by_type:
+      ACTUARIAL: 4
+      OTHER: 6
+      PERFORMANCE: 2
+    suggested: true
+- allocator_id: fl-altamonte-springs-general
+  display_name: Altamonte Springs General Employees' Defined Benefit Pension Plan
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Altamonte Springs
+  jurisdiction_state: FL
+  home_url: https://www.altamonte.org/773/Insurance-Retirement
+  template: T-CP
+  source_id: PB-www-altamonte-org
+  access: AUTO
+  access_reason: null
+  site_title: Insurance & Retirement | Altamonte Springs, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.altamonte.org/773/Insurance-Retirement
+    label: plan page
+    documents: 12
+    by_type:
+      ACTUARIAL: 4
+      OTHER: 6
+      PERFORMANCE: 2
+    suggested: true
+- allocator_id: fl-ocoee-pf
+  display_name: Ocoee Municipal Police Officers' and Firefighters' Retirement Trust Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Ocoee
+  jurisdiction_state: FL
+  home_url: https://ocoee.org/345/Police-Firefighters-Retirement-Trust-Fun
+  template: T-CP
+  source_id: PB-ocoee-org
+  access: AUTO
+  access_reason: null
+  site_title: Police & Firefighters’ Retirement Trust Fund Board | Ocoee, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://ocoee.org/345/Police-Firefighters-Retirement-Trust-Fun
+    label: plan page
+    documents: 12
+    by_type:
+      ACTUARIAL: 1
+      DISCLOSURE_112664: 1
+      FINANCIAL: 2
+      OTHER: 6
+      PERFORMANCE: 2
+    suggested: true
+  - url: https://ocoee.org/342/General-Employees-Retirement-Trust-Fund-
+    label: General Employees’ Retirement Trust Fund Board
+    documents: 6
+    by_type:
+      ACTUARIAL: 1
+      DISCLOSURE_112664: 1
+      FINANCIAL: 1
+      OTHER: 2
+      PERFORMANCE: 1
+    suggested: true
+- allocator_id: fl-ocoee-general
+  display_name: Ocoee General Employees' Retirement Trust Fund
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Ocoee
+  jurisdiction_state: FL
+  home_url: https://ocoee.org/342/General-Employees-Retirement-Trust-Fund-
+  template: T-CP
+  source_id: PB-ocoee-org
+  access: AUTO
+  access_reason: null
+  site_title: General Employees’ Retirement Trust Fund Board | Ocoee, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://ocoee.org/342/General-Employees-Retirement-Trust-Fund-
+    label: plan page
+    documents: 6
+    by_type:
+      ACTUARIAL: 1
+      DISCLOSURE_112664: 1
+      FINANCIAL: 1
+      OTHER: 2
+      PERFORMANCE: 1
+    suggested: true
+  - url: https://ocoee.org/345/Police-Firefighters-Retirement-Trust-Fun
+    label: Police & Firefighters’ Retirement Trust Fund Board
+    documents: 12
+    by_type:
+      ACTUARIAL: 1
+      DISCLOSURE_112664: 1
+      FINANCIAL: 2
+      OTHER: 6
+      PERFORMANCE: 2
+    suggested: true
+- allocator_id: fl-oviedo-fire
+  display_name: Oviedo Firefighters' Pension Trust Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Oviedo
+  jurisdiction_state: FL
+  home_url: https://www.cityofoviedo.net/311/Firefighters-Pension-Board
+  template: MANUAL
+  source_id: PB-www-cityofoviedo-net
+  access: MANUAL
+  access_reason: agendas and minutes only on PrimeGov (robots Disallow /)
+  site_title: null
+  robots: null
+  document_pages: []
+- allocator_id: fl-oviedo-police
+  display_name: Oviedo Police Officers' Pension Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Oviedo
+  jurisdiction_state: FL
+  home_url: https://www.cityofoviedo.net/313/Police-Officers-Pension-Board
+  template: MANUAL
+  source_id: PB-www-cityofoviedo-net
+  access: MANUAL
+  access_reason: agendas and minutes only on PrimeGov (robots Disallow /)
+  site_title: null
+  robots: null
+  document_pages: []
+- allocator_id: fl-longwood-pf
+  display_name: Longwood Police Officers' and Firefighters' Pension Trust Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Longwood
+  jurisdiction_state: FL
+  home_url: https://longwoodfl.org/AgendaCenter/Police-Officers-and-Firefighters-Pension-3/
+  template: T-CP
+  source_id: PB-longwoodfl-org
+  access: AUTO
+  access_reason: null
+  site_title: Agenda Center • Longwood, FL • CivicEngageArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://longwoodfl.org/AgendaCenter/Police-Officers-and-Firefighters-Pension-3/
+    label: plan page
+    documents: 8
+    by_type:
+      AGENDA: 8
+    suggested: true
+- allocator_id: fl-maitland-pf
+  display_name: Maitland Police Officers' and Firefighters' Pension Trust Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Maitland
+  jurisdiction_state: FL
+  home_url: https://itsmymaitland.com/287/Police-Officers-Firefighters-Pension-Tru
+  template: T-CP
+  source_id: PB-itsmymaitland-com
+  access: AUTO
+  access_reason: null
+  site_title: Police Officers & Firefighters Pension Trust Fund Board | Maitland, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://itsmymaitland.com/287/Police-Officers-Firefighters-Pension-Tru
+    label: plan page
+    documents: 1
+    by_type:
+      MINUTES: 1
+    suggested: true
+  - url: https://itsmymaitland.com/341/Disclosures
+    label: Disclosures - Footer - Helpful Links Disclosures
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: false
+- allocator_id: fl-apopka-police
+  display_name: Apopka Police Officers' Retirement Trust Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Apopka
+  jurisdiction_state: FL
+  home_url: https://www.apopka.gov/473/Pension-Board
+  template: T-CP
+  source_id: PB-www-apopka-gov
+  access: AUTO
+  access_reason: null
+  site_title: Pension Board | Apopka, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.apopka.gov/473/Pension-Board
+    label: plan page
+    documents: 0
+    by_type: {}
+    suggested: false
+  - url: https://www.apopka.gov/129/Agendas-Minutes
+    label: CITY MEETINGS & EVENTS Access agendas & minutes.
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: true
+- allocator_id: fl-apopka-fire
+  display_name: Apopka Firefighters' Retirement Trust Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Apopka
+  jurisdiction_state: FL
+  home_url: https://www.apopka.gov/473/Pension-Board
+  template: T-CP
+  source_id: PB-www-apopka-gov
+  access: AUTO
+  access_reason: null
+  site_title: Pension Board | Apopka, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.apopka.gov/473/Pension-Board
+    label: plan page
+    documents: 0
+    by_type: {}
+    suggested: false
+  - url: https://www.apopka.gov/129/Agendas-Minutes
+    label: CITY MEETINGS & EVENTS Access agendas & minutes.
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: true
+- allocator_id: fl-apopka-general
+  display_name: Apopka General Employees' Retirement Trust Fund
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Apopka
+  jurisdiction_state: FL
+  home_url: https://www.apopka.gov/473/Pension-Board
+  template: T-CP
+  source_id: PB-www-apopka-gov
+  access: AUTO
+  access_reason: null
+  site_title: Pension Board | Apopka, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.apopka.gov/473/Pension-Board
+    label: plan page
+    documents: 0
+    by_type: {}
+    suggested: false
+  - url: https://www.apopka.gov/129/Agendas-Minutes
+    label: CITY MEETINGS & EVENTS Access agendas & minutes.
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: true
+- allocator_id: fl-st-cloud-pf
+  display_name: St. Cloud Police Officers' and Firefighters' Retirement System
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: St. Cloud
+  jurisdiction_state: FL
+  home_url: https://stcloudfl.gov/872/Boards-and-Committees-Agenda
+  template: T-CP
+  source_id: PB-stcloudfl-gov
+  access: AUTO
+  access_reason: null
+  site_title: Board and Committee Agendas | City of St. Cloud, Florida - Official WebsiteArrow LeftArrow RightSlideshow Left
+    ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://stcloudfl.gov/872/Boards-and-Committees-Agenda
+    label: plan page
+    documents: 13
+    by_type:
+      AGENDA: 10
+      OTHER: 3
+    suggested: true
+  - url: https://stcloudfl.gov/2328/Agendas-Minutes
+    label: visit the Agendas calendar by clicking here .
+    documents: 3
+    by_type:
+      MINUTES: 3
+    suggested: true
+  - url: https://stcloudfl.gov/1270/Minutes
+    label: Minutes
+    documents: 29
+    by_type:
+      MINUTES: 29
+    suggested: true
+  - url: https://stcloudfl.gov/1774/Tree-Advisory-Committee-Minutes
+    label: Tree Advisory Committee Minutes
+    documents: 27
+    by_type:
+      MINUTES: 27
+    suggested: true
+  - url: https://stcloudfl.gov/1780/Fire-Fighters-and-Police-Pension-Board
+    label: Fire Fighters and Police Pension Board
+    documents: 4
+    by_type:
+      MINUTES: 4
+    suggested: true
+  - url: https://stcloudfl.gov/1779/General-Employee-Pension-Board
+    label: General Employee Pension Board
+    documents: 4
+    by_type:
+      MINUTES: 4
+    suggested: true
+- allocator_id: fl-st-cloud-general
+  display_name: St. Cloud General Employees' Retirement System
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: St. Cloud
+  jurisdiction_state: FL
+  home_url: https://stcloudfl.gov/872/Boards-and-Committees-Agenda
+  template: T-CP
+  source_id: PB-stcloudfl-gov
+  access: AUTO
+  access_reason: null
+  site_title: Board and Committee Agendas | City of St. Cloud, Florida - Official WebsiteArrow LeftArrow RightSlideshow Left
+    ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://stcloudfl.gov/872/Boards-and-Committees-Agenda
+    label: plan page
+    documents: 13
+    by_type:
+      AGENDA: 10
+      OTHER: 3
+    suggested: true
+  - url: https://stcloudfl.gov/2328/Agendas-Minutes
+    label: visit the Agendas calendar by clicking here .
+    documents: 3
+    by_type:
+      MINUTES: 3
+    suggested: true
+  - url: https://stcloudfl.gov/1270/Minutes
+    label: Minutes
+    documents: 29
+    by_type:
+      MINUTES: 29
+    suggested: true
+  - url: https://stcloudfl.gov/1774/Tree-Advisory-Committee-Minutes
+    label: Tree Advisory Committee Minutes
+    documents: 27
+    by_type:
+      MINUTES: 27
+    suggested: true
+  - url: https://stcloudfl.gov/1780/Fire-Fighters-and-Police-Pension-Board
+    label: Fire Fighters and Police Pension Board
+    documents: 4
+    by_type:
+      MINUTES: 4
+    suggested: true
+  - url: https://stcloudfl.gov/1779/General-Employee-Pension-Board
+    label: General Employee Pension Board
+    documents: 4
+    by_type:
+      MINUTES: 4
+    suggested: true
+- allocator_id: fl-haines-city-police
+  display_name: Haines City Municipal Police Officers' Retirement Trust Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Haines City
+  jurisdiction_state: FL
+  home_url: https://hainescity.com/164/Employee-Pension-Retirement
+  template: T-CP
+  source_id: PB-hainescity-com
+  access: AUTO
+  access_reason: null
+  site_title: Employee Pension & Retirement | Haines City, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://hainescity.com/164/Employee-Pension-Retirement
+    label: plan page
+    documents: 6
+    by_type:
+      ACTUARIAL: 3
+      OTHER: 3
+    suggested: true
+  - url: https://hainescity.com/164/Employee-Pension-Retirement?WasThisPageHelpful=true
+    label: 'Yes'
+    documents: 6
+    by_type:
+      ACTUARIAL: 3
+      OTHER: 3
+    suggested: true
+- allocator_id: fl-haines-city-fire
+  display_name: Haines City Municipal Firefighters' Retirement Trust Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Haines City
+  jurisdiction_state: FL
+  home_url: https://hainescity.com/164/Employee-Pension-Retirement
+  template: T-CP
+  source_id: PB-hainescity-com
+  access: AUTO
+  access_reason: null
+  site_title: Employee Pension & Retirement | Haines City, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://hainescity.com/164/Employee-Pension-Retirement
+    label: plan page
+    documents: 6
+    by_type:
+      ACTUARIAL: 3
+      OTHER: 3
+    suggested: true
+  - url: https://hainescity.com/164/Employee-Pension-Retirement?WasThisPageHelpful=true
+    label: 'Yes'
+    documents: 6
+    by_type:
+      ACTUARIAL: 3
+      OTHER: 3
+    suggested: true
+- allocator_id: fl-haines-city-general
+  display_name: Haines City General Employees' Pension Plan
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Haines City
+  jurisdiction_state: FL
+  home_url: https://hainescity.com/164/Employee-Pension-Retirement
+  template: T-CP
+  source_id: PB-hainescity-com
+  access: AUTO
+  access_reason: null
+  site_title: Employee Pension & Retirement | Haines City, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://hainescity.com/164/Employee-Pension-Retirement
+    label: plan page
+    documents: 6
+    by_type:
+      ACTUARIAL: 3
+      OTHER: 3
+    suggested: true
+  - url: https://hainescity.com/164/Employee-Pension-Retirement?WasThisPageHelpful=true
+    label: 'Yes'
+    documents: 6
+    by_type:
+      ACTUARIAL: 3
+      OTHER: 3
+    suggested: true
+- allocator_id: fl-bartow-general
+  display_name: Bartow General Employees' Pension Plan
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Bartow
+  jurisdiction_state: FL
+  home_url: https://www.cityofbartow.net/agendacenter
+  template: T-CP
+  source_id: PB-www-cityofbartow-net
+  access: AUTO
+  access_reason: null
+  site_title: Agenda Center • Bartow, FL • CivicEngageArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.cityofbartow.net/agendacenter
+    label: plan page
+    documents: 160
+    by_type:
+      AGENDA: 160
+    suggested: false
+  - url: https://www.cityofbartow.net/AgendaCenter/PreviousVersions/_08122026-455
+    label: August 12, 2026, 2026-08-12 agenda Recreation Advisory Board meeting. Previous V
+    documents: 4
+    by_type:
+      AGENDA: 4
+    suggested: true
+  - url: https://www.cityofbartow.net/AgendaCenter/PreviousVersions/_04022026-417
+    label: April 02, 2026, Canvassing Board Meeting. Previous Version Previous Versions
+    documents: 6
+    by_type:
+      AGENDA: 6
+    suggested: true
+  - url: https://www.cityofbartow.net/AgendaCenter/PreviousVersions/_11022026-486
+    label: November 02, 2026, City Commission Regular Meeting. Previous Version Previous Ve
+    documents: 8
+    by_type:
+      AGENDA: 5
+      OTHER: 3
+    suggested: true
+  - url: https://www.cityofbartow.net/AgendaCenter/PreviousVersions/_10192026-479
+    label: October 19, 2026, City Commission Regular Meeting. Previous Version Previous Ver
+    documents: 6
+    by_type:
+      AGENDA: 4
+      OTHER: 2
+    suggested: true
+  - url: https://www.cityofbartow.net/AgendaCenter/PreviousVersions/_09152026-464
+    label: September 15, 2026, City Commission Regular Meeting. Previous Version Previous V
+    documents: 8
+    by_type:
+      AGENDA: 5
+      OTHER: 3
+    suggested: true
+  - url: https://www.cityofbartow.net/AgendaCenter/PreviousVersions/_09032026-461
+    label: September 03, 2026, City Commission Regular Meeting. Previous Version Previous V
+    documents: 6
+    by_type:
+      AGENDA: 4
+      OTHER: 2
+    suggested: true
+  - url: https://www.cityofbartow.net/AgendaCenter/PreviousVersions/_08172026-456
+    label: August 17, 2026, City Commission Regular Meeting. Previous Version Previous Vers
+    documents: 6
+    by_type:
+      AGENDA: 4
+      OTHER: 2
+    suggested: true
+  - url: https://www.cityofbartow.net/AgendaCenter/PreviousVersions/_08032026-454
+    label: August 03, 2026, City Commission Regular Meeting. Previous Version Previous Vers
+    documents: 10
+    by_type:
+      AGENDA: 6
+      OTHER: 4
+    suggested: true
+  - url: https://www.cityofbartow.net/AgendaCenter/PreviousVersions/_07202026-449
+    label: July 20, 2026, City Commission Regular Meeting. Previous Version Previous Versio
+    documents: 4
+    by_type:
+      AGENDA: 3
+      OTHER: 1
+    suggested: true
+  - url: https://www.cityofbartow.net/AgendaCenter/PreviousVersions/_07202026-450
+    label: July 20, 2026, City Commission Regular Meeting PACKET. Previous Version Previous
+    documents: 6
+    by_type:
+      AGENDA: 6
+    suggested: true
+  - url: https://www.cityofbartow.net/AgendaCenter/PreviousVersions/_07062026-443
+    label: July 06, 2026, City Commission Regular Meeting. Previous Version Previous Versio
+    documents: 10
+    by_type:
+      AGENDA: 6
+      OTHER: 4
+    suggested: true
+  - url: https://www.cityofbartow.net/AgendaCenter/PreviousVersions/_06252026-436
+    label: June 25, 2026, City Commission Special Meeting - Resolution No. 26-4266-R (CRA).
+    documents: 6
+    by_type:
+      AGENDA: 4
+      OTHER: 2
+    suggested: true
+  - url: https://www.cityofbartow.net/AgendaCenter/PreviousVersions/_10282026-476
+    label: October 28, 2026, Community Redevelopment Agency Regular Meeting. Previous Versi
+    documents: 4
+    by_type:
+      AGENDA: 3
+      OTHER: 1
+    suggested: true
+  - url: https://www.cityofbartow.net/AgendaCenter/PreviousVersions/_09302026-467
+    label: September 30, 2026, Community Redevelopment Agency Regular Meeting. Previous Ver
+    documents: 8
+    by_type:
+      AGENDA: 5
+      OTHER: 3
+    suggested: true
+  - url: https://www.cityofbartow.net/AgendaCenter/PreviousVersions/_08262026-457
+    label: August 26, 2026, Community Redevelopment Agency Budget Meeting. Previous Version
+    documents: 6
+    by_type:
+      AGENDA: 4
+      OTHER: 2
+    suggested: true
+  - url: https://www.cityofbartow.net/AgendaCenter/PreviousVersions/_03252026-415
+    label: March 25, 2026, 2026-03-25 agenda Community Redevelopment Agency. Previous Versi
+    documents: 6
+    by_type:
+      AGENDA: 6
+    suggested: true
+- allocator_id: fl-bartow-police
+  display_name: Bartow Municipal Police Officers' Retirement Trust Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Bartow
+  jurisdiction_state: FL
+  home_url: https://www.cityofbartow.net/211/Retirement-Plans
+  template: T-CP
+  source_id: PB-www-cityofbartow-net
+  access: AUTO
+  access_reason: null
+  site_title: Retirement Plans | Bartow, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.cityofbartow.net/211/Retirement-Plans
+    label: plan page
+    documents: 70
+    by_type:
+      DISCLOSURE_112664: 21
+      FINANCIAL: 5
+      OTHER: 44
+    suggested: true
+- allocator_id: fl-bartow-fire
+  display_name: Bartow Municipal Firefighters' Retirement Trust Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Bartow
+  jurisdiction_state: FL
+  home_url: https://www.cityofbartow.net/211/Retirement-Plans
+  template: T-CP
+  source_id: PB-www-cityofbartow-net
+  access: AUTO
+  access_reason: null
+  site_title: Retirement Plans | Bartow, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.cityofbartow.net/211/Retirement-Plans
+    label: plan page
+    documents: 70
+    by_type:
+      DISCLOSURE_112664: 21
+      FINANCIAL: 5
+      OTHER: 44
+    suggested: true
+- allocator_id: fl-clermont-police
+  display_name: Clermont Police Officers' Pension Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Clermont
+  jurisdiction_state: FL
+  home_url: https://clermontfl.gov/584/Pension-Boards-Disclosures
+  template: T-CP
+  source_id: PB-clermontfl-gov
+  access: AUTO
+  access_reason: null
+  site_title: Pension Boards & Disclosures | Clermont, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://clermontfl.gov/584/Pension-Boards-Disclosures
+    label: plan page
+    documents: 24
+    by_type:
+      DISCLOSURE_112664: 24
+    suggested: true
+- allocator_id: fl-clermont-fire
+  display_name: Clermont Firefighters' Pension Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Clermont
+  jurisdiction_state: FL
+  home_url: https://clermontfl.gov/584/Pension-Boards-Disclosures
+  template: T-CP
+  source_id: PB-clermontfl-gov
+  access: AUTO
+  access_reason: null
+  site_title: Pension Boards & Disclosures | Clermont, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://clermontfl.gov/584/Pension-Boards-Disclosures
+    label: plan page
+    documents: 24
+    by_type:
+      DISCLOSURE_112664: 24
+    suggested: true
+- allocator_id: fl-mount-dora-pf
+  display_name: Mount Dora Police, Firefighters and General Employees Pension Boards
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Mount Dora
+  jurisdiction_state: FL
+  home_url: https://www.cityofmountdora.com/
+  template: MANUAL
+  source_id: PB-www-cityofmountdora-com
+  access: MANUAL
+  access_reason: connection reset to the research pass
+  site_title: null
+  robots: null
+  document_pages: []
+- allocator_id: fl-edgewater-police
+  display_name: Edgewater Police Retirement Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Edgewater
+  jurisdiction_state: FL
+  home_url: https://www.cityofedgewater.org/517/Police-Pension-Board
+  template: T-CP
+  source_id: PB-www-cityofedgewater-org
+  access: AUTO
+  access_reason: null
+  site_title: Police Pension Board | Edgewater, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.cityofedgewater.org/517/Police-Pension-Board
+    label: plan page
+    documents: 0
+    by_type: {}
+    suggested: false
+  - url: https://www.cityofedgewater.org/543/Agendas-and-Minutes
+    label: Agendas & Minutes
+    documents: 6
+    by_type:
+      OTHER: 6
+    suggested: true
+- allocator_id: fl-edgewater-fire
+  display_name: Edgewater Firefighters' Pension Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Edgewater
+  jurisdiction_state: FL
+  home_url: https://www.cityofedgewater.org/515/Fire-Fighters-Pension-Board
+  template: T-CP
+  source_id: PB-www-cityofedgewater-org
+  access: AUTO
+  access_reason: null
+  site_title: Fire Fighters Pension Board | Edgewater, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.cityofedgewater.org/515/Fire-Fighters-Pension-Board
+    label: plan page
+    documents: 0
+    by_type: {}
+    suggested: false
+  - url: https://www.cityofedgewater.org/543/Agendas-and-Minutes
+    label: Agendas & Minutes
+    documents: 6
+    by_type:
+      OTHER: 6
+    suggested: true
+- allocator_id: fl-edgewater-general
+  display_name: Edgewater General Employees' Retirement Plan
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Edgewater
+  jurisdiction_state: FL
+  home_url: https://www.cityofedgewater.org/649/General-Employee-Pension-Board
+  template: T-CP
+  source_id: PB-www-cityofedgewater-org
+  access: AUTO
+  access_reason: null
+  site_title: General Employee Pension Board | Edgewater, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.cityofedgewater.org/649/General-Employee-Pension-Board
+    label: plan page
+    documents: 2
+    by_type:
+      OTHER: 2
+    suggested: true
+  - url: https://www.cityofedgewater.org/543/Agendas-and-Minutes
+    label: Agendas & Minutes
+    documents: 6
+    by_type:
+      OTHER: 6
+    suggested: true
+- allocator_id: fl-new-smyrna-beach-fire
+  display_name: New Smyrna Beach Firefighters' Retirement System
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: New Smyrna Beach
+  jurisdiction_state: FL
+  home_url: https://www.cityofnsb.com/980/Pension-Reports
+  template: T-CP
+  source_id: PB-www-cityofnsb-com
+  access: AUTO
+  access_reason: null
+  site_title: Pension Reports | New Smyrna Beach, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.cityofnsb.com/980/Pension-Reports
+    label: plan page
+    documents: 31
+    by_type:
+      ACTUARIAL: 4
+      DISCLOSURE_112664: 5
+      FINANCIAL: 1
+      OTHER: 20
+      PERFORMANCE: 1
+    suggested: true
+- allocator_id: fl-new-smyrna-beach-police
+  display_name: New Smyrna Beach Police Officers' Retirement System
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: New Smyrna Beach
+  jurisdiction_state: FL
+  home_url: https://www.cityofnsb.com/980/Pension-Reports
+  template: T-CP
+  source_id: PB-www-cityofnsb-com
+  access: AUTO
+  access_reason: null
+  site_title: Pension Reports | New Smyrna Beach, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.cityofnsb.com/980/Pension-Reports
+    label: plan page
+    documents: 31
+    by_type:
+      ACTUARIAL: 4
+      DISCLOSURE_112664: 5
+      FINANCIAL: 1
+      OTHER: 20
+      PERFORMANCE: 1
+    suggested: true
+- allocator_id: fl-holly-hill-pf
+  display_name: Holly Hill Police and Fire Pension Plans
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Holly Hill
+  jurisdiction_state: FL
+  home_url: https://www.hollyhillfl.org/
+  template: MANUAL
+  source_id: PB-www-hollyhillfl-org
+  access: MANUAL
+  access_reason: 403 to the research pass
+  site_title: null
+  robots: null
+  document_pages: []
+- allocator_id: fl-deltona-fire
+  display_name: Deltona Firefighters' Pension Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Deltona
+  jurisdiction_state: FL
+  home_url: https://www.deltonafl.gov/572/Firefighters-Pension-Plan-Board-of-Trust
+  template: T-CP
+  source_id: PB-www-deltonafl-gov
+  access: AUTO
+  access_reason: null
+  site_title: Firefighters Pension Plan Board of Trustees | Deltona, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.deltonafl.gov/572/Firefighters-Pension-Plan-Board-of-Trust
+    label: plan page
+    documents: 2
+    by_type:
+      DISCLOSURE_112664: 1
+      OTHER: 1
+    suggested: true
+- allocator_id: fl-cocoa-fire
+  display_name: Cocoa Firefighters' Retirement Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Cocoa
+  jurisdiction_state: FL
+  home_url: https://www.cocoafl.gov/1165/Pension-Board---Fire
+  template: T-CP
+  source_id: PB-www-cocoafl-gov
+  access: AUTO
+  access_reason: null
+  site_title: Pension Board - Fire | Cocoa, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow Right
+    Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.cocoafl.gov/1165/Pension-Board---Fire
+    label: plan page
+    documents: 0
+    by_type: {}
+    suggested: false
+  - url: https://www.cocoafl.gov/1273/Florida-Firefighters-Retirement-Plan
+    label: Summary Fact Sheet Visit Cocoa's Benefit Plans
+    documents: 2
+    by_type:
+      ACTUARIAL: 1
+      OTHER: 1
+    suggested: true
+- allocator_id: fl-cocoa-police
+  display_name: Cocoa Police Officers' Retirement Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Cocoa
+  jurisdiction_state: FL
+  home_url: https://www.cocoafl.gov/1274/Police-Officers-Retirement-Plan
+  template: T-CP
+  source_id: PB-www-cocoafl-gov
+  access: AUTO
+  access_reason: null
+  site_title: Police Officers' Retirement Plan | Cocoa, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.cocoafl.gov/1274/Police-Officers-Retirement-Plan
+    label: plan page
+    documents: 3
+    by_type:
+      ACTUARIAL: 1
+      OTHER: 1
+      PERFORMANCE: 1
+    suggested: true
+  - url: https://www.cocoafl.gov/1273/Florida-Firefighters-Retirement-Plan
+    label: Florida Firefighters' Retirement Plan
+    documents: 2
+    by_type:
+      ACTUARIAL: 1
+      OTHER: 1
+    suggested: true
+  - url: https://www.cocoafl.gov/1196/Retirement-Benefits
+    label: Retirement Benefits
+    documents: 2
+    by_type:
+      OTHER: 2
+    suggested: true
+- allocator_id: fl-cocoa-general
+  display_name: Cocoa General Employees Defined Benefit Plan
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Cocoa
+  jurisdiction_state: FL
+  home_url: https://www.cocoafl.gov/1272/General-Employees-Defined-Benefit-Plans
+  template: T-CP
+  source_id: PB-www-cocoafl-gov
+  access: AUTO
+  access_reason: null
+  site_title: General Employees Defined Benefit Plans | Cocoa, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.cocoafl.gov/1272/General-Employees-Defined-Benefit-Plans
+    label: plan page
+    documents: 3
+    by_type:
+      ACTUARIAL: 1
+      OTHER: 2
+    suggested: true
+  - url: https://www.cocoafl.gov/1273/Florida-Firefighters-Retirement-Plan
+    label: Florida Firefighters' Retirement Plan
+    documents: 2
+    by_type:
+      ACTUARIAL: 1
+      OTHER: 1
+    suggested: true
+  - url: https://www.cocoafl.gov/1274/Police-Officers-Retirement-Plan
+    label: Police Officers' Retirement Plan
+    documents: 3
+    by_type:
+      ACTUARIAL: 1
+      OTHER: 1
+      PERFORMANCE: 1
+    suggested: true
+  - url: https://www.cocoafl.gov/1196/Retirement-Benefits
+    label: Retirement Benefits
+    documents: 2
+    by_type:
+      OTHER: 2
+    suggested: true
+- allocator_id: fl-largo-pf
+  display_name: Largo Police Officers' and Firefighters' Retirement Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Largo
+  jurisdiction_state: FL
+  home_url: https://www.largo.com/document_center/index.php
+  template: T-CITY
+  source_id: PB-www-largo-com
+  access: AUTO
+  access_reason: null
+  site_title: Document Center
+  robots: allowed
+  document_pages:
+  - url: https://www.largo.com/document_center/index.php
+    label: plan page
+    documents: 167
+    by_type:
+      ACTUARIAL: 7
+      DISCLOSURE_112664: 2
+      FINANCIAL: 13
+      OTHER: 144
+      PERFORMANCE: 1
+    suggested: true
+- allocator_id: fl-venice-pf
+  display_name: Venice Police, Fire and General Employees Pension Plans
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Venice
+  jurisdiction_state: FL
+  home_url: https://www.venicegov.com/
+  template: MANUAL
+  source_id: PB-www-venicegov-com
+  access: MANUAL
+  access_reason: 403 to the research pass
+  site_title: null
+  robots: null
+  document_pages: []
+- allocator_id: fl-sanibel-general
+  display_name: Sanibel General Employees Pension Plan
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Sanibel
+  jurisdiction_state: FL
+  home_url: https://mysanibel.legistar.com/DepartmentDetail.aspx?ID=25717&GUID=4AC86CB7-8F26-4E89-8B0C-C97CEA3AC563&Search=
+  template: T-LEG
+  source_id: PB-mysanibel-legistar-com
+  access: AUTO
+  access_reason: no document links found on the plan page or its listing pages
+  site_title: City of Sanibel - General Employees Pension Plan Board of Trustees
+  robots: allowed
+  document_pages:
+  - url: https://mysanibel.legistar.com/DepartmentDetail.aspx?ID=25717&GUID=4AC86CB7-8F26-4E89-8B0C-C97CEA3AC563&Search=
+    label: plan page
+    documents: 0
+    by_type: {}
+    suggested: false
+- allocator_id: fl-sanibel-police
+  display_name: Sanibel Municipal Police Officers' Retirement Trust Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Sanibel
+  jurisdiction_state: FL
+  home_url: https://mysanibel.legistar.com/DepartmentDetail.aspx?ID=25718&GUID=4BC76F63-1D72-4300-BCD6-E0E8FA5745C5&Search=
+  template: T-LEG
+  source_id: PB-mysanibel-legistar-com
+  access: AUTO
+  access_reason: no document links found on the plan page or its listing pages
+  site_title: City of Sanibel - Municipal Police Officers' Retirement Trust Fund
+  robots: allowed
+  document_pages:
+  - url: https://mysanibel.legistar.com/DepartmentDetail.aspx?ID=25718&GUID=4BC76F63-1D72-4300-BCD6-E0E8FA5745C5&Search=
+    label: plan page
+    documents: 0
+    by_type: {}
+    suggested: false
+- allocator_id: fl-bonita-springs-fire-district-fire
+  display_name: Bonita Springs Fire Control and Rescue District Firefighters' Pension Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Bonita Springs Fire District
+  jurisdiction_state: FL
+  home_url: https://www.bonitafire.org/finance
+  template: T-CITY
+  source_id: PB-www-bonitafire-org
+  access: AUTO
+  access_reason: null
+  site_title: Finance - Bonita Springs Fire Rescue
+  robots: allowed
+  document_pages:
+  - url: https://www.bonitafire.org/finance
+    label: plan page
+    documents: 18
+    by_type:
+      ACTUARIAL: 3
+      DISCLOSURE_112664: 3
+      FINANCIAL: 1
+      OTHER: 11
+    suggested: true
+  - url: https://www.bonitafire.org/board-meetings
+    label: Board Meetings
+    documents: 20
+    by_type:
+      AGENDA: 11
+      MINUTES: 9
+    suggested: true
+- allocator_id: fl-sebring-police
+  display_name: Sebring Police Retirement Trust Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Sebring
+  jurisdiction_state: FL
+  home_url: https://www.mysebring.com/313/Police-Retirement-Trust-Fund
+  template: T-CP
+  source_id: PB-www-mysebring-com
+  access: AUTO
+  access_reason: null
+  site_title: Police Retirement Trust Fund | Sebring, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.mysebring.com/313/Police-Retirement-Trust-Fund
+    label: plan page
+    documents: 12
+    by_type:
+      ACTUARIAL: 3
+      DISCLOSURE_112664: 4
+      OTHER: 5
+    suggested: true
+  - url: https://www.mysebring.com/AgendaCenter
+    label: Agendas & Minutes
+    documents: 82
+    by_type:
+      AGENDA: 80
+      RFP: 2
+    suggested: false
+- allocator_id: fl-sebring-fire
+  display_name: Sebring Fire Retirement Trust Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Sebring
+  jurisdiction_state: FL
+  home_url: https://www.mysebring.com/314/Fire-Retirement-Trust-Fund
+  template: T-CP
+  source_id: PB-www-mysebring-com
+  access: AUTO
+  access_reason: null
+  site_title: Fire Retirement Trust Fund | Sebring, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.mysebring.com/314/Fire-Retirement-Trust-Fund
+    label: plan page
+    documents: 17
+    by_type:
+      DISCLOSURE_112664: 5
+      FINANCIAL: 2
+      OTHER: 10
+    suggested: true
+  - url: https://www.mysebring.com/AgendaCenter
+    label: Agendas & Minutes
+    documents: 82
+    by_type:
+      AGENDA: 80
+      RFP: 2
+    suggested: false
+- allocator_id: fl-avon-park-pf
+  display_name: Avon Park Police and Fire Pension Plans
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Avon Park
+  jurisdiction_state: FL
+  home_url: https://www.avonpark.city/
+  template: MANUAL
+  source_id: PB-www-avonpark-city
+  access: MANUAL
+  access_reason: 403 to the research pass
+  site_title: null
+  robots: null
+  document_pages: []
+- allocator_id: fl-lee-health-plan
+  display_name: Lee Health (Lee Memorial Health System) Pension Plan
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Lee Health
+  jurisdiction_state: FL
+  home_url: https://www.leehealth.org/about-lee-health/board-of-directors
+  template: MANUAL
+  source_id: PB-www-leehealth-org
+  access: MANUAL
+  access_reason: 403 to the research pass
+  site_title: null
+  robots: null
+  document_pages: []
 - allocator_id: fl-sba-frs
   display_name: Florida Retirement System Pension Plan (State Board of Administration)
   allocator_type: PUBLIC_PENSION_STATE
