@@ -2,7 +2,7 @@
 # Edits are allowed before approval; any edit changes the version hash and needs re-approval.
 region: florida
 phase: A
-generated_at: '2026-11-09T17:38:15+00:00'
+generated_at: '2026-11-09T18:04:47+00:00'
 generated_by: discovery agent (radar discover)
 seed: registry/seed_florida.yaml
 allocators:
@@ -1136,17 +1136,12 @@ allocators:
   home_url: https://jupiter.fl.us/294/Police-Pension-Board
   template: T-CP
   source_id: SF-JUP
-  access: AUTO
-  access_reason: no document links found on the plan page or its listing pages
+  access: MANUAL
+  access_reason: "fetch failed: Error: Page.goto: Download is starting\nCall log:\n  - navigating to \"https://jupiter.fl.us/AgendaCenter/MostRecent/Regular-Meeti"
   site_title: Police Pension Board | Jupiter, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow Right
     Arrow
   robots: allowed
-  document_pages:
-  - url: https://jupiter.fl.us/294/Police-Pension-Board
-    label: plan page
-    documents: 0
-    by_type: {}
-    suggested: false
+  document_pages: []
 - allocator_id: fl-keywest-pf
   display_name: Key West Police and Fire Pension
   allocator_type: POLICE_FIRE
@@ -1229,16 +1224,12 @@ allocators:
   home_url: https://www.citynmb.com/
   template: T-CP
   source_id: SF-NMB
-  access: AUTO
-  access_reason: no document links found on the plan page or its listing pages
-  site_title: North Miami Beach, FL | Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  access: MANUAL
+  access_reason: "fetch failed: TimeoutError: Page.goto: Timeout 60000ms exceeded.\nCall log:\n  - navigating to \"https://www.citynmb.com/\"\
+    , waiting until \"networkidle\""
+  site_title: null
   robots: allowed
-  document_pages:
-  - url: https://www.citynmb.com/
-    label: plan page
-    documents: 0
-    by_type: {}
-    suggested: false
+  document_pages: []
 - allocator_id: fl-riviera
   display_name: Riviera Beach pension plans
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -2517,16 +2508,11 @@ allocators:
   home_url: https://www.melbourneflorida.org/Government/Municipal-Boards/Firefighters-Pension-Plan-Board-of-Trustees
   template: T-GOV
   source_id: PB-www-melbourneflorida-org
-  access: AUTO
-  access_reason: no document links found on the plan page or its listing pages
+  access: MANUAL
+  access_reason: "fetch failed: TimeoutError: Page.goto: Timeout 60000ms exceeded.\nCall log:\n  - navigating to \"https://www.melbourneflorida.org/Government/City-Counc"
   site_title: Firefighters' Pension Plan Board of Trustees - City of Melbourne, FL
   robots: allowed
-  document_pages:
-  - url: https://www.melbourneflorida.org/Government/Municipal-Boards/Firefighters-Pension-Plan-Board-of-Trustees
-    label: plan page
-    documents: 0
-    by_type: {}
-    suggested: false
+  document_pages: []
 - allocator_id: fl-melbourne-general
   display_name: City of Melbourne General Employees' Pension Plan
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -2535,16 +2521,11 @@ allocators:
   home_url: https://www.melbourneflorida.org/Government/Municipal-Boards/General-Employees-Pension-Plan-Board-of-Trustees
   template: T-GOV
   source_id: PB-www-melbourneflorida-org
-  access: AUTO
-  access_reason: no document links found on the plan page or its listing pages
+  access: MANUAL
+  access_reason: "fetch failed: TimeoutError: Page.goto: Timeout 60000ms exceeded.\nCall log:\n  - navigating to \"https://www.melbourneflorida.org/Government/City-Counc"
   site_title: General Employees' Pension Plan Board of Trustees - City of Melbourne, FL
   robots: allowed
-  document_pages:
-  - url: https://www.melbourneflorida.org/Government/Municipal-Boards/General-Employees-Pension-Plan-Board-of-Trustees
-    label: plan page
-    documents: 0
-    by_type: {}
-    suggested: false
+  document_pages: []
 - allocator_id: fl-ocala-pf
   display_name: City of Ocala Police Officers' and Firefighters' Retirement Funds
   allocator_type: POLICE_FIRE
@@ -2770,16 +2751,11 @@ allocators:
   home_url: https://cityofrockledge.org/AgendaCenter/MostRecent/Retirement-Board-Police-Employees-11-11
   template: T-CP
   source_id: PB-cityofrockledge-org
-  access: AUTO
-  access_reason: no document links found on the plan page or its listing pages
+  access: MANUAL
+  access_reason: "fetch failed: Error: Page.goto: Download is starting\nCall log:\n  - navigating to \"https://cityofrockledge.org/AgendaCenter/MostRecent/Retirem"
   site_title: null
   robots: allowed
-  document_pages:
-  - url: https://cityofrockledge.org/AgendaCenter/ViewFile/Agenda/1190?html=true
-    label: plan page
-    documents: 0
-    by_type: {}
-    suggested: false
+  document_pages: []
 - allocator_id: fl-rockledge-fire
   display_name: City of Rockledge Fire Employees' Retirement Plan
   allocator_type: POLICE_FIRE
@@ -2788,16 +2764,11 @@ allocators:
   home_url: https://cityofrockledge.org/AgendaCenter/MostRecent/Retirement-Board-Fire-Employees-9-9
   template: T-CP
   source_id: PB-cityofrockledge-org
-  access: AUTO
-  access_reason: no document links found on the plan page or its listing pages
+  access: MANUAL
+  access_reason: "fetch failed: Error: Page.goto: Download is starting\nCall log:\n  - navigating to \"https://cityofrockledge.org/AgendaCenter/MostRecent/Retirem"
   site_title: null
   robots: allowed
-  document_pages:
-  - url: https://cityofrockledge.org/AgendaCenter/ViewFile/Agenda/1188?html=true
-    label: plan page
-    documents: 0
-    by_type: {}
-    suggested: false
+  document_pages: []
 - allocator_id: fl-lake-wales-fire
   display_name: Lake Wales Firefighters' Pension Plan and Trust
   allocator_type: POLICE_FIRE
@@ -3955,17 +3926,13 @@ allocators:
   home_url: https://www.tamarac.gov/878/Firefighters-Pension
   template: T-CP
   source_id: PB-www-tamarac-gov
-  access: AUTO
-  access_reason: no document links found on the plan page or its listing pages
+  access: MANUAL
+  access_reason: "fetch failed: TimeoutError: Page.goto: Timeout 60000ms exceeded.\nCall log:\n  - navigating to \"https://www.tamarac.gov/879/NRE-Pension\"\
+    , waiting unti"
   site_title: Firefighters’ Pension Fund | Tamarac, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
     Right Arrow
   robots: allowed
-  document_pages:
-  - url: https://www.tamarac.gov/878/Firefighters-Pension
-    label: plan page
-    documents: 0
-    by_type: {}
-    suggested: false
+  document_pages: []
 - allocator_id: fl-tamarac-general
   display_name: City of Tamarac General Employees' Pension Trust Fund
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -5328,7 +5295,7 @@ allocators:
   template: T-GOV
   source_id: PB-www-northcollierfire-com
   access: AUTO
-  access_reason: no document links found on the plan page or its listing pages
+  access_reason: null
   site_title: Board Meetings/Events - North Collier FCRD, FL
   robots: allowed
   document_pages:
@@ -5337,6 +5304,18 @@ allocators:
     documents: 0
     by_type: {}
     suggested: false
+  - url: https://www.northcollierfire.com/Commission-Board-Meetings/Agendas-and-Minutes/2026-Meeting-Agendas-Minutes
+    label: 2026 Meeting Agendas & Minutes
+    documents: 47
+    by_type:
+      MINUTES: 47
+    suggested: true
+  - url: https://www.northcollierfire.com/Commission-Board-Meetings/Agendas-and-Minutes/2025-Meeting-Agendas-Minutes
+    label: 2025 Meeting Agendas & Minutes
+    documents: 49
+    by_type:
+      MINUTES: 49
+    suggested: true
 - allocator_id: fl-palatka-general
   display_name: City of Palatka General Employees' Retirement Plan
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -5648,16 +5627,11 @@ allocators:
   home_url: https://www.daniabeachfl.gov/general-employees-pension-board
   template: T-CP
   source_id: PB-www-daniabeachfl-gov
-  access: AUTO
-  access_reason: no document links found on the plan page or its listing pages
-  site_title: General Employees Pension Board | Dania Beach, FL - Official Website
+  access: MANUAL
+  access_reason: "fetch failed: TimeoutError: Page.goto: Timeout 60000ms exceeded.\nCall log:\n  - navigating to \"https://www.daniabeachfl.gov/general-employees-pension"
+  site_title: null
   robots: allowed
-  document_pages:
-  - url: https://www.daniabeachfl.gov/general-employees-pension-board
-    label: plan page
-    documents: 0
-    by_type: {}
-    suggested: false
+  document_pages: []
 - allocator_id: fl-dania-beach-pf
   display_name: City of Dania Beach Police and Firefighters' Retirement System
   allocator_type: POLICE_FIRE
@@ -5666,16 +5640,11 @@ allocators:
   home_url: https://www.daniabeachfl.gov/police-fire-pension-board
   template: T-CP
   source_id: PB-www-daniabeachfl-gov
-  access: AUTO
-  access_reason: no document links found on the plan page or its listing pages
-  site_title: Police & Fire Pension Board | Dania Beach, FL - Official Website
+  access: MANUAL
+  access_reason: "fetch failed: TimeoutError: Page.goto: Timeout 60000ms exceeded.\nCall log:\n  - navigating to \"https://www.daniabeachfl.gov/police-fire-pension-board"
+  site_title: null
   robots: allowed
-  document_pages:
-  - url: https://www.daniabeachfl.gov/police-fire-pension-board
-    label: plan page
-    documents: 0
-    by_type: {}
-    suggested: false
+  document_pages: []
 - allocator_id: fl-bay-harbor-islands-general
   display_name: Town of Bay Harbor Islands Employees Retirement System (General Employees)
   allocator_type: PUBLIC_PENSION_LOCAL
@@ -6717,21 +6686,12 @@ allocators:
   home_url: https://www.largo.com/document_center/index.php
   template: T-CITY
   source_id: PB-www-largo-com
-  access: AUTO
-  access_reason: null
-  site_title: Document Center
+  access: MANUAL
+  access_reason: "fetch failed: TimeoutError: Page.goto: Timeout 60000ms exceeded.\nCall log:\n  - navigating to \"https://www.largo.com/document_center/index.php\"\
+    , wait"
+  site_title: null
   robots: allowed
-  document_pages:
-  - url: https://www.largo.com/document_center/index.php
-    label: plan page
-    documents: 167
-    by_type:
-      ACTUARIAL: 7
-      DISCLOSURE_112664: 2
-      FINANCIAL: 13
-      OTHER: 144
-      PERFORMANCE: 1
-    suggested: true
+  document_pages: []
 - allocator_id: fl-venice-pf
   display_name: Venice Police, Fire and General Employees Pension Plans
   allocator_type: POLICE_FIRE

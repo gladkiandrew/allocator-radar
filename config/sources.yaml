@@ -161,6 +161,16 @@ verdicts:
   - {id: PB-www-avonpark-city, name: "Avon Park (Avon Park Police and Fire Pension Plans)", hosts: [www.avonpark.city], verdict: MANUAL, reason: "403 to the research pass"}
   - {id: PB-www-leehealth-org, name: "Lee Health (Lee Health (Lee Memorial Health System) Pension Plan)", hosts: [www.leehealth.org], verdict: MANUAL, reason: "403 to the research pass"}
 
+  # ---- Phase B import districts ----
+  - {id: PB-www-elfr-org, name: "East Lake Tarpon Fire District (East Lake Tarpon Special Fire Control District F", hosts: [www.elfr.org], verdict: CRAWL}
+  - {id: PB-www-keysenergy-com, name: "Keys Energy Services (Utility Board of the City of Key West (Keys Energy Service", hosts: [www.keysenergy.com], verdict: CRAWL}
+  - {id: PB-greaternaplesfire-org, name: "Greater Naples Fire District (Greater Naples Fire Rescue District Firefighters' ", hosts: [greaternaplesfire.org], verdict: CRAWL}
+  - {id: PB-southwaltonfire-gov, name: "South Walton Fire District (South Walton Fire District Firefighters' Retirement ", hosts: [southwaltonfire.gov], verdict: CRAWL}
+  - {id: PB-www-nrfd-org, name: "North River Fire District (North River Fire District Firefighters' Pension Plan)", hosts: [www.nrfd.org], verdict: CRAWL}
+  - {id: PB-www-hnfd-org, name: "Holley-Navarre Fire District (Holley-Navarre Fire District Firefighters' Pension", hosts: [www.hnfd.org], verdict: CRAWL}
+  - {id: PB-okaloosaislandfire-com, name: "Okaloosa Island Fire District (Okaloosa Island Fire District Firefighters' Pensi", hosts: [okaloosaislandfire.com], verdict: CRAWL}
+  - {id: PB-enfd-specialdistrict-org, name: "East Niceville Fire District (East Niceville Fire District Firefighters' Pension", hosts: [enfd.specialdistrict.org], verdict: CRAWL}
+
   # ---- Blocked to non-browser clients (§2.4) -> MANUAL ----
   - {id: SF-BLOCKED, name: "Akamai/Cloudflare-fronted city sites", hosts: [www.plantation.org, www.delraybeachfl.gov, www.sunrisefl.gov, www.wpb.org, www.fortlauderdale.gov, lakeworthbeachfl.gov], verdict: MANUAL, reason: "blocked to non-browser clients; never evaded"}
   - {id: SF-TRC, name: "The Resource Centers (TPA)", hosts: [www.resourcecenters.com, resourcecenters.com], verdict: DROP, reason: "Cloudflare managed challenge; robots Disallow: / to ClaudeBot and anthropic-ai"}
