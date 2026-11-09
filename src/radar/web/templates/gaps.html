@@ -4,11 +4,15 @@
 <h1>Coverage gaps</h1>
 <p class="sub">Plans in the registry that don't meet the main-table bar: at least 3 documents fetched, at least one dated in the
   last 6 months, and the investment consultant identified (<span class="mono">config/main_table.yaml</span>). Each row says
-  why. A gap describes our coverage, not the plan.</p>
+  why. A gap describes our coverage, not the plan. Plans here can still have a DEPLOYING or PREPARING signal; they are listed
+  first.</p>
 <div class="scroll"><table class="stack">
-  <thead><tr><th>Plan</th><th>Why it is here</th><th class="hide-sm">Coverage</th></tr></thead>
+  <thead><tr><th>Plan</th><th>Readiness</th><th>Why it is here</th><th class="hide-sm">Coverage</th></tr></thead>
   <tbody>{% for a in rows %}
   <tr><td><a href="/a/{{ a.allocator_id }}"><strong>{{ a.display_name }}</strong></a><br><span class="muted">{{ a.jurisdiction_city }}</span></td>
+    <td><span class="tier {{ a.readiness.tier }}">{{ a.readiness.tier }}</span>
+      {% if a.readiness.reasons %}{% set s = a.readiness.reasons[0] %}<br><span style="font-size:12.5px"><span class="mono">{{ s.event_date }}</span> {{ s.summary|truncate(110) }}
+        {% for e in s.evidence[:1] %}<a class="cite" href="{{ cite_href(e) }}" target="_blank" rel="noopener">[p.{{ e.page }}]</a>{% endfor %}</span>{% endif %}</td>
     <td style="font-size:13.5px"><ul style="margin:0;padding-left:18px">{% for r in a.bar_reasons %}<li>{{ r }}</li>{% endfor %}</ul></td>
     <td class="hide-sm mono">{{ a.coverage_pct }}% · {{ a.n_docs }} docs</td></tr>
   {% endfor %}</tbody></table></div>

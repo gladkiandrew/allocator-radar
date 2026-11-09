@@ -86,7 +86,7 @@ def create_app() -> FastAPI:
         from radar.registry import approve as reg
 
         with db.connect() as con:
-            rows = [r for r in queries.allocator_table(con) if r["bar_reasons"]]
+            rows = [r for r in queries.allocator_table(con) if r["bar_reasons"]]  # sorted: DEPLOYING/PREPARING first
         data, _ = reg.load()
         return render(request, "gaps.html", rows=rows, sponsors=(data or {}).get("manual_only_sponsors", []))
 
