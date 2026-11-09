@@ -37,6 +37,10 @@ PLAN_WORDS = {
     "police": r"\bpolice\b", "fire": r"\bfire(?:fighters?)?\b", "general": r"\b(?:general|ge)\b",
     "management": r"\bmanagement\b",
 }
+# City-wide listings (every board's agendas on one page): a document counts only if its section heading or link
+# names a pension/retirement board.
+CITYWIDE_PAGE = re.compile(r"/AgendaCenter/?(\?.*)?$|/Archive\.aspx/?$|/archive\.aspx/?$", re.I)
+PENSION_SECTION = re.compile(r"pension|retire|trust fund|175|185", re.I)
 # On city-hosted pages, a document link must look like it belongs to a pension plan.
 CITY_DOC_HINT = re.compile(r"(pension|retire|trust|112\.664|actuar|valuation|investment|performance|"
                            r"agenda|minutes|ips|policy|financial|audit|board|quarter|rfp|disclosure)", re.I)
@@ -122,6 +126,9 @@ def collect_links(client: PoliteClient, allocs: list[dict], pages: dict[str, lis
                 continue
             label = f"{l.text} | {unquote(urlsplit(l.url).path.rsplit('/', 1)[-1])} | {l.context}"
             if city and not CITY_DOC_HINT.search(label):
+                continue
+            if CITYWIDE_PAGE.search(urlsplit(page_url).path + ("?" + urlsplit(page_url).query if urlsplit(page_url).query else "")) \
+                    and not PENSION_SECTION.search(f"{l.context} {l.text}"):
                 continue
             d = parse_date(l.text) or parse_date(unquote(l.url)) or parse_date(l.context)
             if d and d < cutoff:

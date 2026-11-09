@@ -72,3 +72,11 @@ def test_select_targets_depth():
     assert sum(u.startswith("https://x/a") for u in got) == 19  # 0..18 months
     assert {"https://x/ips0.pdf", "https://x/ips1.pdf"} <= got and "https://x/ips3.pdf" not in got
     assert "https://x/v.pdf" in got
+
+
+def test_citywide_agendacenter_keeps_only_pension_sections():
+    html = """<h2>City Commission</h2><a href="/AgendaCenter/ViewFile/Agenda/_10012026-1">Agenda October 1, 2026</a>
+              <h2>Police & Fire Pension Board</h2><a href="/AgendaCenter/ViewFile/Agenda/_11102026-2">Agenda November 10, 2026</a>"""
+    allocs = [{"allocator_id": "fl-npb-pf", "template": "T-CP"}]
+    links = runner.collect_links(FakeClient(html), allocs, {"fl-npb-pf": ["https://x.gov/AgendaCenter"]})
+    assert [l.url.rsplit("/", 1)[-1] for l in links] == ["_11102026-2"]

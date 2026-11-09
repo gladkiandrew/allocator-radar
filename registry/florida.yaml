@@ -2,7 +2,7 @@
 # Edits are allowed before approval; any edit changes the version hash and needs re-approval.
 region: florida
 phase: A
-generated_at: '2026-11-06T17:09:44+00:00'
+generated_at: '2026-11-09T16:48:29+00:00'
 generated_by: discovery agent (radar discover)
 seed: registry/seed_florida.yaml
 allocators:
@@ -1259,6 +1259,331 @@ allocators:
       ACTUARIAL: 2
       OTHER: 5
     suggested: true
+- allocator_id: fl-miami-eort
+  display_name: City of Miami Elected Officers' Retirement Trust
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Miami
+  jurisdiction_state: FL
+  home_url: https://archive.miami.gov/finance/EORT/
+  template: MANUAL
+  source_id: SF-MIAEORT
+  access: MANUAL
+  access_reason: 403 to automated clients (research pass 2026-11-06)
+  site_title: null
+  robots: null
+  document_pages: []
+- allocator_id: fl-northmiami-general
+  display_name: Clair T. Singerman Employees Retirement System (North Miami)
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: North Miami
+  jurisdiction_state: FL
+  home_url: https://northmiamipension.com/home/notices/
+  template: T-WP
+  source_id: SF-NMPEN
+  access: AUTO
+  access_reason: null
+  site_title: Meeting Notice
+  robots: allowed
+  document_pages: &id003
+  - url: https://northmiamipension.com/home/notices/
+    label: plan page
+    documents: 51
+    by_type:
+      AGENDA: 44
+      OTHER: 7
+    suggested: true
+  - url: https://northmiamipension.com/home/documents/
+    label: Actuarial Valuation
+    documents: 13
+    by_type:
+      ACTUARIAL: 13
+    suggested: true
+  - url: https://northmiamipension.com/home/regulatory/
+    label: Regulatory / Financials
+    documents: 30
+    by_type:
+      ACTUARIAL: 5
+      DISCLOSURE_112664: 10
+      FINANCIAL: 13
+      OTHER: 2
+    suggested: true
+  - url: https://northmiamipension.com/home/forms/
+    label: Forms and Documents
+    documents: 20
+    by_type:
+      AGENDA: 1
+      OTHER: 19
+    suggested: false
+  - url: https://northmiamipension.com/employee-resources/
+    label: Employee Resources
+    documents: 12
+    by_type:
+      OTHER: 12
+    suggested: true
+  - url: https://northmiamipension.com/retiring-soon/
+    label: Retiring Soon ?
+    documents: 3
+    by_type:
+      OTHER: 3
+    suggested: true
+- allocator_id: fl-northmiami-police
+  display_name: North Miami Police Pension Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: North Miami
+  jurisdiction_state: FL
+  home_url: https://northmiamipension.com/home/notices/
+  template: T-WP
+  source_id: SF-NMPEN
+  access: AUTO
+  access_reason: null
+  site_title: Meeting Notice
+  robots: allowed
+  document_pages: *id003
+- allocator_id: fl-nmb-general
+  display_name: Retirement Plan for General Employees of the City of North Miami Beach
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: North Miami Beach
+  jurisdiction_state: FL
+  home_url: https://www.citynmb.com/481/General-Employees-Retirement-Board
+  template: T-CP
+  source_id: SF-NMB
+  access: AUTO
+  access_reason: null
+  site_title: General Employees Retirement Board | North Miami Beach, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.citynmb.com/481/General-Employees-Retirement-Board
+    label: plan page
+    documents: 4
+    by_type:
+      OTHER: 4
+    suggested: true
+  - url: https://www.citynmb.com/AgendaCenter/General-Employees-Retirement-Committee-5
+    label: View Most Recent Agendas and Minutes
+    documents: 2
+    by_type:
+      AGENDA: 2
+    suggested: true
+  - url: https://www.citynmb.com/544/Pension-Plan-Reforms
+    label: Pension Plan Reforms
+    documents: 30
+    by_type:
+      ACTUARIAL: 1
+      OTHER: 29
+    suggested: true
+- allocator_id: fl-pompano-general
+  display_name: Pompano Beach General Employees Retirement System
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Pompano Beach
+  jurisdiction_state: FL
+  home_url: https://pompgers.org/
+  template: CUSTOM
+  source_id: SF-PGERS
+  access: AUTO
+  access_reason: null
+  site_title: Pompano Beach General Employees Retirement System
+  robots: allowed
+  document_pages:
+  - url: https://www.pompgers.org/
+    label: plan page
+    documents: 2
+    by_type:
+      OTHER: 2
+    suggested: true
+  - url: https://www.pompgers.org/agenda.htm
+    label: meeting agendas meeting agendas
+    documents: 1
+    by_type:
+      AGENDA: 1
+    suggested: true
+  - url: https://www.pompgers.org/documents.htm
+    label: plan documents plan documents
+    documents: 18
+    by_type:
+      IPS: 1
+      OTHER: 17
+    suggested: false
+  - url: https://www.pompgers.org/senate-bill-reports.html
+    label: senate bill reports senate bill reports
+    documents: 4
+    by_type:
+      ACTUARIAL: 3
+      DISCLOSURE_112664: 1
+    suggested: true
+  - url: https://www.pompgers.org/board-of-trustees-election.htm
+    label: 2026 Board of Trustees Election
+    documents: 2
+    by_type:
+      OTHER: 2
+    suggested: true
+- allocator_id: fl-davie-police
+  display_name: Town of Davie Police Pension Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Davie
+  jurisdiction_state: FL
+  home_url: https://www.davie-fl.gov/191/Pension-Plan-Information
+  template: T-CP
+  source_id: SF-DAVIE
+  access: AUTO
+  access_reason: null
+  site_title: Pension Plan Information | Davie, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages:
+  - url: https://www.davie-fl.gov/191/Pension-Plan-Information
+    label: plan page
+    documents: 3
+    by_type:
+      DISCLOSURE_112664: 1
+      OTHER: 2
+    suggested: true
+  - url: https://www.davie-fl.gov/165/Town-Council-Meeting-Agendas
+    label: Agendas & Meeting Minutes
+    documents: 3
+    by_type:
+      AGENDA: 3
+    suggested: true
+  - url: https://www.davie-fl.gov/Archive.aspx?AMID=39
+    label: Firefighters Pension Plan Documents
+    documents: 17
+    by_type:
+      DISCLOSURE_112664: 4
+      IPS: 2
+      OTHER: 11
+    suggested: true
+- allocator_id: fl-hallandale-police-fire
+  display_name: Hallandale Beach Police Officers' and Firefighters' Pension Plan
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Hallandale Beach
+  jurisdiction_state: FL
+  home_url: https://www.hallandalebeachfl.gov/925/Defined-Benefit-Plans
+  template: T-CP
+  source_id: SF-HALL
+  access: AUTO
+  access_reason: null
+  site_title: Defined Benefit Plans | Hallandale Beach, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages: &id004
+  - url: https://www.hallandalebeachfl.gov/925/Defined-Benefit-Plans
+    label: plan page
+    documents: 107
+    by_type:
+      ACTUARIAL: 94
+      DISCLOSURE_112664: 4
+      FINANCIAL: 1
+      IPS: 3
+      OTHER: 5
+    suggested: true
+- allocator_id: fl-hallandale-general
+  display_name: Hallandale Beach General/Not-Represented Employees Pension Plan
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Hallandale Beach
+  jurisdiction_state: FL
+  home_url: https://www.hallandalebeachfl.gov/925/Defined-Benefit-Plans
+  template: T-CP
+  source_id: SF-HALL
+  access: AUTO
+  access_reason: null
+  site_title: Defined Benefit Plans | Hallandale Beach, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages: *id004
+- allocator_id: fl-hallandale-management
+  display_name: Hallandale Beach Professional/Management Employees Pension Plan
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Hallandale Beach
+  jurisdiction_state: FL
+  home_url: https://www.hallandalebeachfl.gov/925/Defined-Benefit-Plans
+  template: T-CP
+  source_id: SF-HALL
+  access: AUTO
+  access_reason: null
+  site_title: Defined Benefit Plans | Hallandale Beach, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages: *id004
+- allocator_id: fl-pbgardens-fire
+  display_name: City of Palm Beach Gardens Firefighters' Pension Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Palm Beach Gardens
+  jurisdiction_state: FL
+  home_url: https://www.pbgfl.gov/629/Financial-Reports
+  template: T-CP
+  source_id: SF-PBG
+  access: AUTO
+  access_reason: null
+  site_title: Financial Reports | Palm Beach Gardens, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages: &id005
+  - url: https://www.pbgfl.gov/629/Financial-Reports
+    label: plan page
+    documents: 47
+    by_type:
+      ACTUARIAL: 11
+      FINANCIAL: 14
+      OTHER: 22
+    suggested: true
+- allocator_id: fl-pbgardens-police
+  display_name: City of Palm Beach Gardens Police Officers' Pension Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Palm Beach Gardens
+  jurisdiction_state: FL
+  home_url: https://www.pbgfl.gov/629/Financial-Reports
+  template: T-CP
+  source_id: SF-PBG
+  access: AUTO
+  access_reason: null
+  site_title: Financial Reports | Palm Beach Gardens, FL - Official WebsiteArrow LeftArrow RightSlideshow Left ArrowSlideshow
+    Right Arrow
+  robots: allowed
+  document_pages: *id005
+- allocator_id: fl-boynton-police
+  display_name: Boynton Beach Police Officers' Pension Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Boynton Beach
+  jurisdiction_state: FL
+  home_url: https://www.boynton-beach.org/365/Pension-Reports
+  template: T-CP
+  source_id: SF-BOYN
+  access: AUTO
+  access_reason: null
+  site_title: Pension Reports | Boynton Beach, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages: &id006
+  - url: https://www.boynton-beach.org/365/Pension-Reports
+    label: plan page
+    documents: 3
+    by_type:
+      OTHER: 3
+    suggested: true
+- allocator_id: fl-boynton-fire
+  display_name: Boynton Beach Municipal Firefighters' Pension Trust Fund
+  allocator_type: POLICE_FIRE
+  jurisdiction_city: Boynton Beach
+  jurisdiction_state: FL
+  home_url: https://www.boynton-beach.org/365/Pension-Reports
+  template: T-CP
+  source_id: SF-BOYN
+  access: AUTO
+  access_reason: null
+  site_title: Pension Reports | Boynton Beach, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages: *id006
+- allocator_id: fl-boynton-general
+  display_name: Boynton Beach General Employees' Pension Fund
+  allocator_type: PUBLIC_PENSION_LOCAL
+  jurisdiction_city: Boynton Beach
+  jurisdiction_state: FL
+  home_url: https://www.boynton-beach.org/365/Pension-Reports
+  template: T-CP
+  source_id: SF-BOYN
+  access: AUTO
+  access_reason: null
+  site_title: Pension Reports | Boynton Beach, FLArrow LeftArrow RightSlideshow Left ArrowSlideshow Right Arrow
+  robots: allowed
+  document_pages: *id006
 - allocator_id: fl-sba-frs
   display_name: Florida Retirement System Pension Plan (State Board of Administration)
   allocator_type: PUBLIC_PENSION_STATE

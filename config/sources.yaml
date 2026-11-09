@@ -52,6 +52,78 @@ verdicts:
   - {id: SF-BOYN, name: "City of Boynton Beach", hosts: [www.boynton-beach.org, boynton-beach.org], verdict: CRAWL, template: T-CP}
   - {id: SF-MIAEORT, name: "City of Miami file archive (EORT)", hosts: [archive.miami.gov], verdict: MANUAL, reason: "403 to automated clients (research pass 2026-11-06)"}
 
+  # ---- Phase B import north ----
+  - {id: PB-www-jacksonville-gov, name: "Jacksonville (Jacksonville Police and Fire Pension Fund)", hosts: [www.jacksonville.gov], verdict: CRAWL}
+  - {id: PB-www-gainesvillefl-gov, name: "Gainesville (City of Gainesville Consolidated Police Officers' and Firefighters'", hosts: [www.gainesvillefl.gov], verdict: CRAWL}
+  - {id: PB-www-talgov-com, name: "Tallahassee (City of Tallahassee Retirement System)", hosts: [www.talgov.com], verdict: CRAWL}
+  - {id: PB-pensacolafl-portal-civic, name: "Pensacola (City of Pensacola Police Pension Board of Trustees)", hosts: [pensacolafl.portal.civicclerk.com], verdict: CRAWL}
+  - {id: PB-www-jacksonvillebeach-or, name: "Jacksonville Beach (City of Jacksonville Beach Police Officers' Retirement Syste", hosts: [www.jacksonvillebeach.org], verdict: CRAWL}
+  - {id: PB-www-coab-us, name: "Atlantic Beach (City of Atlantic Beach Police Officers' Retirement System)", hosts: [www.coab.us], verdict: CRAWL}
+  - {id: PB-citystaug-com, name: "St. Augustine (City of St. Augustine Firefighters' Retirement Fund)", hosts: [citystaug.com], verdict: CRAWL}
+  - {id: PB-www-citystaug-com, name: "St. Augustine (City of St. Augustine Police Officers' Retirement Fund)", hosts: [www.citystaug.com], verdict: CRAWL}
+  - {id: PB-pcbfl-gov, name: "Panama City Beach (City of Panama City Beach Retirement Trust Funds)", hosts: [pcbfl.gov], verdict: MANUAL, reason: "403 to the research pass"}
+  - {id: PB-www-destinfire-gov, name: "Destin (Destin Firefighters' Retirement Trust Fund (Destin Fire Control District", hosts: [www.destinfire.gov], verdict: CRAWL}
+  - {id: PB-ocwfcd-specialdistrict-o, name: "Ocean City-Wright (Ocean City-Wright Fire Control District Retirement Board)", hosts: [ocwfcd.specialdistrict.org], verdict: CRAWL}
+  - {id: PB-navarrebeachfire-org, name: "Navarre Beach (Navarre Beach Fire Rescue District Firefighters' Pension Board of", hosts: [navarrebeachfire.org], verdict: CRAWL}
+  - {id: PB-www-lcfla-com, name: "Lake City (City of Lake City Pension Boards (Police, Fire, General Employees))", hosts: [www.lcfla.com], verdict: CRAWL}
+
+  # ---- Phase B import central ----
+  - {id: PB-www-orlando-gov, name: "Orlando (City of Orlando Police Officers' Pension Fund)", hosts: [www.orlando.gov], verdict: CRAWL}
+  - {id: PB-www-kissimmee-gov, name: "Kissimmee (City of Kissimmee Municipal Police Officers' Retirement Plan)", hosts: [www.kissimmee.gov], verdict: CRAWL}
+  - {id: PB-daytonabeach-gov, name: "Daytona Beach (Daytona Beach Police Officers' and Firefighters' Pension Trust Fu", hosts: [daytonabeach.gov], verdict: CRAWL}
+  - {id: PB-pbpfpf-org, name: "Palm Bay (Palm Bay Police and Firefighters' Pension Fund)", hosts: [pbpfpf.org], verdict: CRAWL}
+  - {id: PB-www-melbourneflorida-org, name: "Melbourne (City of Melbourne Police Officers' Retirement Trust Fund)", hosts: [www.melbourneflorida.org], verdict: CRAWL}
+  - {id: PB-www-ocalafl-gov, name: "Ocala (City of Ocala Police Officers' and Firefighters' Retirement Funds)", hosts: [www.ocalafl.gov], verdict: MANUAL, reason: "ocalafl.gov 403 to the research pass"}
+  - {id: PB-sanfordfl-gov, name: "Sanford (Sanford Firefighters' Retirement System)", hosts: [sanfordfl.gov], verdict: CRAWL}
+  - {id: PB-wgfl-gov, name: "Winter Garden (Winter Garden Police and Firefighters' Pension Plan)", hosts: [wgfl.gov], verdict: CRAWL}
+  - {id: PB-www-casselberry-org, name: "Casselberry (Casselberry Police Officers' and Firefighters' Pension Plan)", hosts: [www.casselberry.org], verdict: CRAWL}
+  - {id: PB-palmcoast-gov, name: "Palm Coast (City of Palm Coast Firefighters' Retirement System and Trust)", hosts: [palmcoast.gov], verdict: CRAWL}
+  - {id: PB-www-titusville-com, name: "Titusville (City of Titusville Police Officers' and Firefighters' Pension Plan)", hosts: [www.titusville.com], verdict: CRAWL}
+  - {id: PB-cityofrockledge-org, name: "Rockledge (City of Rockledge Police Employees' Retirement Plan)", hosts: [cityofrockledge.org], verdict: CRAWL}
+  - {id: PB-lakewalesfl-gov, name: "Lake Wales (Lake Wales Firefighters' Pension Plan and Trust)", hosts: [lakewalesfl.gov], verdict: CRAWL}
+  - {id: PB-www-ormondbeach-org, name: "Ormond Beach (City of Ormond Beach Firefighters' and Police Officers' Pension Tr", hosts: [www.ormondbeach.org], verdict: CRAWL}
+  - {id: PB-www-deland-org, name: "DeLand (City of DeLand Police Officers' Retirement Plan)", hosts: [www.deland.org], verdict: CRAWL}
+  - {id: PB-www-cityofcocoabeach-com, name: "Cocoa Beach (City of Cocoa Beach Police Officers' Pension Plan)", hosts: [www.cityofcocoabeach.com], verdict: CRAWL}
+  - {id: PB-tavaresfl-gov, name: "Tavares (City of Tavares Police Officers' and Firefighters' Pension Trust Funds)", hosts: [tavaresfl.gov], verdict: CRAWL}
+  - {id: PB-www-leesburgflorida-gov, name: "Leesburg (City of Leesburg Police Officers' Pension Plan)", hosts: [www.leesburgflorida.gov], verdict: CRAWL}
+
+  # ---- Phase B import southeast ----
+  - {id: PB-www-village-npb-org, name: "North Palm Beach (Village of North Palm Beach Police and Fire Pension Board)", hosts: [www.village-npb.org], verdict: CRAWL}
+  - {id: PB-www-covb-org, name: "Vero Beach (City of Vero Beach Police Officers' Retirement Fund)", hosts: [www.covb.org], verdict: CRAWL}
+  - {id: PB-wiltonmanors-gov, name: "Wilton Manors (City of Wilton Manors Firefighters Pension Board)", hosts: [wiltonmanors.gov], verdict: CRAWL}
+  - {id: PB-www-cityoffortpierce-com, name: "Fort Pierce (City of Fort Pierce Retirement and Benefit System)", hosts: [www.cityoffortpierce.com], verdict: CRAWL}
+  - {id: PB-public-destinyhosted-com, name: "Fort Pierce (Fort Pierce Police Officers' Retirement Trust Fund)", hosts: [public.destinyhosted.com], verdict: CRAWL}
+  - {id: PB-www-slcfd-com, name: "St. Lucie County Fire District (St. Lucie County Fire District Firefighters' Pen", hosts: [www.slcfd.com], verdict: CRAWL}
+  - {id: PB-www-deerfield-beach-com, name: "Deerfield Beach (Deerfield Beach Municipal Firefighters' Pension Trust Fund)", hosts: [www.deerfield-beach.com], verdict: CRAWL}
+  - {id: PB-www-tamarac-gov, name: "Tamarac (City of Tamarac Firefighters' Pension Trust Fund)", hosts: [www.tamarac.gov], verdict: CRAWL}
+  - {id: PB-www-oaklandparkfl-gov, name: "Oakland Park (Oakland Park Police Officers' and Firefighters' Pension Fund)", hosts: [www.oaklandparkfl.gov], verdict: CRAWL}
+  - {id: PB-balharbourfl-gov, name: "Bal Harbour (Bal Harbour Village Police Officers' Retirement Fund)", hosts: [balharbourfl.gov], verdict: CRAWL}
+  - {id: PB-www-mhs-net, name: "South Broward Hospital District (South Broward Hospital District (Memorial Healt", hosts: [www.mhs.net], verdict: CRAWL}
+  - {id: PB-lauderhillpolicepension-, name: "Lauderhill (Lauderhill Police Officers' Retirement Plan)", hosts: [lauderhillpolicepension.org], verdict: MANUAL, reason: "connection reset; city notices 403"}
+  - {id: PB-www-miamisprings-fl-gov, name: "Miami Springs (City of Miami Springs Police and Firefighters' / General Employee", hosts: [www.miamisprings-fl.gov], verdict: MANUAL, reason: "403 to the research pass"}
+  - {id: PB-www-tequesta-org, name: "Tequesta (Village of Tequesta Public Safety Officers' and General Employees' Pen", hosts: [www.tequesta.org], verdict: MANUAL, reason: "documents only on resourcecenters.com (do-not-crawl)"}
+
+  # ---- Phase B import tampa_sw ----
+  - {id: PB-www-tampa-gov, name: "Tampa (City of Tampa General Employees' Retirement Fund)", hosts: [www.tampa.gov], verdict: CRAWL}
+  - {id: PB-www-stpete-org, name: "St. Petersburg (City of St. Petersburg Employees' Retirement System)", hosts: [www.stpete.org], verdict: CRAWL}
+  - {id: PB-www-myclearwater-com, name: "Clearwater (City of Clearwater Employees' Pension Plan)", hosts: [www.myclearwater.com], verdict: CRAWL}
+  - {id: PB-www-capecoral-gov, name: "Cape Coral (City of Cape Coral Police Officers' Pension Plan)", hosts: [www.capecoral.gov], verdict: CRAWL}
+  - {id: PB-www-sarasotafl-gov, name: "Sarasota (City of Sarasota Firefighters' Pension Plan)", hosts: [www.sarasotafl.gov], verdict: CRAWL}
+  - {id: PB-www-pinellaspark-gov, name: "Pinellas Park (City of Pinellas Park Firefighters' Pension Plan)", hosts: [www.pinellaspark.gov], verdict: CRAWL}
+  - {id: PB-www-dunedin-gov, name: "Dunedin (Dunedin Firefighters' Pension Trust Fund)", hosts: [www.dunedin.gov], verdict: CRAWL}
+  - {id: PB-www-myseminole-com, name: "Seminole (City of Seminole Municipal Firefighters' Pension Trust Fund)", hosts: [www.myseminole.com], verdict: CRAWL}
+  - {id: PB-mygulfport-us, name: "Gulfport (City of Gulfport Firefighter and General Employees Pension Boards)", hosts: [mygulfport.us], verdict: MANUAL, reason: "documents only on resourcecenters.com (do-not-crawl)"}
+  - {id: PB-www-templeterrace-gov, name: "Temple Terrace (City of Temple Terrace Police Officers' Retirement System)", hosts: [www.templeterrace.gov], verdict: CRAWL}
+  - {id: PB-www-plantcitygov-com, name: "Plant City (City of Plant City Safety Employees' Pension Trust Fund)", hosts: [www.plantcitygov.com], verdict: CRAWL}
+  - {id: PB-www-cityofnewportrichey-, name: "New Port Richey (City of New Port Richey Police Pension Board)", hosts: [www.cityofnewportrichey.org], verdict: CRAWL}
+  - {id: PB-cityofbrooksville-us, name: "Brooksville (City of Brooksville Firefighters' Pension Trust Fund)", hosts: [cityofbrooksville.us], verdict: CRAWL}
+  - {id: PB-www-palmettofl-org, name: "Palmetto (City of Palmetto General Employees' Pension Plan)", hosts: [www.palmettofl.org], verdict: CRAWL}
+  - {id: PB-wmfr-specialdistrict-org, name: "West Manatee Fire District (West Manatee Fire and Rescue District Firefighters' ", hosts: [wmfr.specialdistrict.org], verdict: CRAWL}
+  - {id: PB-northportfl-gov, name: "North Port (City of North Port Firefighters' Pension Plan)", hosts: [northportfl.gov], verdict: CRAWL}
+  - {id: PB-www-naplesgov-com, name: "Naples (City of Naples General, Police Officers' and Firefighters' Pension Board", hosts: [www.naplesgov.com], verdict: MANUAL, reason: "403 to the research pass"}
+  - {id: PB-www-ci-punta-gorda-fl-us, name: "Punta Gorda (City of Punta Gorda Pension Boards (Fire, Police, General))", hosts: [www.ci.punta-gorda.fl.us], verdict: MANUAL, reason: "403 to the research pass"}
+  - {id: PB-www-northcollierfire-com, name: "North Collier Fire District (North Collier Fire Control and Rescue District Fire", hosts: [www.northcollierfire.com], verdict: CRAWL}
+
   # ---- Blocked to non-browser clients (§2.4) -> MANUAL ----
   - {id: SF-BLOCKED, name: "Akamai/Cloudflare-fronted city sites", hosts: [www.plantation.org, www.delraybeachfl.gov, www.sunrisefl.gov, www.wpb.org, www.fortlauderdale.gov, lakeworthbeachfl.gov], verdict: MANUAL, reason: "blocked to non-browser clients; never evaded"}
   - {id: SF-TRC, name: "The Resource Centers (TPA)", hosts: [www.resourcecenters.com, resourcecenters.com], verdict: DROP, reason: "Cloudflare managed challenge; robots Disallow: / to ClaudeBot and anthropic-ai"}
