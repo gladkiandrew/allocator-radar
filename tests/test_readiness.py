@@ -57,3 +57,11 @@ def test_search_scheduled_upcoming_meeting_counts_now():
     assert compute([sig("SEARCH_SCHEDULED", -10)], NOW, TODAY).tier == "DEPLOYING"   # meeting in 10 days
     assert compute([sig("SEARCH_SCHEDULED", -120)], NOW, TODAY).tier == "WATCHING"   # too far ahead
     assert compute([sig("RFP_ISSUED", -5)], NOW, TODAY).tier == "WATCHING"           # other types: no future dates
+
+
+def test_config_deploying_qualifiers_intact():
+    from radar.settings import readiness_config
+    dep = readiness_config()["tiers"][0]
+    for t in ("SEARCH_OPENED", "SEARCH_SCHEDULED", "RFP_ISSUED", "FINALISTS_NAMED", "MANDATE_AWARDED"):
+        assert dep["qualifiers"][t] == ["manager"], t
+    assert all(isinstance(v, int) for v in dep.get("future_days", {}).values())

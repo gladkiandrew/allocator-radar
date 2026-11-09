@@ -25,12 +25,12 @@ tiers:
     qualifiers:
       SEARCH_OPENED: [manager]
       SEARCH_SCHEDULED: [manager]
-    # A posted agenda for an upcoming meeting shows a search that is open now (owner, 2026-11-09).
-    future_days:
-      SEARCH_SCHEDULED: 90
       RFP_ISSUED: [manager]
       FINALISTS_NAMED: [manager]
       MANDATE_AWARDED: [manager]
+    # A posted agenda for an upcoming meeting shows a search that is open now (owner, 2026-11-09).
+    future_days:
+      SEARCH_SCHEDULED: 90
 
   - tier: PREPARING
     window_days: 180
