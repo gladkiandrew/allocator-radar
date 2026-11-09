@@ -246,3 +246,17 @@ are the irreversible ones, which went to the repo owner.
   unchanged.
 - **D-B04 Operator note.** In zsh, an unquoted `$VAR` is not word-split. `radar pipeline --only-file`
   reads ids from a file, and one argument holding many ids is split.
+- **D-B05 Gap categories.** Every gap plan gets one primary cause, in fix order: MANUAL_SOURCE,
+  PROCESSING, NO_LISTING_PAGES, THIN, NOT_POSTING_RECENT, CONSULTANT_UNIDENTIFIED. Each category
+  has a next action. The causes are shown on `/gaps` and printed by `radar gaps`.
+- **D-B06 Resource Centers files are never ingested, even when a person downloads them.** Its
+  robots.txt disallows Anthropic's agents, and we honor that because the text goes to Claude
+  (D-A05). For those plans, a person enters facts by hand, or a Chapter 119 response from the city is
+  ingested instead.
+- **D-B07 Consultant scan (`consultant-scan-1`).** A separately versioned extraction pass for gap
+  plans missing a consultant. It reads up to 4 likely documents per plan (report-type documents
+  first) and up to 6 pages per document that name providers. Facts need a quote containing the firm
+  name, as always.
+- **D-B08 Deep discovery.** `--deep` renders every page in the browser and follows a second level of
+  links, for NO_LISTING_PAGES and THIN plans. It is GET-only and checks robots.txt like normal
+  discovery.

@@ -340,10 +340,18 @@ def main(argv: list[str] | None = None) -> int:
                  "report, IPS, actuarial valuation and 112.664 disclosure. Drop the files in the folder shown, then run",
                  "`uv run radar sba` for FL SBA or the Records requests page -> Ingest manual inbox for everything else.", ""]
         for r in sorted(rows, key=lambda r: r["display_name"]):
+            why = r.get("access_reason") or "blocked"
             lines += [f"- **{r['display_name']}** ({r['jurisdiction_city']})", f"  - page: {r['home_url']}",
-                      f"  - why manual: {r.get('access_reason') or 'blocked'}",
-                      f"  - drop files in: `inbox/manual/{r['allocator_id']}/`"]
-            (Path("inbox/manual") / r["allocator_id"]).mkdir(parents=True, exist_ok=True)
+                      f"  - why manual: {why}"]
+            if "resourcecenters" in why.lower():
+                # Resource Centers' robots.txt disallows Anthropic's agents; we honor that (D-A05), so its documents are
+                # never fed to the extractor, even when a person downloads them.
+                lines += ["  - **do not drop Resource Centers files in the inbox** (its robots.txt disallows AI agents). "
+                          "Use Manual fact entry for specific facts, or file a Chapter 119 request with the city and ingest "
+                          "the city's response on the Records requests page."]
+            else:
+                lines += [f"  - drop files in: `inbox/manual/{r['allocator_id']}/`"]
+                (Path("inbox/manual") / r["allocator_id"]).mkdir(parents=True, exist_ok=True)
         Path("data/manual_worklist.md").write_text("\n".join(lines) + "\n")
         print(f"wrote data/manual_worklist.md ({len(rows)} plans)")
     elif args.cmd == "index":
