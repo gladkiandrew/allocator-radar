@@ -229,3 +229,20 @@ are the irreversible ones, which went to the repo owner.
 - **D-A52 Phase A locked 2026-11-06.** Final state: 13 plans on the main table (1 DEPLOYING, 1
   PREPARING, 11 WATCHING) and 17 on gaps; 193 signals auto-approved and 27 pending for the owner.
   Phase B (DMS statewide list, 112.664 crawl, the parked plans) is not started.
+
+## Phase B (started 2026-11-09)
+
+- **D-B01 Plan discovery without the DMS list.** The statewide DMS plan list is on an Akamai-fronted
+  host (D-A27) and still needs a manual download. Meanwhile four read-only research passes (one per
+  region) located official plan pages. Their results are curated before import: lone PDFs,
+  city-wide AgendaCenter roots with no pension section, staging hosts, frozen archives and NOT FOUND
+  entries are skipped. They are imported with `radar import-seed`. The importer only adds new hosts
+  to the allowlist. Blocked plans, and plans whose documents sit only on resourcecenters.com, enter
+  as MANUAL so the gap stays visible.
+- **D-B02 City-wide listings.** A document on a city-wide AgendaCenter or Archive page is taken only
+  if its section heading or link names a pension or retirement board.
+- **D-B03 The gaps page shows readiness.** A plan below the main-table bar can still carry a DEPLOYING
+  or PREPARING signal. The gaps page shows that signal so the plan stays visible. The bar itself is
+  unchanged.
+- **D-B04 Operator note.** In zsh, an unquoted `$VAR` is not word-split. `radar pipeline --only-file`
+  reads ids from a file, and one argument holding many ids is split.

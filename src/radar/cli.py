@@ -38,7 +38,8 @@ def main(argv: list[str] | None = None) -> int:
     ss.add_argument("--gaps", action="store_true", help="scan gaps-page plans that have documents (default: main table)")
     ss.add_argument("--only", nargs="*", help="scan these plan ids (any bar status)")
     pp = sub.add_parser("pipeline", help="discover -> registry policy -> crawl -> extract -> search scan -> auto-approve -> index")
-    pp.add_argument("--only", nargs="+", required=True)
+    pp.add_argument("--only", nargs="+")
+    pp.add_argument("--only-file", nargs="+", help="files of whitespace-separated plan ids (avoids shell word-splitting)")
     pp.add_argument("--workers", type=int, default=5)
     fp = sub.add_parser("reextract", help="force re-extraction of one document, all pages")
     fp.add_argument("sha_prefix"); fp.add_argument("--max-pages", type=int, default=64)
@@ -255,7 +256,13 @@ def main(argv: list[str] | None = None) -> int:
             list(ex.map(one, todo))
     elif args.cmd == "pipeline":
         import subprocess
-        ids = args.only
+        from pathlib import Path
+        ids = list(args.only or [])
+        for f in args.only_file or []:
+            ids += Path(f).read_text().split()
+        ids = [i for i in ids for i in i.split()]  # a single argument holding many ids is split too
+        if not ids:
+            raise SystemExit("pipeline: no plan ids")
         steps = [["discover", "--only", *ids], ["approve-pending"], ["crawl", "--only", *ids],
                  ["extract", "--only", *ids, "--workers", str(args.workers)], ["scan-searches", "--only", *ids],
                  ["auto-approve"], ["index"]]
