@@ -36,6 +36,10 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("auto-approve", help="run the tiered auto-approval rules over pending signals")
     ss = sub.add_parser("scan-searches", help="search-focused extraction over the last 12 months of agendas/minutes/RFPs")
     ss.add_argument("--gaps", action="store_true", help="scan gaps-page plans that have documents (default: main table)")
+    ss.add_argument("--only", nargs="*", help="scan these plan ids (any bar status)")
+    pp = sub.add_parser("pipeline", help="discover -> registry policy -> crawl -> extract -> search scan -> auto-approve -> index")
+    pp.add_argument("--only", nargs="+", required=True)
+    pp.add_argument("--workers", type=int, default=5)
     fp = sub.add_parser("reextract", help="force re-extraction of one document, all pages")
     fp.add_argument("sha_prefix"); fp.add_argument("--max-pages", type=int, default=64)
     sub.add_parser("index", help="add newly parsed (scrubbed) pages to the LanceDB search index")
@@ -228,8 +232,11 @@ def main(argv: list[str] | None = None) -> int:
         since = date.today() - timedelta(days=365)
         with db.connect() as con:
             rows = queries.allocator_table(con)
-            main = [a for a in rows if (bool(a["bar_reasons"]) and a["n_docs"] > 0) == args.gaps
-                    and (args.gaps or not a["bar_reasons"])]
+            if args.only:
+                main = [a for a in rows if a["allocator_id"] in args.only]
+            else:
+                main = [a for a in rows if (bool(a["bar_reasons"]) and a["n_docs"] > 0) == args.gaps
+                        and (args.gaps or not a["bar_reasons"])]
             todo = []
             for a in main:
                 for h in coverage.held_documents(con, a["allocator_id"]):
@@ -244,6 +251,15 @@ def main(argv: list[str] | None = None) -> int:
 
         with ThreadPoolExecutor(max_workers=5) as ex:
             list(ex.map(one, todo))
+    elif args.cmd == "pipeline":
+        import subprocess
+        ids = args.only
+        steps = [["discover", "--only", *ids], ["approve-pending"], ["crawl", "--only", *ids],
+                 ["extract", "--only", *ids, "--workers", str(args.workers)], ["scan-searches", "--only", *ids],
+                 ["auto-approve"], ["index"]]
+        for st in steps:
+            print(f"== radar {st[0]}", flush=True)
+            subprocess.run([sys.executable, "-m", "radar.cli", *st], check=False)
     elif args.cmd == "index":
         from radar import db, search
         db.init_db()
