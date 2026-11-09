@@ -124,6 +124,43 @@ verdicts:
   - {id: PB-www-ci-punta-gorda-fl-us, name: "Punta Gorda (City of Punta Gorda Pension Boards (Fire, Police, General))", hosts: [www.ci.punta-gorda.fl.us], verdict: MANUAL, reason: "403 to the research pass"}
   - {id: PB-www-northcollierfire-com, name: "North Collier Fire District (North Collier Fire Control and Rescue District Fire", hosts: [www.northcollierfire.com], verdict: CRAWL}
 
+  # ---- Phase B import leftovers_n_se ----
+  - {id: PB-www-palatka-fl-gov, name: "Palatka (City of Palatka General Employees' Retirement Plan)", hosts: [www.palatka-fl.gov], verdict: CRAWL}
+  - {id: PB-www-cityofcrestview-org, name: "Crestview (Crestview Police Officers and Firefighters Retirement Plan)", hosts: [www.cityofcrestview.org], verdict: CRAWL}
+  - {id: PB-www-miltonfl-org, name: "Milton (City of Milton Police Officers' Pension Trust Fund)", hosts: [www.miltonfl.org], verdict: CRAWL}
+  - {id: PB-www-cityoflynnhaven-gov, name: "Lynn Haven (Lynn Haven General Employees' Retirement System)", hosts: [www.cityoflynnhaven.gov], verdict: CRAWL}
+  - {id: PB-www-niceville-org, name: "Niceville (City of Niceville pension plans)", hosts: [www.niceville.org], verdict: MANUAL, reason: "Cloudflare 525 to the research pass"}
+  - {id: PB-jea-com, name: "Jacksonville (St. Johns River Power Park System Employees' Retirement Plan (JEA)", hosts: [jea.com], verdict: MANUAL, reason: "jea.com served a CAPTCHA; never evaded"}
+  - {id: PB-www-daniabeachfl-gov, name: "Dania Beach (City of Dania Beach General Employees' Pension Plan)", hosts: [www.daniabeachfl.gov], verdict: CRAWL}
+  - {id: PB-bayharborislands-fl-gov, name: "Bay Harbor Islands (Town of Bay Harbor Islands Employees Retirement System (Gene", hosts: [bayharborislands-fl.gov], verdict: CRAWL}
+  - {id: PB-goldenbeach-us, name: "Golden Beach (Town of Golden Beach Employees' Pension Plan)", hosts: [goldenbeach.us], verdict: CRAWL}
+  - {id: PB-palmtran-sba-inc-com, name: "West Palm Beach (Palm Tran, Inc. ATU Local 1577 Pension Plan)", hosts: [palmtran.sba-inc.com], verdict: CRAWL}
+
+  # ---- Phase B import leftovers_c_sw ----
+  - {id: PB-www-altamonte-org, name: "Altamonte Springs (Altamonte Springs Police Officers' Pension Plan)", hosts: [www.altamonte.org], verdict: CRAWL}
+  - {id: PB-ocoee-org, name: "Ocoee (Ocoee Municipal Police Officers' and Firefighters' Retirement Trust Fund)", hosts: [ocoee.org], verdict: CRAWL}
+  - {id: PB-www-cityofoviedo-net, name: "Oviedo (Oviedo Firefighters' Pension Trust Fund)", hosts: [www.cityofoviedo.net], verdict: MANUAL, reason: "agendas and minutes only on PrimeGov (robots Disallow /)"}
+  - {id: PB-longwoodfl-org, name: "Longwood (Longwood Police Officers' and Firefighters' Pension Trust Fund)", hosts: [longwoodfl.org], verdict: CRAWL}
+  - {id: PB-itsmymaitland-com, name: "Maitland (Maitland Police Officers' and Firefighters' Pension Trust Fund)", hosts: [itsmymaitland.com], verdict: CRAWL}
+  - {id: PB-www-apopka-gov, name: "Apopka (Apopka Police Officers' Retirement Trust Fund)", hosts: [www.apopka.gov], verdict: CRAWL}
+  - {id: PB-stcloudfl-gov, name: "St. Cloud (St. Cloud Police Officers' and Firefighters' Retirement System)", hosts: [stcloudfl.gov], verdict: CRAWL}
+  - {id: PB-hainescity-com, name: "Haines City (Haines City Municipal Police Officers' Retirement Trust Fund)", hosts: [hainescity.com], verdict: CRAWL}
+  - {id: PB-www-cityofbartow-net, name: "Bartow (Bartow General Employees' Pension Plan)", hosts: [www.cityofbartow.net], verdict: CRAWL}
+  - {id: PB-clermontfl-gov, name: "Clermont (Clermont Police Officers' Pension Plan)", hosts: [clermontfl.gov], verdict: CRAWL}
+  - {id: PB-www-cityofmountdora-com, name: "Mount Dora (Mount Dora Police, Firefighters and General Employees Pension Boards", hosts: [www.cityofmountdora.com], verdict: MANUAL, reason: "connection reset to the research pass"}
+  - {id: PB-www-cityofedgewater-org, name: "Edgewater (Edgewater Police Retirement Plan)", hosts: [www.cityofedgewater.org], verdict: CRAWL}
+  - {id: PB-www-cityofnsb-com, name: "New Smyrna Beach (New Smyrna Beach Firefighters' Retirement System)", hosts: [www.cityofnsb.com], verdict: CRAWL}
+  - {id: PB-www-hollyhillfl-org, name: "Holly Hill (Holly Hill Police and Fire Pension Plans)", hosts: [www.hollyhillfl.org], verdict: MANUAL, reason: "403 to the research pass"}
+  - {id: PB-www-deltonafl-gov, name: "Deltona (Deltona Firefighters' Pension Plan)", hosts: [www.deltonafl.gov], verdict: CRAWL}
+  - {id: PB-www-cocoafl-gov, name: "Cocoa (Cocoa Firefighters' Retirement Plan)", hosts: [www.cocoafl.gov], verdict: CRAWL}
+  - {id: PB-www-largo-com, name: "Largo (Largo Police Officers' and Firefighters' Retirement Plan)", hosts: [www.largo.com], verdict: CRAWL}
+  - {id: PB-www-venicegov-com, name: "Venice (Venice Police, Fire and General Employees Pension Plans)", hosts: [www.venicegov.com], verdict: MANUAL, reason: "403 to the research pass"}
+  - {id: PB-mysanibel-legistar-com, name: "Sanibel (Sanibel General Employees Pension Plan)", hosts: [mysanibel.legistar.com], verdict: CRAWL}
+  - {id: PB-www-bonitafire-org, name: "Bonita Springs Fire District (Bonita Springs Fire Control and Rescue District Fi", hosts: [www.bonitafire.org], verdict: CRAWL}
+  - {id: PB-www-mysebring-com, name: "Sebring (Sebring Police Retirement Trust Fund)", hosts: [www.mysebring.com], verdict: CRAWL}
+  - {id: PB-www-avonpark-city, name: "Avon Park (Avon Park Police and Fire Pension Plans)", hosts: [www.avonpark.city], verdict: MANUAL, reason: "403 to the research pass"}
+  - {id: PB-www-leehealth-org, name: "Lee Health (Lee Health (Lee Memorial Health System) Pension Plan)", hosts: [www.leehealth.org], verdict: MANUAL, reason: "403 to the research pass"}
+
   # ---- Blocked to non-browser clients (§2.4) -> MANUAL ----
   - {id: SF-BLOCKED, name: "Akamai/Cloudflare-fronted city sites", hosts: [www.plantation.org, www.delraybeachfl.gov, www.sunrisefl.gov, www.wpb.org, www.fortlauderdale.gov, lakeworthbeachfl.gov], verdict: MANUAL, reason: "blocked to non-browser clients; never evaded"}
   - {id: SF-TRC, name: "The Resource Centers (TPA)", hosts: [www.resourcecenters.com, resourcecenters.com], verdict: DROP, reason: "Cloudflare managed challenge; robots Disallow: / to ClaudeBot and anthropic-ai"}
