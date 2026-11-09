@@ -1,58 +1,116 @@
 {% extends "base.html" %}
+{% macro cite(e) %}<a class="cite" href="{{ cite_href(e) }}" target="_blank" rel="noopener" title="{{ e.quote or '' }}">{{ (e.doc_title or 'source')|truncate(26) }}{% if e.page %} · p.{{ e.page }}{% endif %}</a>{% endmacro %}
 {% block body %}
-<h1>Florida allocators</h1>
-<p class="sub">Readiness comes from approved signals in public documents. Each row shows the signal, its date and its source.
-  <a href="/how">How tiers are set</a>.</p>
 
-<form class="filters" method="get" action="/" style="align-items:center">
-  <label style="margin:0;color:var(--fg)">Strategy
-    <select name="strategy" onchange="this.form.submit()" style="width:auto;margin-left:4px">
-      <option value="all" {{ 'selected' if strategy == 'all' }}>All strategies</option>
-      <option value="hf" {{ 'selected' if strategy == 'hf' }}>Hedge fund / diversifying / managed futures / multi-strat / quant / absolute return</option>
-      {% for b in buckets %}<option value="{{ b }}" {{ 'selected' if strategy == b }}>{{ b|replace('_',' ')|title }}</option>{% endfor %}
-    </select></label>
-  {% if tier %}<input type="hidden" name="tier" value="{{ tier }}">{% endif %}
-</form>
-<div class="filters">
-  <a href="/?strategy={{ strategy }}" class="{{ 'on' if not tier }}">All {{ counts.total }}</a>
-  {% for t in tiers %}<a href="/?tier={{ t }}&strategy={{ strategy }}" class="{{ 'on' if tier == t }}">{{ t|title }} {{ counts[t] }}</a>{% endfor %}
-  <a href="/gaps">Coverage gaps {{ n_gaps }}</a>
-  <a href="/export.csv" class="hide-sm">Export CSV (approved only)</a>
-</div>
+<section class="hero rise" aria-labelledby="hero-title">
+  <div class="sweep" aria-hidden="true"></div>
+  <p class="eyebrow">{{ scope.label }} · public pension plans</p>
+  <h1 id="hero-title">Which allocators are getting ready to deploy capital, and the page that proves it.</h1>
+  <p>Allocator Radar reads the agendas, minutes and investment reports that {{ scope.label }} pension boards publish.
+    It gives each plan one readiness tier. Every tier points to a dated signal and the exact page it came from.</p>
+  <div class="byline">
+    <span class="chip"><span class="dot" aria-hidden="true"></span>Public records only · every claim cited</span>
+    <span>Built in 3 days by <a href="/about">Andrew Gladki</a>, AI engineer · <a href="/about">About this project →</a></span>
+  </div>
+</section>
 
-{% if not rows %}
-<div class="card">{% if n_gaps %}No plan meets the main-table bar yet. See <a href="/gaps">Coverage gaps</a>.{% else %}No allocators yet. The registry has not been loaded and approved. Go to <a href="/registry">Registry</a>.{% endif %}</div>
-{% else %}
-<div class="scroll">
-<table class="stack">
-  <thead><tr>
-    <th>Allocator</th><th>Readiness</th><th>Why (latest approved signal)</th><th class="hide-sm">Consultant</th><th class="hide-sm">Coverage</th>
-  </tr></thead>
-  <tbody>
-  {% for a in rows %}{% set r = a.readiness %}
-  <tr>
-    <td><a href="/a/{{ a.allocator_id }}"><strong>{{ a.display_name }}</strong></a><br>
-      <span class="muted">{{ a.jurisdiction_city or '' }}{% if a.access == 'MANUAL' %} · manual source{% endif %}</span></td>
-    <td><span class="tier {{ r.tier }}">{{ r.tier }}</span>
-      {% if r.coverage_stale and r.tier not in ('STALE',) %}<br><span class="muted" style="font-size:12px">coverage stale</span>{% endif %}</td>
-    <td class="why">
-      {% if r.reasons %}{% set s = r.reasons[0] %}
-        <span class="date">{{ s.event_date }}{% if s.date_basis %} <span title="date basis">({{ s.date_basis|replace('_',' ') }})</span>{% endif %}</span>{{ s.summary }}
-        {% for e in s.evidence[:1] %} <a class="cite" href="{{ cite_href(e) }}" target="_blank" rel="noopener">[{{ (e.doc_title or 'source')|truncate(28) }}{% if e.page %} p.{{ e.page }}{% endif %}]</a>{% endfor %}
-        <br><span class="muted mono" style="font-size:11.5px">{% if s.hf_relevant %}<span class="tier PREPARING" style="font-size:10.5px">HF</span> {% endif %}{{ (s.bucket or 'OTHER')|replace('_',' ')|lower }}{% if not s.bucket_label %} (inferred){% endif %}
-          · {{ 'auto-approved' if s.review_status == 'auto_approved' else 'approved by you' }}
-          · next meeting {{ a.next_meeting or 'not published' }}</span>
-        {% if r.reasons|length > 1 %}<br><a class="muted" href="/a/{{ a.allocator_id }}#signals">+{{ r.reasons|length - 1 }} more qualifying</a>{% endif %}
-      {% elif r.tier == 'STALE' %}<span class="muted">{{ 'No documents fetched yet.' if not a.last_fetched else 'No new document in ' ~ stale_days ~ ' days.' }}</span>
-      {% else %}<span class="muted">No qualifying approved signal in window.</span>{% endif %}
-      {% if a.pending %}<br><span class="pending">{{ a.pending|length }} pending review</span>{% endif %}
-    </td>
-    <td class="hide-sm">{% if a.consultant %}{{ a.consultant.consultant }}<br><span class="muted mono">as of {{ a.consultant.as_of }}</span>{% else %}<span class="muted">—</span>{% endif %}</td>
-    <td class="hide-sm"><span class="mono">{{ a.coverage_pct }}%</span> <span class="muted mono">· {{ a.n_docs }} docs</span><br><span class="muted mono">newest {{ a.newest_doc_date or '—' }}</span></td>
-  </tr>
+<section class="kpis rise d1" aria-label="Key figures">
+  <div class="kpi"><div class="v">{{ kpi.plans }}</div><div class="l">{{ scope.label }} plans tracked</div></div>
+  <a class="kpi" href="#allocators"><div class="v">{{ kpi.main }}</div><div class="l">Meet the coverage bar</div></a>
+  <a class="kpi deploy" href="/?tier=DEPLOYING#allocators"><div class="v">{{ counts.DEPLOYING if strategy == 'all' else '—' }}</div><div class="l">Deploying now</div></a>
+  <a class="kpi prep" href="/?tier=PREPARING#allocators"><div class="v">{{ counts.PREPARING if strategy == 'all' else '—' }}</div><div class="l">Preparing</div></a>
+  <div class="kpi"><div class="v">{{ '{:,}'.format(kpi.documents) }}</div><div class="l">Public documents read</div></div>
+  <div class="kpi"><div class="v">{{ '{:,}'.format(kpi.signals) }}</div><div class="l">Cited signals</div></div>
+</section>
+
+{% if spotlight %}
+<section class="rise d2" aria-labelledby="spot-title">
+  <div class="section-title"><h2 id="spot-title">Deploying and preparing now</h2>
+    <span class="muted">Ranked by tier, then by how recent the signal is. Click a citation to open the source page.</span></div>
+  <div class="spot">
+  {% for a in spotlight %}{% set r = a.readiness %}{% set s = r.reasons[0] %}
+    <article class="spot-card {{ r.tier }}">
+      <div class="head">
+        <div><a class="name" href="/a/{{ a.allocator_id }}">{{ a.display_name }}</a>
+          <div class="where">{{ a.jurisdiction_city }}{% if a.county and a.county != 'Statewide' %} · {{ a.county }} County{% elif a.county %} · Statewide{% endif %}</div></div>
+        <span class="tier {{ r.tier }}">{{ r.tier }}</span>
+      </div>
+      <div class="what"><span class="mono" style="color:var(--fg)">{{ s.event_date }}</span> · {{ s.summary }}
+        {% for e in (s.evidence|uniq_cites)[:1] %}{{ cite(e) }}{% endfor %}</div>
+      <div class="meta">
+        <span>Strategy <b>{{ (s.bucket or 'other')|replace('_',' ')|lower }}</b>{% if not s.bucket_label %} <span class="faint">(inferred)</span>{% endif %}</span>
+        {% if a.consultant %}<span>Consultant <b>{{ a.consultant.consultant|truncate(34) }}</b></span>{% endif %}
+        <span>Next meeting <b>{{ a.next_meeting or 'not published' }}</b></span>
+        {% if r.reasons|length > 1 %}<a href="/a/{{ a.allocator_id }}#signals">+{{ r.reasons|length - 1 }} more</a>{% endif %}
+      </div>
+    </article>
   {% endfor %}
-  </tbody>
-</table>
-</div>
+  </div>
+</section>
 {% endif %}
+
+<section id="allocators" class="rise d3" aria-labelledby="all-title">
+  <div class="section-title"><h2 id="all-title">All allocators on the main table</h2>
+    <span class="muted">Plans with enough coverage to read. {{ n_gaps }} more are on <a href="/gaps">Coverage gaps</a>.</span></div>
+
+  <div class="toolbar">
+    <div class="filters" role="group" aria-label="Filter by readiness">
+      <a href="/?strategy={{ strategy }}#allocators" class="{{ 'on' if not tier }}">All <span class="n">{{ counts.total }}</span></a>
+      {% for t in tiers %}<a href="/?tier={{ t }}&strategy={{ strategy }}#allocators" class="{{ 'on' if tier == t }}">{{ t|title }} <span class="n">{{ counts[t] }}</span></a>{% endfor %}
+    </div>
+    <form method="get" action="/#allocators">
+      <label class="select-wrap" for="strategy">Strategy
+        <select id="strategy" name="strategy" onchange="this.form.submit()">
+          <option value="all" {{ 'selected' if strategy == 'all' }}>All strategies</option>
+          <option value="hf" {{ 'selected' if strategy == 'hf' }}>Hedge fund &amp; diversifying</option>
+          {% for b in buckets %}<option value="{{ b }}" {{ 'selected' if strategy == b }}>{{ b|replace('_',' ')|title }}</option>{% endfor %}
+        </select></label>
+      {% if tier %}<input type="hidden" name="tier" value="{{ tier }}">{% endif %}
+      <noscript><button type="submit">Apply</button></noscript>
+    </form>
+  </div>
+  {% if strategy == 'hf' %}<p class="muted small" style="margin:-4px 0 10px">Hedge fund preset: hedge fund, diversifying, managed futures, multi-strategy, quant and absolute return signals.</p>{% endif %}
+
+  {% if not rows %}
+  <div class="card empty">{% if n_gaps %}No plan matches this view. Try <a href="/">all strategies</a>, or see <a href="/gaps">Coverage gaps</a>.{% else %}No allocators yet. The registry has not been loaded and approved. Go to <a href="/registry">Registry</a>.{% endif %}</div>
+  {% else %}
+  <div class="table-card"><div class="scroll">
+  <table class="stack">
+    <thead><tr>
+      <th scope="col">Allocator</th><th scope="col">Readiness</th><th scope="col">Why: latest qualifying signal</th><th scope="col" class="hide-sm">Consultant</th><th scope="col" class="hide-sm">Coverage</th>
+    </tr></thead>
+    <tbody>
+    {% for a in rows %}{% set r = a.readiness %}
+    <tr>
+      <td class="plan"><a class="pname" href="/a/{{ a.allocator_id }}">{{ a.display_name }}</a>
+        <div class="where">{{ a.jurisdiction_city or '' }}{% if a.county and a.county != 'Statewide' %} · {{ a.county }}{% elif a.county %} · Statewide{% endif %}{% if a.access == 'MANUAL' %} · manual source{% endif %}</div></td>
+      <td><span class="tier {{ r.tier }}">{{ r.tier }}</span>
+        {% if r.coverage_stale and r.tier not in ('STALE',) %}<div class="faint small" style="margin-top:6px">coverage stale</div>{% endif %}</td>
+      <td class="why">
+        {% if r.reasons %}{% set s = r.reasons[0] %}
+          <span class="date">{{ s.event_date }}</span>{{ s.summary }}
+          {% for e in (s.evidence|uniq_cites)[:1] %}{{ cite(e) }}{% endfor %}
+          <div class="meta">
+            {% if s.hf_relevant %}<span class="tag hf">HF</span>{% endif %}
+            <span>{{ (s.bucket or 'other')|replace('_',' ')|lower }}{% if not s.bucket_label %} <span class="faint">(inferred)</span>{% endif %}</span>
+            {% if s.date_basis %}<span class="basis">dated by {{ s.date_basis|replace('_',' ') }}</span>{% endif %}
+            <span>{{ 'auto-approved' if s.review_status == 'auto_approved' else 'approved by a person' }}</span>
+            <span>next meeting {{ a.next_meeting or 'not published' }}</span>
+            {% if r.reasons|length > 1 %}<a href="/a/{{ a.allocator_id }}#signals">+{{ r.reasons|length - 1 }} more qualifying</a>{% endif %}
+          </div>
+        {% elif r.tier == 'STALE' %}<span class="muted">{{ 'No documents fetched yet.' if not a.last_fetched else 'No new document in ' ~ stale_days ~ ' days.' }}</span>
+        {% else %}<span class="muted">No qualifying signal in the window. Coverage is current.</span>{% endif %}
+        {% if a.pending %}<div style="margin-top:6px"><span class="pending">{{ a.pending|length }} pending review</span></div>{% endif %}
+      </td>
+      <td class="hide-sm">{% if a.consultant %}{{ a.consultant.consultant }}<div class="faint mono" style="font-size:11px;margin-top:3px">as of {{ a.consultant.as_of }}</div>{% else %}<span class="faint">—</span>{% endif %}</td>
+      <td class="hide-sm cov"><span class="bar" aria-hidden="true"><i style="width:{{ [a.coverage_pct, 100]|min }}%"></i></span><span class="mono">{{ a.coverage_pct }}%</span>
+        <div class="faint mono" style="font-size:11px;margin-top:4px">{{ a.n_docs }} docs · newest {{ a.newest_doc_date or '—' }}</div></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div></div>
+  <p class="muted small">Tiers come from fixed rules applied to approved signals. <a href="/how">How tiers are set →</a></p>
+  {% endif %}
+</section>
 {% endblock %}

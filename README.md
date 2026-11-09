@@ -1,7 +1,13 @@
 # Allocator Radar
 
-A prospecting list of Florida public pension plans. It shows which ones are getting ready to put
-money to work, and the dated public document behind each one.
+A prospecting list of South Florida public pension plans. It shows which ones are getting ready to
+put money to work, and the dated public document behind each one.
+
+> **Built in 3 days by Andrew Gladki, AI engineer.** I want to work on the institutional business
+> development team of a large financial institution. This project shows what I would bring to that
+> team: AI engineering, data analytics, an understanding of how institutional capital moves, and
+> the ability to take a complex, open-ended problem to an accurate, working solution quickly. The
+> app's **About** page tells the full story.
 
 The main screen is one table. Each row is a plan with a readiness tier: **DEPLOYING**,
 **PREPARING**, **WATCHING** or **STALE**. Next to the tier is the signal that set it, the date it
@@ -90,7 +96,6 @@ make test                              # unit + wall tests (make wall adds the s
 | Touchpoint | Where |
 |---|---|
 | Registry approval | **Registry**: approve the plan list and the pages to crawl |
-| Merge review | **Merge review**: ambiguous entity matches only |
 | Signal review | **Signal review**: approve, correct or reject each signal. See the review policy below |
 | Manual facts | **Manual fact**: URL + date + plan + fact, for sources the system never fetches |
 | Public-records requests | **Records requests**: track Chapter 119 requests a person files. Drop the responses in the request's folder and ingest them. The system never sends anything |
@@ -112,6 +117,14 @@ There is one adapter (`src/radar/llm/provider.py`). Model names live in config, 
 
 Only scrubbed public-document text is ever sent to a model.
 
+## Scope
+
+The app is set to **South Florida**: Miami-Dade, Broward, Palm Beach and Monroe counties, plus the
+Treasure Coast (St. Lucie and Indian River), plus the statewide Florida Retirement System. That is
+79 plans. The crawler and the database cover every Florida plan in the registry (251). To show all
+of them, set `region: florida` in `config/scope.yaml`. Scope only filters what the pages, the review
+queue and the export show.
+
 ## Deploy
 
 `docker compose up -d` runs the app (login required) and a nightly worker. Put it behind your own
@@ -121,7 +134,8 @@ store; the SQL is kept portable so it can move to Postgres.
 ## Status
 
 Phase A covers South Florida local plans, plus the State Board of Administration via the manual
-inbox. Phase B covers every Florida local plan. Phase C covers Florida endowments, foundations and
-hospitals, from IRS 990 data.
+inbox. Phase B has collected every Florida local plan into the registry (the app shows South
+Florida; see Scope). Phase C would add Florida endowments, foundations and hospitals, from IRS 990
+data.
 
 License: to be chosen before the repository is made public.

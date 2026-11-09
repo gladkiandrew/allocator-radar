@@ -1,6 +1,7 @@
 """Entity resolution for firm names as printed (consultants and managers). AGENDA §4.6, light v0.
 
-Ladder: normalized exact -> fuzzy score >= 0.95 auto-alias -> 0.80-0.95 merge queue (Touchpoint 2) -> new.
+Ladder: normalized exact -> fuzzy score >= 0.95 auto-alias -> otherwise kept as a separate name.
+There is no manual merge queue: anything below the auto-alias bar simply stays distinct (D-B11).
 Merges are alias edges, never destructive: the printed name is always kept on the row; only the
 display/grouping uses the canonical name. Hard negatives (e.g. "Millennium Management" vs
 "Millennium Partners") are protected by requiring the distinguishing tokens to match.
@@ -13,7 +14,6 @@ import unicodedata
 from difflib import SequenceMatcher
 
 from radar import db
-from radar.models import new_id
 
 SUFFIXES = r"\b(llc|l\.l\.c|lp|l\.p|ltd|inc|incorporated|corp|corporation|co|company|group|holdings|the)\b"
 GENERIC = {"capital", "management", "investment", "investments", "advisors", "advisers", "partners", "asset",
@@ -61,14 +61,12 @@ def _names(con, kind: str) -> list[str]:
 
 
 def run() -> dict:
-    stats = {"auto": 0, "queued": 0}
+    stats = {"auto": 0}
     with db.connect() as con:
         con.execute(DDL)
         for kind in ("consultant", "manager"):
             names = _names(con, kind)
             known = dict(con.execute("SELECT alias, canonical FROM entity_aliases WHERE kind = ?", [kind]).fetchall())
-            queued = {(l, r) for l, r in con.execute(
-                "SELECT left_name, right_name FROM merge_queue WHERE entity_kind = ?", [kind]).fetchall()}
             canon: list[str] = sorted({known.get(n, n) for n in names}, key=len)
             for n in names:
                 if n in known:
@@ -84,28 +82,7 @@ def run() -> dict:
                     con.execute("INSERT INTO entity_aliases VALUES (?, ?, ?, 'auto', ?, 'resolver', now()) ON CONFLICT DO NOTHING",
                                 [kind, n, known.get(best, best), best_s])
                     stats["auto"] += 1
-                elif best and best_s >= 0.80 and (n, best) not in queued and (best, n) not in queued:
-                    con.execute("INSERT INTO merge_queue VALUES (?, ?, ?, ?, ?, NULL, 'open', NULL, NULL)",
-                                [new_id(), kind, n, best, best_s])
-                    stats["queued"] += 1
     return stats
-
-
-def decide(merge_id: str, same: bool, actor: str) -> None:
-    with db.connect() as con:
-        con.execute(DDL)
-        r = con.execute("SELECT entity_kind, left_name, right_name, score FROM merge_queue WHERE merge_id = ?", [merge_id]).fetchone()
-        if not r:
-            raise ValueError("unknown merge")
-        kind, left, right, s = r
-        if same:
-            canonical = min((left, right), key=len)
-            alias = right if canonical == left else left
-            con.execute("INSERT INTO entity_aliases VALUES (?, ?, ?, 'reviewed', ?, ?, now()) ON CONFLICT DO NOTHING",
-                        [kind, alias, canonical, s, actor])
-        con.execute("UPDATE merge_queue SET status = ?, decided_by = ?, decided_at = now() WHERE merge_id = ?",
-                    ["merged" if same else "distinct", actor, merge_id])
-        db.audit(con, actor, "merge_decision", merge_id, detail={"same": same, "left": left, "right": right})
 
 
 def canonical_map(con, kind: str) -> dict[str, str]:

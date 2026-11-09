@@ -1,18 +1,20 @@
 {% extends "base.html" %}
 {% block title %}Signal review · Allocator Radar{% endblock %}
 {% block body %}
-<h1>Signal review</h1>
-<p class="sub">A signal changes a readiness tier only once it is approved, either by you or by the auto-approval rules
-  (<a href="/how#auto">how auto-approval works</a>). It appears in an export only after <strong>you</strong> approve it. Check the quote against
-  the page (the link opens the PDF at that page). Correct the type, date or summary if needed, then approve or reject.</p>
-{% if policy_actor %}<div class="notice">Auto-approve is <strong>on</strong> (config/review_policy.yaml, set by the owner). Signals that pass every
-  validator are approved as <span class="mono">{{ policy_actor }}</span>. Use <em>Reject</em> or <em>Back to pending</em> below to undo any of them.</div>{% endif %}
-<div class="filters">
-  <a href="/review" class="{{ 'on' if status == 'new' }}">Pending {{ counts.new }}</a>
-  <a href="/review?status=auto_approved" class="{{ 'on' if status == 'auto_approved' }}">Auto-approved {{ counts.auto_approved }}</a>
-  <a href="/review?status=approved" class="{{ 'on' if status == 'approved' }}">Approved by you {{ counts.approved }}</a>
-  <a href="/review?status=rejected" class="{{ 'on' if status == 'rejected' }}">Rejected {{ counts.rejected }}</a>
+<p class="eyebrow">Signal review</p>
+<h1>Review queue</h1>
+<p class="sub">A signal changes a readiness tier only once it is approved, either by a person or by the auto-approval rules
+  (<a href="/how#auto">how auto-approval works</a>). It reaches an export only after a <strong>person</strong> approves it.
+  Check the quote against the page (the link opens the PDF at that page). Correct the type, date or summary if needed,
+  then approve or reject.</p>
+{% if policy_actor %}<div class="notice">Auto-approve is <strong>on</strong> (config/review_policy.yaml). Signals that pass every
+  validator are approved as <span class="mono">{{ policy_actor }}</span>. Use <em>Reject</em> or <em>Back to pending</em> to undo any of them.</div>{% endif %}
+<div class="filters" role="group" aria-label="Filter by status">
+  <a href="/review" class="{{ 'on' if status == 'new' }}">Pending <span class="n">{{ counts.new }}</span></a>
+  <a href="/review?status=auto_approved" class="{{ 'on' if status == 'auto_approved' }}">Auto-approved <span class="n">{{ counts.auto_approved }}</span></a>
+  <a href="/review?status=approved" class="{{ 'on' if status == 'approved' }}">Approved by a person <span class="n">{{ counts.approved }}</span></a>
+  <a href="/review?status=rejected" class="{{ 'on' if status == 'rejected' }}">Rejected <span class="n">{{ counts.rejected }}</span></a>
 </div>
-{% if not signals %}<div class="card muted">Nothing here.</div>{% endif %}
+{% if not signals %}<div class="card empty">Nothing here. The queue is clear.</div>{% endif %}
 {% for s in signals %}{% include "review_card.html" %}{% endfor %}
 {% endblock %}

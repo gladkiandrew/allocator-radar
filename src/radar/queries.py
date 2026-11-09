@@ -44,8 +44,12 @@ def signals_for(con, allocator_ids: list[str] | None = None,
     return sigs
 
 
-def allocator_table(con) -> list[dict]:
+def allocator_table(con, scoped: bool = True) -> list[dict]:
+    from radar import scope
+
     allocs = db.rows(con, "SELECT * FROM allocators ORDER BY display_name")
+    if scoped:
+        allocs = [a for a in allocs if scope.contains(a)]
     docs = {
         r["allocator_id"]: r
         for r in db.rows(
@@ -59,7 +63,7 @@ def allocator_table(con) -> list[dict]:
         r["allocator_id"]: r
         for r in db.rows(
             con,
-            """SELECT c.allocator_id, string_agg(DISTINCT c.consultant_name_as_disclosed, ', ') AS consultant, m.as_of
+            """SELECT c.allocator_id, string_agg(DISTINCT c.consultant_name_as_disclosed, ' | ') AS consultant, m.as_of
                FROM consultant_engagements c
                JOIN (SELECT allocator_id, max(as_of) AS as_of FROM consultant_engagements GROUP BY 1) m
                  ON m.allocator_id = c.allocator_id AND m.as_of = c.as_of
@@ -70,7 +74,7 @@ def allocator_table(con) -> list[dict]:
 
     cmap = canonical_map(con, "consultant")
     for c in consultants.values():  # several consultants on the same date (e.g. per asset class) are all shown
-        c["consultant"] = ", ".join(sorted({cmap.get(x.strip(), x.strip()) for x in c["consultant"].split(",")}))
+        c["consultant"] = ", ".join(sorted({cmap.get(x.strip(), x.strip()) for x in c["consultant"].split(" | ")}))
     sigs_by: dict[str, list[dict]] = defaultdict(list)
     for s in signals_for(con):
         sigs_by[s["allocator_id"]].append(s)
@@ -84,6 +88,7 @@ def allocator_table(con) -> list[dict]:
         fut = con.execute("SELECT min(as_of) FROM plan_facts WHERE allocator_id = ? AND fact_kind = 'NEXT_MEETING' "
                           "AND as_of >= current_date", [a["allocator_id"]]).fetchone()[0]
         a.update(
+            county=scope.county(a),
             next_meeting=fut,
             coverage_pct=coverage.checklist(con, a["allocator_id"])["pct"],
             bar_reasons=coverage.bar(con, a),
@@ -102,7 +107,12 @@ def allocator_table(con) -> list[dict]:
 
 
 def pending_count(con) -> int:
-    return con.execute("SELECT count(*) FROM signals WHERE review_status = 'new'").fetchone()[0]
+    from radar import scope
+
+    ids = scope.ids(con)
+    if ids is None:
+        return con.execute("SELECT count(*) FROM signals WHERE review_status = 'new'").fetchone()[0]
+    return sum(1 for (i,) in con.execute("SELECT allocator_id FROM signals WHERE review_status = 'new'").fetchall() if i in ids)
 
 
 def allocator_brief(con, allocator_id: str) -> dict | None:
@@ -110,6 +120,9 @@ def allocator_brief(con, allocator_id: str) -> dict | None:
     if not rs:
         return None
     a = rs[0]
+    from radar import scope
+
+    a["county"] = scope.county(a)
     a["pages"] = db.rows(con, "SELECT * FROM allocator_pages WHERE allocator_id = ? ORDER BY url", [allocator_id])
     a["documents"] = db.rows(
         con,

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Registry · Allocator Radar{% endblock %}
 {% block body %}
+<p class="eyebrow">Tools</p>
 <h1>Florida registry</h1>
 <p class="sub">The discovery agent built this list from AGENDA §2.4. Approve it once and the crawler can start. Nothing is
   crawled before approval. Untick any listing page you don't want crawled.</p>
@@ -24,7 +25,7 @@
 
 <form method="post" action="/registry/approve">
 <input type="hidden" name="version" value="{{ version }}">
-<div class="scroll">
+<div class="table-card"><div class="scroll">
 <table class="stack">
   <thead><tr><th>Allocator</th><th>Access</th><th>Listing pages to crawl (documents found)</th></tr></thead>
   <tbody>
@@ -49,7 +50,7 @@
   {% endfor %}
   </tbody>
 </table>
-</div>
+</div></div>
 
 {% if reg.manual_only_sponsors %}
 <h2>Sponsors blocked to automated clients (manual only)</h2>

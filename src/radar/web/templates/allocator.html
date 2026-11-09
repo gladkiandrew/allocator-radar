@@ -1,101 +1,132 @@
 {% extends "base.html" %}
 {% block title %}{{ a.display_name }} · Allocator Radar{% endblock %}
-{% macro cites(evs) %}{% for e in (evs|uniq_cites)[:2] %} <a class="cite" href="{{ cite_href(e) }}" target="_blank" rel="noopener" title="{{ e.quote }}">[{{ (e.doc_title or 'source')|truncate(30) }}{% if e.page %} p.{{ e.page }}{% endif %}]</a>{% endfor %}{% endmacro %}
-{% block body %}{% set r = a.readiness %}
-<p class="muted" style="margin:0"><a href="/">← All allocators</a></p>
-<h1>{{ a.display_name }}</h1>
-<p class="sub">{{ a.allocator_type|replace('_',' ')|title }} · {{ a.jurisdiction_city }}, {{ a.jurisdiction_state }} ·
-  <a href="{{ a.home_url }}" target="_blank" rel="noopener noreferrer">official site</a>
-  {% if a.access == 'MANUAL' %}· <span class="tier STALE">MANUAL SOURCE</span> <span class="muted">{{ a.access_reason }}</span>{% endif %}</p>
-
-{% set f = a.facts %}
+{% macro cites(evs) %}{% for e in (evs|uniq_cites)[:2] %}<a class="cite" href="{{ cite_href(e) }}" target="_blank" rel="noopener" title="{{ e.quote }}">{{ (e.doc_title or 'source')|truncate(24) }}{% if e.page %} · p.{{ e.page }}{% endif %}</a>{% endfor %}{% endmacro %}
 {% macro money(v) %}{% if v is not none %}${{ '{:,.0f}'.format(v) }}{% endif %}{% endmacro %}
-{% macro fact(x) %}{% if x %}{{ caller() }}{{ cites(x.evidence) }}{% else %}<span class="muted">not found in fetched documents</span>{% endif %}{% endmacro %}
-<div class="card">
-  <dl class="kv">
-    <dt>Readiness</dt><dd><span class="tier {{ r.tier }}">{{ r.tier }}</span> <span class="muted">{{ r.rule_meaning }}</span></dd>
-    <dt>Total assets</dt><dd>{% call fact(f.total_assets) %}{{ money(f.total_assets.value_num) }} <span class="muted mono">as of {{ f.total_assets.as_of }}</span>{% endcall %}</dd>
-    <dt>Consultant</dt><dd>{% if a.consultant_engagements %}{% set c = a.consultant_engagements[0] %}{{ c.consultant_name_as_disclosed }}
-        <span class="muted mono">as of {{ c.as_of }}</span>{{ cites(c.evidence) }}{% elif f.providers.INVESTMENT_CONSULTANT %}{% set c = f.providers.INVESTMENT_CONSULTANT %}{{ c.label }} <span class="muted mono">as of {{ c.as_of }}</span>{{ cites(c.evidence) }}{% else %}<span class="muted">not found in fetched documents</span>{% endif %}</dd>
-    <dt>Actuary</dt><dd>{% call fact(f.providers.ACTUARY) %}{{ f.providers.ACTUARY.label }} <span class="muted mono">as of {{ f.providers.ACTUARY.as_of }}</span>{% endcall %}</dd>
-    <dt>Custodian</dt><dd>{% call fact(f.providers.CUSTODIAN) %}{{ f.providers.CUSTODIAN.label }} <span class="muted mono">as of {{ f.providers.CUSTODIAN.as_of }}</span>{% endcall %}</dd>
-    <dt>Auditor</dt><dd>{% call fact(f.providers.AUDITOR) %}{{ f.providers.AUDITOR.label }} <span class="muted mono">as of {{ f.providers.AUDITOR.as_of }}</span>{% endcall %}</dd>
-    <dt>Assumed return</dt><dd>{% call fact(f.assumed_return) %}{{ '%g'|format(f.assumed_return.value_num) }}% <span class="muted mono">as of {{ f.assumed_return.as_of }}</span>{% endcall %}</dd>
-    <dt>Next meeting</dt><dd>{% call fact(f.next_meeting) %}<span class="mono">{{ f.next_meeting.as_of }}</span>{% endcall %}</dd>
-  </dl>
+{% block body %}{% set r = a.readiness %}{% set f = a.facts %}{% set reason_ids = r.reasons|map(attribute='signal_id')|list %}
+<p class="crumb"><a href="/">← All allocators</a></p>
+<div class="page-head">
+  <div>
+    {% set types = {'PUBLIC_PENSION_STATE': 'State pension plan', 'PUBLIC_PENSION_LOCAL': 'Local government pension plan', 'POLICE_FIRE': 'Police and fire pension plan'} %}
+    <p class="eyebrow">{{ types.get(a.allocator_type, a.allocator_type|replace('_',' ')|title) }}{% if a.county %} · {{ a.county }}{{ ' County' if a.county != 'Statewide' }}{% endif %}</p>
+    <h1>{{ a.display_name }}</h1>
+    <p class="sub" style="margin-bottom:12px">{{ a.jurisdiction_city }}, {{ a.jurisdiction_state }} ·
+      <a href="{{ a.home_url }}" target="_blank" rel="noopener noreferrer">Official site ↗</a>
+      {% if a.access == 'MANUAL' %} · <span class="tag bad">Manual source</span> <span class="muted">{{ a.access_reason }}</span>{% endif %}</p>
+  </div>
 </div>
 
-<h2 id="coverage">Coverage <span class="muted" style="font-weight:400">{{ a.coverage.pct }}% of what this plan publishes</span></h2>
-{% if a.bar_reasons %}<div class="notice">Not on the main table: {{ a.bar_reasons|join('; ') }}.</div>{% endif %}
-<div class="scroll"><table class="stack">
-  <thead><tr><th>Document</th><th>Status</th><th>Newest held</th></tr></thead><tbody>
-  {% for it in a.coverage['items'] %}
-  <tr><td>{{ it.label }}</td>
-    <td>{% if it.status == 'ok' %}<span class="tier WATCHING">✓ held</span>{% elif it.status == 'partial' %}<span class="tier PREPARING">partial</span>{% elif it.status == 'missing' %}<span class="tier STALE">missing</span>{% else %}<span class="muted">not published</span>{% endif %}
-      {% if it.detail %}<span class="muted mono" style="font-size:12px"> {{ it.detail }}</span>{% endif %}</td>
-    <td>{% if it.newest %}<a href="/doc/{{ it.newest.sha256 }}" target="_blank" rel="noopener">{{ it.newest.title|truncate(50) }}</a> <span class="muted mono">{{ it.newest.dated or '' }}</span>{% else %}<span class="muted">—</span>{% endif %}</td></tr>
-  {% endfor %}</tbody></table></div>
-<p class="muted" style="font-size:12px">"Not published" means not found on the plan's approved listing pages. "Missing" means listed there but not fetched yet.</p>
+<div class="readiness-banner {{ r.tier }}">
+  <span class="tier {{ r.tier }}">{{ r.tier }}</span>
+  <span class="txt">{{ r.rule_meaning }}{% if r.reasons %} Latest qualifying signal: <span class="mono">{{ r.reasons[0].event_date }}</span>.{% endif %}</span>
+  {% if r.reasons %}<a class="btn ghost" href="#signals">See the evidence ↓</a>{% endif %}
+</div>
+{% if a.bar_reasons %}<div class="notice">Not on the main table yet: {{ a.bar_reasons|join('; ') }}.</div>{% endif %}
 
+{% macro fact(label, x, big=False) %}<div class="fact"><div class="l">{{ label }}</div>
+  {% if x %}<div class="v{{ ' big' if big }}">{{ caller() }}</div><span class="as">as of {{ x.as_of }}</span><div style="margin-top:6px">{{ cites(x.evidence[:1]) }}</div>
+  {% else %}<div class="none">Not found in fetched documents</div>{% endif %}</div>{% endmacro %}
+<section class="facts" aria-label="At a glance">
+  {% call fact('Total assets', f.total_assets, True) %}{{ money(f.total_assets.value_num) }}{% endcall %}
+  <div class="fact"><div class="l">Investment consultant</div>
+    {% if a.consultant_engagements %}{% set c = a.consultant_engagements[0] %}<div class="v">{{ c.consultant_name_as_disclosed }}</div><span class="as">as of {{ c.as_of }}</span><div style="margin-top:6px">{{ cites(c.evidence[:1]) }}</div>
+    {% elif f.providers.INVESTMENT_CONSULTANT %}{% set c = f.providers.INVESTMENT_CONSULTANT %}<div class="v">{{ c.label }}</div><span class="as">as of {{ c.as_of }}</span><div style="margin-top:6px">{{ cites(c.evidence[:1]) }}</div>
+    {% else %}<div class="none">Not found in fetched documents</div>{% endif %}</div>
+  {% call fact('Assumed return', f.assumed_return, True) %}{{ '%g'|format(f.assumed_return.value_num) }}%{% endcall %}
+  {% call fact('Next meeting', f.next_meeting, True) %}<span class="num">{{ f.next_meeting.as_of }}</span>{% endcall %}
+  {% call fact('Actuary', f.providers.ACTUARY) %}{{ f.providers.ACTUARY.label }}{% endcall %}
+  {% call fact('Custodian', f.providers.CUSTODIAN) %}{{ f.providers.CUSTODIAN.label }}{% endcall %}
+  {% call fact('Auditor', f.providers.AUDITOR) %}{{ f.providers.AUDITOR.label }}{% endcall %}
+  <div class="fact"><div class="l">Coverage</div><div class="v big">{{ a.coverage.pct }}%</div><span class="as">of what this plan publishes</span>
+    <div style="margin-top:8px"><span class="bar" style="width:100%" aria-hidden="true"><i style="width:{{ [a.coverage.pct, 100]|min }}%"></i></span></div></div>
+</section>
+
+<nav class="jump" aria-label="On this page">
+  <a href="#signals">Signals</a><a href="#allocation">Allocation</a><a href="#managers">Managers</a><a href="#coverage">Coverage</a>
+  <a href="#officers">Officers</a><a href="#search">Search</a><a href="#documents">Documents</a>
+</nav>
+
+<h2 id="signals">Signal timeline <span class="count">{{ a.signals|length }}</span></h2>
+{% if not a.signals %}<div class="card empty">No signals yet.</div>{% else %}
+<div class="card">
+{% macro sig_item(s) %}{% set live = s.review_status in ('approved', 'auto_approved') %}
+  <li class="{{ 'off' if not live }} {% if live and s.signal_id in reason_ids %}{{ r.tier }}{% endif %}">
+    <div class="t-head">
+      <span class="t-date">{{ s.event_date }}</span>
+      <span class="t-type">{{ s.signal_type }}{% if s.qualifier %} · {{ s.qualifier }}{% endif %}</span>
+      {% if s.hf_relevant %}<span class="tag hf">HF</span>{% endif %}
+      {% if s.review_status == 'approved' %}<span class="tag ok">approved by a person</span>{% elif s.review_status == 'auto_approved' %}<span class="tag" title="{{ s.review_note }}">auto-approved</span>{% elif s.review_status == 'new' %}<span class="pending">pending review</span>{% else %}<span class="tag bad">rejected</span>{% endif %}
+      {% if s.origin == 'MANUAL' %}<span class="tag">manual entry</span>{% endif %}
+    </div>
+    <div class="t-sum">{{ s.summary }} {{ cites(s.evidence) }}</div>
+    {% for e in s.evidence[:1] %}<blockquote>{{ e.quote }}</blockquote>{% endfor %}
+  </li>{% endmacro %}
+<ol class="timeline">{% for s in a.signals[:20] %}{{ sig_item(s) }}{% endfor %}</ol>
+{% if a.signals|length > 20 %}<details><summary class="btn" style="margin:4px 0 0 30px">Show {{ a.signals|length - 20 }} earlier signals</summary>
+<ol class="timeline" style="margin-top:16px">{% for s in a.signals[20:] %}{{ sig_item(s) }}{% endfor %}</ol></details>{% endif %}
+</div>{% endif %}
+
+<div class="grid-2" style="align-items:start">
+<section>
 <h2 id="allocation">Target vs actual allocation</h2>
-{% if not f.alloc %}<p class="muted">Not found in fetched documents.</p>{% else %}
-<div class="scroll"><table class="stack">
-  <thead><tr><th>Asset class (as labeled)</th><th>Target{% if f.target_as_of %} <span class="muted mono">{{ f.target_as_of }}</span>{% endif %}</th><th>Range</th><th>Actual{% if f.actual_as_of %} <span class="muted mono">{{ f.actual_as_of }}</span>{% endif %}</th></tr></thead>
+{% if not f.alloc %}<div class="card empty">Not found in fetched documents.</div>{% else %}
+<div class="table-card"><div class="scroll"><table>
+  <thead><tr><th scope="col">Asset class (as labeled)</th><th scope="col">Target{% if f.target_as_of %} <span class="mono faint">{{ f.target_as_of }}</span>{% endif %}</th><th scope="col">Range</th><th scope="col">Actual{% if f.actual_as_of %} <span class="mono faint">{{ f.actual_as_of }}</span>{% endif %}</th></tr></thead>
   <tbody>{% for row in f.alloc %}
   <tr><td>{{ row.label }}</td>
-    <td class="mono">{% if row.target %}{{ '%g'|format(row.target.value_num) }}%{{ cites(row.target.evidence[:1]) }}{% else %}—{% endif %}</td>
+    <td class="mono">{% if row.target %}{{ '%g'|format(row.target.value_num) }}%{% else %}—{% endif %}</td>
     <td class="mono">{% if row.target and row.target.value_low is not none %}{{ '%g'|format(row.target.value_low) }}–{{ '%g'|format(row.target.value_high) }}%{% else %}—{% endif %}</td>
-    <td class="mono">{% if row.actual %}{{ '%g'|format(row.actual.value_num) }}%{{ cites(row.actual.evidence[:1]) }}{% else %}—{% endif %}</td></tr>
-  {% endfor %}</tbody></table></div>{% endif %}
+    <td class="mono">{% if row.actual %}{{ '%g'|format(row.actual.value_num) }}%{% else %}—{% endif %}</td></tr>
+  {% endfor %}</tbody></table></div></div>
+  {% set c1 = (f.alloc|selectattr('target')|first) %}{% if c1 %}<p class="muted small">Source: {{ cites(c1.target.evidence[:1]) }}</p>{% endif %}{% endif %}
+</section>
+<section>
+<h2 id="coverage">Coverage checklist <span class="count">{{ a.coverage.pct }}%</span></h2>
+<div class="table-card"><div class="scroll"><table>
+  <thead><tr><th scope="col">Document</th><th scope="col">Status</th><th scope="col" class="hide-sm">Newest held</th></tr></thead><tbody>
+  {% for it in a.coverage['items'] %}
+  <tr><td>{{ it.label }}{% if it.detail %}<div class="faint mono" style="font-size:11px">{{ it.detail }}</div>{% endif %}</td>
+    <td>{% if it.status == 'ok' %}<span class="tag ok">✓ held</span>{% elif it.status == 'partial' %}<span class="tag warn">partial</span>{% elif it.status == 'missing' %}<span class="tag bad">missing</span>{% else %}<span class="faint small">not published</span>{% endif %}</td>
+    <td class="hide-sm">{% if it.newest %}<a href="/doc/{{ it.newest.sha256 }}" target="_blank" rel="noopener">{{ it.newest.title|truncate(34) }}</a> <span class="faint mono" style="font-size:11px">{{ it.newest.dated or '' }}</span>{% else %}<span class="faint">—</span>{% endif %}</td></tr>
+  {% endfor %}</tbody></table></div></div>
+<p class="faint small">"Not published" means not found on the plan's approved listing pages. "Missing" means listed there but not fetched yet.</p>
+</section>
+</div>
 
-<h2 id="managers">Current managers by asset class{% if a.managers_as_of %} <span class="muted mono" style="font-weight:400">as of {{ a.managers_as_of }}</span>{% endif %}</h2>
-{% if not a.managers %}<p class="muted">Not found in fetched documents.</p>{% else %}
-<div class="scroll"><table class="stack"><thead><tr><th>Asset class (as labeled)</th><th>Manager</th><th>Amount</th><th>Status</th><th>Source</th></tr></thead><tbody>
+<h2 id="managers">Current managers by asset class{% if a.managers_as_of %} <span class="mono count">as of {{ a.managers_as_of }}</span>{% endif %}</h2>
+{% if not a.managers %}<div class="card empty">Not found in fetched documents.</div>{% else %}
+<div class="table-card"><div class="scroll"><table class="stack"><thead><tr><th scope="col">Asset class (as labeled)</th><th scope="col">Manager</th><th scope="col">Amount</th><th scope="col">Status</th><th scope="col">Source</th></tr></thead><tbody>
 {% for label, ms in a.managers %}{% for m in ms %}
-<tr><td>{% if loop.first %}{{ label }}{% endif %}</td><td>{{ m.manager_name_as_disclosed }}</td>
+<tr><td>{% if loop.first %}<strong>{{ label }}</strong>{% endif %}</td><td>{{ m.manager_name_as_disclosed }}</td>
   <td class="mono">{% if m.amount_usd_as_disclosed is not none %}{% if m.amount_kind in ('target_pct','actual_pct') %}{{ '%g'|format(m.amount_usd_as_disclosed) }}%{% else %}{{ money(m.amount_usd_as_disclosed) }}{% endif %}{% else %}—{% endif %}</td>
-  <td class="mono" style="font-size:12px">{{ m.status }}</td><td>{{ cites(m.evidence[:1]) }}</td></tr>
-{% endfor %}{% endfor %}</tbody></table></div>{% endif %}
+  <td><span class="tag">{{ m.status }}</span></td><td>{{ cites(m.evidence[:1]) }}</td></tr>
+{% endfor %}{% endfor %}</tbody></table></div></div>{% endif %}
 
-<h2 id="signals">Signal timeline</h2>
-{% if not a.signals %}<p class="muted">No signals yet.</p>{% else %}
-<div class="scroll"><table class="stack">
-  <thead><tr><th>Date</th><th>Signal</th><th>What the document says</th><th>Status</th></tr></thead>
-  <tbody>{% for s in a.signals %}
-  <tr style="{{ 'opacity:.6' if s.review_status not in ('approved', 'auto_approved') }}">
-    <td class="mono">{{ s.event_date }}</td>
-    <td class="mono" style="font-size:12px">{{ s.signal_type }}{% if s.qualifier %} ({{ s.qualifier }}){% endif %}</td>
-    <td class="why">{{ s.summary }}{{ cites(s.evidence) }}
-      {% for e in s.evidence[:1] %}<blockquote>{{ e.quote }}</blockquote>{% endfor %}</td>
-    <td>{% if s.hf_relevant %}<span class="tier PREPARING">HF</span> {% endif %}{% if s.review_status == 'approved' %}<span class="tier WATCHING">approved by you</span>{% elif s.review_status == 'auto_approved' %}<span class="tier WATCHING" style="opacity:.8" title="{{ s.review_note }}">auto-approved</span>{% elif s.review_status == 'new' %}<span class="pending">pending review</span>{% else %}<span class="muted">rejected</span>{% endif %}
-      {% if s.origin == 'MANUAL' %}<br><span class="muted" style="font-size:12px">manual entry</span>{% endif %}</td>
-  </tr>{% endfor %}</tbody>
-</table></div>{% endif %}
-
-<h2>Officers and trustees (as printed)</h2>
-{% if not a.officers %}<p class="muted">None extracted yet.</p>{% else %}
-<div class="scroll"><table class="stack"><thead><tr><th>Name</th><th>Title</th><th>As of</th><th>Source</th></tr></thead><tbody>
+<h2 id="officers">Officers and trustees <span class="count">as printed</span></h2>
+{% if not a.officers %}<div class="card empty">None extracted yet.</div>{% else %}
+<div class="table-card"><div class="scroll"><table class="stack"><thead><tr><th scope="col">Name</th><th scope="col">Title</th><th scope="col">As of</th><th scope="col">Source</th></tr></thead><tbody>
 {% for o in a.officers %}<tr><td>{{ o.name_as_printed }}</td><td>{{ o.title_as_printed }}</td><td class="mono">{{ o.as_of }}</td><td>{{ cites(o.evidence) }}</td></tr>{% endfor %}
-</tbody></table></div>
-<p class="muted" style="font-size:12px">Names and titles only, exactly as the documents print them. No contact details are stored.</p>{% endif %}
+</tbody></table></div></div>
+<p class="faint small">Names and titles only, exactly as the documents print them. No contact details are stored.</p>{% endif %}
 
 <h2 id="search">Search this plan's documents</h2>
-<input type="search" name="q" placeholder="e.g. hedge fund, RFP, absolute return, watch list" hx-get="/a/{{ a.allocator_id }}/search"
-  hx-trigger="keyup changed delay:400ms, search" hx-target="#search-results">
-<div id="search-results"></div>
+<div class="search-field">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+  <input type="search" name="q" aria-label="Search this plan's documents" placeholder="e.g. hedge fund, RFP, absolute return, watch list" hx-get="/a/{{ a.allocator_id }}/search"
+    hx-trigger="keyup changed delay:400ms, search" hx-target="#search-results">
+</div>
+<div id="search-results" aria-live="polite" style="margin-top:10px"></div>
 
-<h2 id="documents">Documents we watch</h2>
-{% if a.pages %}<p class="muted" style="font-size:13px">Listing pages: {% for p in a.pages %}<a href="{{ p.url }}" target="_blank" rel="noopener noreferrer">{{ p.label or p.url|truncate(40) }}</a>{{ ', ' if not loop.last }}{% endfor %}</p>{% endif %}
-{% if not a.documents %}<p class="muted">Nothing fetched yet.</p>{% else %}
-<div class="scroll"><table class="stack">
-  <thead><tr><th>Document</th><th>Type</th><th>Dated</th><th class="hide-sm">Fetched</th><th class="hide-sm">Pages</th></tr></thead>
+<h2 id="documents">Documents we watch <span class="count">{{ a.documents|length }}</span></h2>
+{% if a.pages %}<p class="muted small">Listing pages: {% for p in a.pages %}<a href="{{ p.url }}" target="_blank" rel="noopener noreferrer">{{ p.label or p.url|truncate(40) }}</a>{{ ', ' if not loop.last }}{% endfor %}</p>{% endif %}
+{% if not a.documents %}<div class="card empty">Nothing fetched yet.</div>{% else %}
+<div class="table-card"><div class="scroll"><table class="stack">
+  <thead><tr><th scope="col">Document</th><th scope="col">Type</th><th scope="col">Dated</th><th scope="col" class="hide-sm">Fetched</th><th scope="col" class="hide-sm">Pages</th></tr></thead>
   <tbody>{% for d in a.documents %}
   <tr><td><a href="/doc/{{ d.sha256 }}" target="_blank" rel="noopener">{{ d.title|truncate(70) }}</a>
-      <br><a class="muted mono" style="font-size:11px" href="{{ d.url }}" target="_blank" rel="noopener noreferrer">source</a>
-      {% if d.provenance != 'CRAWL' %}<span class="muted" style="font-size:11px"> · {{ d.provenance|lower }}</span>{% endif %}</td>
-    <td class="mono" style="font-size:12px">{{ d.doc_type }}</td>
+      <div class="faint small"><a class="faint" href="{{ d.url }}" target="_blank" rel="noopener noreferrer">original ↗</a>{% if d.provenance != 'CRAWL' %} · {{ d.provenance|lower }}{% endif %}</div></td>
+    <td><span class="tag">{{ d.doc_type }}</span></td>
     <td class="mono">{{ d.doc_date or '—' }}</td>
     <td class="mono hide-sm">{{ d.last_fetched.strftime('%Y-%m-%d') }}</td>
-    <td class="mono hide-sm">{{ d.page_count or 0 }}{% if d.hit_pages %} <span class="muted">({{ d.hit_pages }} w/ terms)</span>{% endif %}{% if d.parse_error %} <span class="muted">parse error</span>{% endif %}</td></tr>
-  {% endfor %}</tbody></table></div>{% endif %}
+    <td class="mono hide-sm">{{ d.page_count or 0 }}{% if d.hit_pages %} <span class="faint">({{ d.hit_pages }} w/ terms)</span>{% endif %}{% if d.parse_error %} <span class="tag bad">parse error</span>{% endif %}</td></tr>
+  {% endfor %}</tbody></table></div></div>{% endif %}
 {% endblock %}

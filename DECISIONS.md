@@ -270,3 +270,17 @@ are the irreversible ones, which went to the repo owner.
   meeting. A scheduled interview for next week shows a search that is open now, so its meeting date
   can be up to 90 days ahead and still counts (`future_days` in the readiness rules). Every other
   type keeps D-A12: future-dated signals never count.
+
+## Delivery (2026-11-09)
+
+- **D-B11 Merge review removed.** The manual merge queue (Touchpoint 2) is gone: no page, no queue
+  table, no queued rows. Firm names that score at least 0.95 are still grouped automatically for
+  display. Anything below that stays a separate name. The printed name is always kept on the row.
+- **D-B12 The app is scoped to South Florida (`config/scope.yaml`).** The counties are Miami-Dade,
+  Broward, Palm Beach, Monroe, St. Lucie and Indian River, plus the statewide FRS. The scope
+  filters the pages, the review queue, the pending count and the CSV export. Crawling, extraction
+  and storage are not scoped. `region: florida` shows every plan.
+- **D-B13 Interface redesign.** One stylesheet, no build step, light and dark themes. Fonts (Inter,
+  Source Serif 4, JetBrains Mono; SIL OFL) are served from `static/fonts/`, so a page makes no
+  third-party requests. New About page with the author and the mission. The workbench pages
+  (manual fact, records requests, registry, export) moved under a Tools menu.

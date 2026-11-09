@@ -191,18 +191,6 @@ CREATE TABLE IF NOT EXISTS extraction_runs (
     PRIMARY KEY (sha256, page_no, extractor_version)
 );
 
-CREATE TABLE IF NOT EXISTS merge_queue (   -- Touchpoint 2
-    merge_id VARCHAR PRIMARY KEY,
-    entity_kind VARCHAR NOT NULL,
-    left_name VARCHAR NOT NULL,
-    right_name VARCHAR NOT NULL,
-    score DOUBLE NOT NULL,
-    context VARCHAR,
-    status VARCHAR NOT NULL,               -- open | merged | distinct
-    decided_by VARCHAR,
-    decided_at TIMESTAMPTZ
-);
-
 CREATE TABLE IF NOT EXISTS records_requests (  -- Touchpoint 5 (tracking only; system never sends)
     request_id VARCHAR PRIMARY KEY,
     allocator_id VARCHAR NOT NULL,

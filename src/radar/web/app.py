@@ -39,14 +39,30 @@ def uniq_cites(evs: list[dict]) -> list[dict]:
 templates.env.filters["uniq_cites"] = uniq_cites
 
 
+def _scope_stats(con, ids: list[str]) -> dict:
+    """Documents read and cited signals for the plans in scope."""
+    if not ids:
+        return {"documents": 0, "pages": 0, "signals": 0}
+    ph = ",".join("?" * len(ids))
+    docs = con.execute(f"SELECT count(DISTINCT sha256) FROM document_urls WHERE allocator_id IN ({ph})", ids).fetchone()[0]
+    pages = con.execute(f"""SELECT count(*) FROM pages WHERE sha256 IN
+                            (SELECT DISTINCT sha256 FROM document_urls WHERE allocator_id IN ({ph}))""", ids).fetchone()[0]
+    sigs = con.execute(f"""SELECT count(*) FROM signals WHERE allocator_id IN ({ph})
+                           AND review_status IN ('approved', 'auto_approved')""", ids).fetchone()[0]
+    return {"documents": docs, "pages": pages, "signals": sigs}
+
+
 def create_app() -> FastAPI:
     db.init_db()
     app = FastAPI(title="Allocator Radar", docs_url=None, redoc_url=None, dependencies=[Depends(require_user)])
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
 
     def render(request: Request, name: str, **ctx) -> HTMLResponse:
+        from radar import scope
+
         with db.connect() as con:
             ctx.setdefault("nav", {"pending": queries.pending_count(con)})
+        ctx.setdefault("scope", scope.config())
         return templates.TemplateResponse(request, name, ctx)
 
     @app.get("/", response_class=HTMLResponse)
@@ -76,8 +92,12 @@ def create_app() -> FastAPI:
         counts = {t: sum(1 for r in rows if r["readiness"].tier == t) for t in TIER_ORDER}
         counts["total"] = len(rows)
         shown = [r for r in rows if not tier or r["readiness"].tier == tier]
+        spotlight = [r for r in rows if r["readiness"].tier in ("DEPLOYING", "PREPARING")] if not tier else []
+        with db.connect() as con:
+            kpi = _scope_stats(con, [r["allocator_id"] for r in everything])
+        kpi.update(plans=len(everything), main=len([r for r in everything if not r["bar_reasons"]]))
         return render(request, "index.html", rows=shown, tiers=TIER_ORDER, tier=tier, counts=counts,
-                      strategy=strategy, buckets=buckets,
+                      strategy=strategy, buckets=buckets, spotlight=spotlight, kpi=kpi,
                       n_gaps=sum(1 for r in everything if r["bar_reasons"]),
                       stale_days=readiness_config()["coverage"]["stale_after_days"])
 
@@ -99,6 +119,25 @@ def create_app() -> FastAPI:
     @app.get("/how", response_class=HTMLResponse)
     def how(request: Request):
         return render(request, "how.html", rules=readiness_config())
+
+    @app.get("/about", response_class=HTMLResponse)
+    def about(request: Request):
+        with db.connect() as con:
+            everything = queries.allocator_table(con)
+            ids = [r["allocator_id"] for r in everything]
+            local = _scope_stats(con, ids)
+            total = {
+                "plans": con.execute("SELECT count(*) FROM allocators").fetchone()[0],
+                "documents": con.execute("SELECT count(*) FROM documents").fetchone()[0],
+                "pages": con.execute("SELECT count(*) FROM pages").fetchone()[0],
+                "evidence": con.execute("SELECT count(*) FROM evidence").fetchone()[0],
+                "facts": con.execute("SELECT count(*) FROM plan_facts").fetchone()[0]
+                + con.execute("SELECT count(*) FROM mandates").fetchone()[0],
+            }
+        local.update(plans=len(everything), main=len([r for r in everything if not r["bar_reasons"]]),
+                     deploying=sum(1 for r in everything if r["readiness"].tier == "DEPLOYING" and not r["bar_reasons"]),
+                     preparing=sum(1 for r in everything if r["readiness"].tier == "PREPARING" and not r["bar_reasons"]))
+        return render(request, "about.html", local=local, total=total)
 
     @app.get("/doc/{sha}")
     def doc(sha: str):

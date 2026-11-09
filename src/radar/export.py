@@ -45,7 +45,7 @@ COLUMNS = ["allocator", "allocator_type", "city", "state", "readiness_tier", "si
 def build_csv(actor: str) -> tuple[str, int]:
     with db.connect() as con:
         table = {a["allocator_id"]: a for a in queries.allocator_table(con)}
-        sigs = queries.signals_for(con, statuses=("approved",))
+        sigs = [s for s in queries.signals_for(con, statuses=("approved",)) if s["allocator_id"] in table]
         if any(s["review_status"] != "approved" for s in sigs):  # belt and braces
             raise ExportRefused("unapproved row reached the exporter")
         buf = io.StringIO()

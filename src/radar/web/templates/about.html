@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}About · Allocator Radar{% endblock %}
+{% block body %}
+
+<section class="hero rise" aria-labelledby="about-title">
+  <div class="sweep" aria-hidden="true"></div>
+  <div class="about-hero">
+    <div>
+      <p class="eyebrow">About this project</p>
+      <h1 id="about-title">Allocator Radar was built in 3 days by Andrew Gladki, AI engineer.</h1>
+      <p>One question drives it: which {{ scope.label }} institutional allocators are getting ready to put capital to
+        work, and where does the public record say so? Every answer is a dated signal with a link to the page it
+        came from.</p>
+      <p class="sig">Andrew Gladki · AI engineer</p>
+    </div>
+    <div class="stat-stack" aria-label="Project figures">
+      <div class="s"><div class="v">3 days</div><div class="l">from empty repository to working product</div></div>
+      <div class="s"><div class="v">{{ local.plans }}</div><div class="l">{{ scope.label }} plans in scope</div></div>
+      <div class="s"><div class="v">{{ '{:,}'.format(local.documents) }}</div><div class="l">public documents read for them</div></div>
+      <div class="s"><div class="v">{{ '{:,}'.format(local.signals) }}</div><div class="l">cited signals behind the tiers</div></div>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="mission-title">
+  <h2 id="mission-title" class="eyebrow" style="font-family:var(--sans);font-size:11.5px;margin:30px 0 12px">My mission</h2>
+  <div class="mission rise d1">
+    <p class="lead">I want to work on the institutional business development team of a large financial institution.
+      Allocator Radar is how I'd like to introduce myself: a working tool, not a slide.</p>
+    <p>Institutional business development depends on timing. Reaching a pension plan the month its board approves an
+      asset-liability study is very different from reaching it a year after the mandate has been awarded. The signals
+      are public, but they are buried in hundreds of board packets, minutes and investment reports, and nobody reads
+      them all. I built a system that does. It reads every page, records what changed and when, and cites its source,
+      so a business development team can spend its time on the conversations.</p>
+    <p>The project shows the four things I bring to that team: AI engineering, data analytics, an understanding of how
+      institutional money moves, and the ability to take a complex, open-ended problem to an accurate, working
+      solution quickly.</p>
+  </div>
+</section>
+
+<h2>What it demonstrates</h2>
+<div class="grid-4">
+  <article class="pillar">
+    <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9zM9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></div>
+    <h3>AI engineering</h3>
+    <p>A language model reads board documents and proposes structured signals. Code checks every one before it can count.</p>
+    <ul>
+      <li>Each extracted quote is checked against the page text</li>
+      <li>Strict JSON schemas, plus a lint that rejects evaluative language</li>
+      <li>Model-based contact scrubber, tested every night with a canary</li>
+      <li>Deterministic table parsers where a model isn't needed</li>
+    </ul>
+  </article>
+  <article class="pillar">
+    <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
+    <h3>Data analytics</h3>
+    <p>Thousands of unstructured PDFs become one queryable dataset with provenance on every row.</p>
+    <ul>
+      <li>{{ '{:,}'.format(total.pages) }} pages parsed statewide, OCR for scans</li>
+      <li>{{ '{:,}'.format(total.facts) }} facts and holdings rows, each traced to a page</li>
+      <li>A coverage score and gap taxonomy for each plan</li>
+      <li>Firm-name resolution and a strategy crosswalk</li>
+    </ul>
+  </article>
+  <article class="pillar">
+    <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V10M9.5 21V10M14.5 21V10M19 21V10M2 10l10-6 10 6"/></svg></div>
+    <h3>Financial understanding</h3>
+    <p>The signal types follow how a public plan actually moves money, from studying its liabilities to awarding a mandate.</p>
+    <ul>
+      <li>Asset-liability study → target change → IPS amendment</li>
+      <li>Consultant search → RFP → finalists → award</li>
+      <li>Consultants, actuaries, custodians and assumed returns</li>
+      <li>Florida 112.664 disclosures and SBA investment reports</li>
+    </ul>
+  </article>
+  <article class="pillar">
+    <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg></div>
+    <h3>Fast and accurate</h3>
+    <p>Three days from a written brief to a working product, with accuracy built in rather than added at the end.</p>
+    <ul>
+      <li>No invented numbers: gaps are labeled as gaps</li>
+      <li>A person approves anything before it can be exported</li>
+      <li>Each tier is a rule in config, not an opinion</li>
+      <li>Unit and Wall test suites, with the Wall rerun every night</li>
+    </ul>
+  </article>
+</div>
+
+<h2>How the 3 days went</h2>
+<div class="days">
+  <article class="day">
+    <div class="n">Day 1</div>
+    <h3>Foundation and the Wall</h3>
+    <ul>
+      <li>Registry of plans and the public pages where each one posts documents</li>
+      <li>A polite crawler: allowlist, robots.txt, GET-only, encrypted document store</li>
+      <li>The Wall: no contact fields anywhere, a scrubber, and nightly canary tests</li>
+    </ul>
+  </article>
+  <article class="day">
+    <div class="n">Day 2</div>
+    <h3>Reading and ranking</h3>
+    <ul>
+      <li>Model extraction with quote-on-page and summary checks</li>
+      <li>Readiness tiers, a review queue and tiered auto-approval</li>
+      <li>A deterministic parser for the State Board of Administration's investment reports</li>
+    </ul>
+  </article>
+  <article class="day">
+    <div class="n">Day 3</div>
+    <h3>Scale and delivery</h3>
+    <ul>
+      <li>Discovery across Florida: {{ total.plans }} plans registered, {{ '{:,}'.format(total.documents) }} documents held</li>
+      <li>Coverage-gap taxonomy and scheduled-search signals</li>
+      <li>This interface, scoped to {{ scope.label }}</li>
+    </ul>
+  </article>
+</div>
+
+<h2>Why {{ scope.label }} only</h2>
+<div class="card"><div class="prose">
+  <p>The app is deliberately set to {{ scope.label }}: {{ scope.description }}. That is
+    <strong>{{ local.plans }} plans</strong>, {{ local.main }} of which meet the coverage bar for the main table.
+    {% if local.deploying or local.preparing %}Today {{ local.deploying }} are deploying and {{ local.preparing }} are preparing.{% endif %}</p>
+  <p>The engine underneath is not regional. It already holds {{ total.plans }} plans statewide. Widening the view is one
+    line in <span class="mono">config/scope.yaml</span>, and adding another state means a new registry, not a new system.</p>
+</div></div>
+
+<h2>Built with</h2>
+<div class="card">
+  <dl class="kv">
+    <dt>Application</dt><dd>Python 3.12, FastAPI, Jinja and HTMX. Server-rendered, one stylesheet, no build step.</dd>
+    <dt>Data</dt><dd>DuckDB, an encrypted raw-document store, and a page-level search index</dd>
+    <dt>Documents</dt><dd>pdfplumber, with local OCR for scanned pages and a headless browser for sites that render with JavaScript</dd>
+    <dt>Language model</dt><dd>Claude, behind a single adapter that has no tools and returns schema-checked JSON</dd>
+    <dt>Privacy</dt><dd>Regex plus a named-entity scrubber, nightly tests over every stored text column, and a dependency allowlist</dd>
+  </dl>
+</div>
+
+<div class="credit" style="margin-top:22px">
+  <span>Want to see how a tier is decided? Every rule is published.</span>
+  <span><a class="btn" href="/how">How it works</a> <a class="btn primary" href="/">See the allocators</a></span>
+</div>
+{% endblock %}

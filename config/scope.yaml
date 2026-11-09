@@ -1,0 +1,27 @@
+# Which plans the web app shows. The crawler and the database keep everything they hold; this only
+# scopes what the pages, the review queue and the CSV export show.
+#
+# region: south_florida  -> the counties listed below, plus the statewide plans listed under `statewide`
+# region: florida        -> every plan in the registry (251 at last count)
+region: south_florida
+
+regions:
+  south_florida:
+    label: South Florida
+    description: Miami-Dade, Broward, Palm Beach and Monroe counties, plus the Treasure Coast (St. Lucie and Indian River)
+    counties:
+      Miami-Dade: [Bal Harbour, Bay Harbor Islands, Coral Gables, Golden Beach, Hialeah, Hialeah Gardens, Miami,
+                   Miami Beach, Miami Shores, Miami Springs, North Miami, North Miami Beach, South Miami]
+      Broward: [Coral Springs, Dania Beach, Davie, Deerfield Beach, Fort Lauderdale, Hallandale Beach, Hollywood,
+                Lauderhill, Miramar, Oakland Park, Pembroke Pines, Pompano Beach, South Broward Hospital District,
+                Tamarac, Wilton Manors]
+      Palm Beach: [Boca Raton, Boynton Beach, Jupiter, Lantana, North Palm Beach, Palm Beach, Palm Beach Gardens,
+                   Riviera Beach, Tequesta, West Palm Beach]
+      Monroe: [Key West, Keys Energy Services]
+      St. Lucie: [Fort Pierce, St. Lucie County Fire District]
+      Indian River: [Vero Beach]
+    # Statewide plans that cover public employees in the region (matched by allocator_id).
+    statewide: [fl-sba-frs]
+  florida:
+    label: Florida
+    description: every plan in the registry

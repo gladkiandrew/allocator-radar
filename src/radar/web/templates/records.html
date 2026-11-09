@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Records requests · Allocator Radar{% endblock %}
 {% block body %}
+<p class="eyebrow">Tools</p>
 <h1>Public-records requests</h1>
 <p class="sub">Florida Chapter 119 requests are filed by a person outside this system, which never sends anything. This page tracks
   each request. Drop the response files into the request's folder, then click <em>Ingest folder</em>. Files ingested this way are
@@ -8,7 +9,7 @@
 {% if msg %}<div class="notice">{{ msg }}</div>{% endif %}
 {% if err %}<div class="error">{{ err }}</div>{% endif %}
 {% if reqs %}
-<div class="scroll"><table class="stack">
+<div class="table-card"><div class="scroll"><table class="stack">
   <thead><tr><th>Plan</th><th>Request</th><th>Filed</th><th>Status</th><th>Response folder</th></tr></thead>
   <tbody>{% for r in reqs %}
   <tr><td>{{ r.display_name }}</td><td style="font-size:13px;white-space:pre-wrap">{{ r.request_text|truncate(220) }}{% if r.note %}<br><span class="muted">{{ r.note }}</span>{% endif %}</td>
@@ -18,7 +19,7 @@
     <td class="mono" style="font-size:12px">{{ r.response_folder }}<br>
       <form method="post" action="/records/{{ r.request_id }}/ingest" class="inline"><button>Ingest folder</button></form>
       <span class="muted">{{ r.n_docs }} docs</span></td></tr>
-  {% endfor %}</tbody></table></div>
+  {% endfor %}</tbody></table></div></div>
 {% endif %}
 <h2>Track a new request</h2>
 <form method="post" action="/records" class="card">

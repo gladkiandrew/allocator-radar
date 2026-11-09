@@ -30,7 +30,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("hash-password", help="print the sha256 for RADAR_AUTH_PASSWORD_HASH (reads the password from stdin)")
     sub.add_parser("approve-pending", help="apply config/review_policy.yaml to pending signals (and the registry)")
     sub.add_parser("reparse-scanned", help="re-parse documents that have scanned (empty) pages, with local OCR")
-    sub.add_parser("resolve", help="entity resolution for firm names (auto-alias + merge queue)")
+    sub.add_parser("resolve", help="entity resolution for firm names (auto-alias only)")
     sub.add_parser("report", help="main table vs coverage gaps, with coverage % per allocator")
     sub.add_parser("sba", help="ingest + parse the FL SBA reports in inbox/manual/fl-sba-frs/")
     sub.add_parser("auto-approve", help="run the tiered auto-approval rules over pending signals")
@@ -181,7 +181,7 @@ def main(argv: list[str] | None = None) -> int:
         from radar import coverage, db, queries
         db.init_db()
         with db.connect() as con:
-            rows = queries.allocator_table(con)
+            rows = queries.allocator_table(con, scoped=False)
             main = [r for r in rows if not r["bar_reasons"]]
             gaps = [r for r in rows if r["bar_reasons"]]
             print(f"MAIN TABLE: {len(main)}   COVERAGE GAPS: {len(gaps)}   (registry: {len(rows)})\n")
@@ -248,7 +248,7 @@ def main(argv: list[str] | None = None) -> int:
         db.init_db()
         since = date.today() - timedelta(days=365)
         with db.connect() as con:
-            rows = queries.allocator_table(con)
+            rows = queries.allocator_table(con, scoped=False)
             if args.all:
                 main = rows
             elif args.only:
@@ -299,7 +299,7 @@ def main(argv: list[str] | None = None) -> int:
         from radar import coverage, db, queries
         db.init_db()
         with db.connect() as con:
-            rows = [r for r in queries.allocator_table(con) if r["bar_reasons"]]
+            rows = [r for r in queries.allocator_table(con, scoped=False) if r["bar_reasons"]]
             groups = defaultdict(list)
             for r in rows:
                 cat, desc, action = coverage.gap_category(con, r)
@@ -318,7 +318,7 @@ def main(argv: list[str] | None = None) -> int:
         db.init_db()
         with db.connect() as con:
             todo = []
-            for a in queries.allocator_table(con):
+            for a in queries.allocator_table(con, scoped=False):
                 if not any("consultant not identified" in x for x in a["bar_reasons"]):
                     continue
                 docs = sorted(coverage.held_documents(con, a["allocator_id"]),
@@ -338,7 +338,7 @@ def main(argv: list[str] | None = None) -> int:
         from radar import coverage, db, queries
         db.init_db()
         with db.connect() as con:
-            rows = [r for r in queries.allocator_table(con) if r["bar_reasons"]
+            rows = [r for r in queries.allocator_table(con, scoped=False) if r["bar_reasons"]
                     and coverage.gap_category(con, r)[0] == "MANUAL_SOURCE"]
         lines = ["# Manual worklist (blocked to automated clients)", "",
                  "Open each page in your own browser. Download recent agendas/minutes, the latest quarterly investment",
@@ -364,7 +364,7 @@ def main(argv: list[str] | None = None) -> int:
         from radar import coverage, db, queries
         db.init_db()
         with db.connect() as con:
-            rows = queries.allocator_table(con)
+            rows = queries.allocator_table(con, scoped=False)
             main = [r for r in rows if not r["bar_reasons"]]
             gaps = [r for r in rows if r["bar_reasons"]]
             cats = Counter(coverage.gap_category(con, r)[0] for r in gaps)

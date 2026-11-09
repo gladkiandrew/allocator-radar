@@ -1,59 +1,78 @@
 {% extends "base.html" %}
-{% block title %}How this works · Allocator Radar{% endblock %}
+{% block title %}How it works · Allocator Radar{% endblock %}
 {% block body %}
-<h1>How this works</h1>
+<p class="eyebrow">How it works</p>
+<h1>From a board packet to a readiness tier</h1>
 <p class="sub">Each allocator gets one readiness tier. A tier is not a score or an opinion. It comes from the rules below,
-  applied to signals that a person has approved. Every signal cites a public document and a page.</p>
+  applied to approved signals. Every signal cites a public document and a page.</p>
 
-<h2>Rules (config/readiness_rules.yaml)</h2>
-<div class="scroll"><table>
-  <thead><tr><th>Tier</th><th>Window</th><th>Signal types that set it</th><th>Meaning</th></tr></thead>
+<div class="credit">
+  <span><b>Built in 3 days by Andrew Gladki</b>, AI engineer, and set to {{ scope.label }} allocators only
+    ({{ scope.description }}).</span>
+  <a href="/about">About the project and its mission →</a>
+</div>
+
+<div class="flow" aria-label="Pipeline">
+  <div class="step"><div class="k">01 · Discover</div><h3>Find the plans</h3><p>A registry of public plans and the pages where each one posts agendas, minutes and reports. A person approves it before any crawling.</p></div>
+  <div class="step"><div class="k">02 · Fetch</div><h3>Collect politely</h3><p>GET-only, allowlisted hosts, robots.txt honored, 10 seconds between requests to a host, and a stop at any bot wall.</p></div>
+  <div class="step"><div class="k">03 · Read</div><h3>Extract signals</h3><p>A language model reads each page and proposes signals, each with an exact quote. Contact details are scrubbed first.</p></div>
+  <div class="step"><div class="k">04 · Verify</div><h3>Check every claim</h3><p>The quote has to appear on the cited page. Dates come from the document. A lint rejects evaluative language.</p></div>
+  <div class="step"><div class="k">05 · Rank</div><h3>Set the tier</h3><p>Fixed rules turn approved signals into a tier. Only a person's approval lets a signal into an export.</p></div>
+</div>
+
+<h2>Readiness rules <span class="mono count">config/readiness_rules.yaml</span></h2>
+<div class="table-card"><div class="scroll"><table class="stack">
+  <thead><tr><th scope="col">Tier</th><th scope="col">Window</th><th scope="col">Signal types that set it</th><th scope="col">Meaning</th></tr></thead>
   <tbody>
   {% for t in rules.tiers %}
   <tr><td><span class="tier {{ t.tier }}">{{ t.tier }}</span></td>
       <td class="mono">{{ t.window_days }} days</td>
-      <td class="mono">{% for st in t.signal_types %}{{ st }}{% if t.qualifiers and t.qualifiers.get(st) %} ({{ t.qualifiers[st]|join(', ') }} only){% endif %}<br>{% endfor %}</td>
+      <td class="mono" style="font-size:11.5px;line-height:1.7">{% for st in t.signal_types %}{{ st }}{% if t.qualifiers and t.qualifiers.get(st) %} <span class="faint">({{ t.qualifiers[st]|join(', ') }} only)</span>{% endif %}<br>{% endfor %}</td>
       <td>{{ t.meaning }}</td></tr>
   {% endfor %}
-  <tr><td><span class="tier WATCHING">WATCHING</span></td><td class="mono">—</td><td class="muted">none of the above</td>
-      <td>We fetched a new document in the last {{ rules.coverage.stale_after_days }} days. No qualifying approved signal is in window.</td></tr>
-  <tr><td><span class="tier STALE">STALE</span></td><td class="mono">{{ rules.coverage.stale_after_days }} days</td><td class="muted">coverage</td>
+  <tr><td><span class="tier WATCHING">WATCHING</span></td><td class="mono">—</td><td class="faint">none of the above</td>
+      <td>We fetched a new document in the last {{ rules.coverage.stale_after_days }} days. No qualifying approved signal is in the window.</td></tr>
+  <tr><td><span class="tier STALE">STALE</span></td><td class="mono">{{ rules.coverage.stale_after_days }} days</td><td class="faint">coverage</td>
       <td>{{ rules.coverage.meaning }} This shows where coverage is thin. It says nothing about the allocator.</td></tr>
   </tbody>
-</table></div>
-<p class="muted">Tiers are checked top to bottom, and the first match wins. The window is counted back from today, using the
+</table></div></div>
+<p class="muted small">Tiers are checked top to bottom, and the first match wins. The window is counted back from today, using the
   date printed on the source (the meeting, notice or filing date). The date we fetched the document is never used.</p>
 
-<h2>Which plans appear on the main table</h2>
-<p>A plan is listed only when our coverage of it is good enough to read: at least 3 documents fetched, at least one dated in
-  the last 6 months, and its investment consultant identified from a cited document (<span class="mono">config/main_table.yaml</span>).
-  Plans below that bar are on <a href="/gaps">Coverage gaps</a>, with the reason. Each plan's page also shows a coverage
-  checklist covering 18 months of agendas and minutes, plus the latest IPS, quarterly report, actuarial valuation, audited
-  financials and 112.664 disclosure.</p>
-
-<h2 id="auto">Auto-approval</h2>
-<p>A pending signal is auto-approved only if all four hold. (a) It is not a termination, watch-list change or
-  redemption; those always go to a person. (b) It was read from a parsed table, or its quote matches the cited page word
-  for word. (c) Its date was printed in the source as a meeting, report or filing date (a quarter-end fallback does not
-  count). (d) Its summary passes the language lint. Auto-approved signals set tiers and show as "auto-approved". They are
-  never exported until a person approves them. Rules: <span class="mono">config/auto_approval.yaml</span>.</p>
-
-<h2>What counts</h2>
-<ul>
-  <li>Only <strong>approved</strong> signals change a tier. New signals appear as <span class="pending">pending review</span> until a reviewer approves or rejects them.</li>
-  <li>A signal comes from one of two places. The extractor reads a fetched public document and quotes the page. Or a person enters a fact from a manual-only source, with its URL and date.</li>
-  <li>Nothing exports until it is approved. The CSV export contains approved signals only.</li>
-</ul>
+<div class="grid-2" style="margin-top:28px">
+  <section class="card">
+    <h3>Which plans appear on the main table</h3>
+    <p class="muted" style="margin:0">A plan is listed only when our coverage of it is good enough to read: at least 3
+      documents fetched, at least one dated in the last 6 months, and its investment consultant identified from a cited
+      document (<span class="mono">config/main_table.yaml</span>). Plans below that bar are on <a href="/gaps">Coverage gaps</a>,
+      with the reason. Each plan's page also has a coverage checklist: 18 months of agendas and minutes, plus the latest
+      IPS, quarterly report, actuarial valuation, audited financials and 112.664 disclosure.</p>
+  </section>
+  <section class="card" id="auto">
+    <h3>Auto-approval</h3>
+    <p class="muted" style="margin:0">A pending signal is auto-approved only if all four checks pass. (a) It is not a
+      termination, watch-list change or redemption; those always go to a person. (b) It was read from a parsed table, or
+      its quote matches the cited page word for word. (c) Its date was printed in the source as a meeting, report or filing
+      date. (d) Its summary passes the language lint. Auto-approved signals set tiers, but they are never exported until a
+      person approves them (<span class="mono">config/auto_approval.yaml</span>).</p>
+  </section>
+</div>
 
 <h2>The Wall</h2>
-<ul>
-  <li><strong>No contact details anywhere.</strong> No model has an email, phone, address, or social-profile field. People appear only as name and title, as printed in public documents.</li>
-  <li><strong>Scrubber first.</strong> Every piece of text is scrubbed before it reaches the language model, the search index or any table. Contact-shaped text becomes <span class="mono">[REDACTED-CONTACT]</span>.</li>
-  <li><strong>No outbound capability.</strong> The crawler sends GET and HEAD requests only, to an allowlist of hosts. It honors robots.txt and stops at any bot wall. The system cannot send email or messages, and it cannot submit forms.</li>
-  <li><strong>Tested every night.</strong> Wall tests sweep every stored text column. They also run a canary packet full of fake contact details through the pipeline and require that none of it is stored.</li>
-</ul>
+<div class="grid-2">
+  <div class="card"><h3>No contact details anywhere</h3><p class="muted" style="margin:0">No model has an email, phone, address or social-profile field. People appear only by name and title, as the public documents print them.</p></div>
+  <div class="card"><h3>Scrubber first</h3><p class="muted" style="margin:0">All text is scrubbed before it reaches the language model, the search index or any table. Contact-shaped text becomes <span class="mono">[REDACTED-CONTACT]</span>.</p></div>
+  <div class="card"><h3>No outbound capability</h3><p class="muted" style="margin:0">The crawler sends GET and HEAD requests only, to an allowlist of hosts. The system cannot send email or messages, and it cannot submit forms.</p></div>
+  <div class="card"><h3>Tested every night</h3><p class="muted" style="margin:0">Wall tests sweep every stored text column. A canary packet full of fake contact details goes through the pipeline, and none of it may be stored.</p></div>
+</div>
 
-<h2>Language</h2>
-<p>Summaries use factual verbs (reported, approved, voted, issued, awarded, terminated, placed on watch). A lint rejects
-  evaluative words before anything is stored.</p>
+<h2>What counts</h2>
+<div class="card prose">
+  <ul style="margin:0">
+    <li>Only <strong>approved</strong> signals change a tier. A new signal shows as <span class="pending">pending review</span> until it is approved or rejected.</li>
+    <li>A signal comes from one of two places. Either the extractor reads a fetched public document and quotes the page, or a person enters a fact from a manual-only source, with its URL and date.</li>
+    <li>Summaries use factual verbs: reported, approved, voted, issued, awarded, terminated, placed on watch. A lint rejects evaluative words before anything is stored.</li>
+    <li>The CSV export contains only signals a person has approved.</li>
+  </ul>
+</div>
 {% endblock %}

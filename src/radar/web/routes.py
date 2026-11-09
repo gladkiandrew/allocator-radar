@@ -59,9 +59,16 @@ def register(app: FastAPI, render) -> None:
     @app.get("/review", response_class=HTMLResponse)
     def review_page(request: Request, status: str = "new"):
         status = status if status in ("new", "approved", "auto_approved", "rejected") else "new"
+        from radar import scope
+
         with db.connect() as con:
-            sigs = _enrich(con, queries.signals_for(con, statuses=(status,)))
-            counts = dict(con.execute("SELECT review_status, count(*) FROM signals GROUP BY 1").fetchall())
+            ids = scope.ids(con)
+            sigs = _enrich(con, [s for s in queries.signals_for(con, statuses=(status,))
+                                 if ids is None or s["allocator_id"] in ids])
+            counts: dict[str, int] = {}
+            for st, aid in con.execute("SELECT review_status, allocator_id FROM signals").fetchall():
+                if ids is None or aid in ids:
+                    counts[st] = counts.get(st, 0) + 1
         for k in ("new", "approved", "auto_approved", "rejected"):
             counts.setdefault(k, 0)
         if status == "new":  # what could move a tier first, newest first
@@ -98,7 +105,10 @@ def register(app: FastAPI, render) -> None:
     from radar.models import ManualFact
 
     def _allocs(con):
-        return db.rows(con, "SELECT allocator_id, display_name FROM allocators ORDER BY display_name")
+        from radar import scope
+
+        return [a for a in db.rows(con, "SELECT allocator_id, display_name, jurisdiction_city FROM allocators ORDER BY display_name")
+                if scope.contains(a)]
 
     @app.get("/manual", response_class=HTMLResponse)
     def manual_page(request: Request, msg: str | None = None):
@@ -175,22 +185,6 @@ def register(app: FastAPI, render) -> None:
         text, n = export.build_csv(user)
         return _R(text, media_type="text/csv",
                   headers={"Content-Disposition": f'attachment; filename="allocator-radar-approved-{_d.today()}.csv"'})
-
-    # ---------------- Touchpoint 2: merge review ----------------
-    from radar import resolve
-
-    @app.get("/merges", response_class=HTMLResponse)
-    def merges_page(request: Request):
-        with db.connect() as con:
-            con.execute(resolve.DDL)
-            items = db.rows(con, "SELECT * FROM merge_queue WHERE status = 'open' ORDER BY score DESC")
-            aliases = db.rows(con, "SELECT * FROM entity_aliases ORDER BY kind, canonical")
-        return render(request, "merges.html", items=items, aliases=aliases)
-
-    @app.post("/merges/{merge_id}")
-    def merges_decide(merge_id: str, same: str = Form(...), user: str = Depends(require_user)):
-        resolve.decide(merge_id, same == "1", user)
-        return RedirectResponse("/merges", status_code=303)
 
     # ---------------- Touchpoint 1: registry ----------------
     @app.get("/registry", response_class=HTMLResponse)
