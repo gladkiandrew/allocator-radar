@@ -49,6 +49,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("gaps", help="coverage gaps grouped by primary cause, with the next action for each")
     cs = sub.add_parser("consultant-scan", help="targeted extraction of service providers for gap plans missing a consultant")
     cs.add_argument("--workers", type=int, default=3)
+    sub.add_parser("manual-worklist", help="write data/manual_worklist.md: blocked plans, where to look, where to drop files")
     sub.add_parser("index", help="add newly parsed (scrubbed) pages to the LanceDB search index")
     dp = sub.add_parser("discover", help="discovery agent: registry/seed_florida.yaml -> registry/florida.yaml")
     dp.add_argument("--resuggest", action="store_true", help="recompute suggested pages only (no fetching)")
@@ -327,6 +328,24 @@ def main(argv: list[str] | None = None) -> int:
 
         with ThreadPoolExecutor(max_workers=args.workers) as ex:
             list(ex.map(one, todo))
+    elif args.cmd == "manual-worklist":
+        from pathlib import Path
+        from radar import coverage, db, queries
+        db.init_db()
+        with db.connect() as con:
+            rows = [r for r in queries.allocator_table(con) if r["bar_reasons"]
+                    and coverage.gap_category(con, r)[0] == "MANUAL_SOURCE"]
+        lines = ["# Manual worklist (blocked to automated clients)", "",
+                 "Open each page in your own browser. Download recent agendas/minutes, the latest quarterly investment",
+                 "report, IPS, actuarial valuation and 112.664 disclosure. Drop the files in the folder shown, then run",
+                 "`uv run radar sba` for FL SBA or the Records requests page -> Ingest manual inbox for everything else.", ""]
+        for r in sorted(rows, key=lambda r: r["display_name"]):
+            lines += [f"- **{r['display_name']}** ({r['jurisdiction_city']})", f"  - page: {r['home_url']}",
+                      f"  - why manual: {r.get('access_reason') or 'blocked'}",
+                      f"  - drop files in: `inbox/manual/{r['allocator_id']}/`"]
+            (Path("inbox/manual") / r["allocator_id"]).mkdir(parents=True, exist_ok=True)
+        Path("data/manual_worklist.md").write_text("\n".join(lines) + "\n")
+        print(f"wrote data/manual_worklist.md ({len(rows)} plans)")
     elif args.cmd == "index":
         from radar import db, search
         db.init_db()
