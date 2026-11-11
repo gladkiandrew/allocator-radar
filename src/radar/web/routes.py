@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import Depends, FastAPI, Form, Request
+from fastapi import Depends, FastAPI, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from radar import db
@@ -240,6 +240,42 @@ def register(app: FastAPI, render) -> None:
         st = manual.ingest_inbox(user)
         n = sum(v["files"] for v in st.values())
         return RedirectResponse(f"/records?msg=Manual inbox: {n} files across {len(st)} plans.", status_code=303)
+
+    # ---------------- manual fetch tasks (data/manual_tasks.yaml) ----------------
+    import yaml
+
+    from radar.web import tasks as mt
+
+    @app.get("/tasks", response_class=HTMLResponse)
+    def tasks_page(request: Request, msg: str | None = None, err: str | None = None):
+        load_err, rows = None, []
+        try:
+            rows = mt.sorted_tasks(mt.load())
+        except mt.TaskError as e:
+            load_err = str(e)
+        except (yaml.YAMLError, UnicodeDecodeError) as e:  # malformed file: say so, never crash the page
+            load_err = f"could not parse manual_tasks.yaml: {e}"
+        for t in rows:
+            t["_status"] = str(t.get("status") or "open")
+            t["_uploadable"] = t["_status"] == "open" and mt.safe_name(t.get("allocator_id")) and mt.safe_name(t.get("file_name"))
+        from radar.settings import get_settings
+
+        return render(request, "tasks.html", tasks=rows, msg=msg, err=err, load_err=load_err,
+                      exists=mt.tasks_path().exists(), inbox=get_settings().manual_inbox,
+                      n_open=sum(1 for t in rows if t["_status"] == "open"))
+
+    @app.post("/tasks/{task_id}/upload")
+    async def tasks_upload(task_id: str, file: UploadFile = File(...), user: str = Depends(require_user)):
+        from urllib.parse import quote
+
+        data = await file.read(mt.MAX_UPLOAD_BYTES + 1)
+        try:
+            dest = mt.receive(task_id, data)
+        except mt.TaskError as e:
+            return RedirectResponse(f"/tasks?err={quote(str(e))}", status_code=303)
+        rel = f"{dest.parent.name}/{dest.name}"
+        return RedirectResponse(f"/tasks?msg={quote(f'Saved {rel} in the manual inbox; task {task_id} marked received.')}",
+                                status_code=303)
 
     @app.get("/export.csv")
     def export_csv(user: str = Depends(require_user)):

@@ -59,7 +59,7 @@ templates.env.filters["consultant"] = present.consultant_name
 templates.env.globals["coverage_note"] = present.coverage_note
 
 
-PUBLIC_HIDDEN = ("/review", "/manual", "/records", "/registry", "/inbox", "/export")
+PUBLIC_HIDDEN = ("/review", "/manual", "/records", "/registry", "/inbox", "/export", "/tasks")
 
 
 def _scope_stats(con, ids: list[str]) -> dict:
