@@ -18,8 +18,12 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("wall", help="run the live wall checks (nightly)")
     xp = sub.add_parser("export-static", help="render the public read-only site to plain HTML (for a static host)")
     xp.add_argument("--out", default="dist", help="output directory (replaced)")
+    xp.add_argument("--audience", choices=["public", "member"], default="public",
+                    help="public (default, the open site) or member (contacts shown; for the gated Worker only)")
     wp = sub.add_parser("wall-static", help="wall check on a static snapshot before deploy: contact patterns, admin links")
     wp.add_argument("dir", nargs="?", default="dist")
+    wp.add_argument("--audience", choices=["public", "member"], default="public",
+                    help="which build this is: member allows contact details only inside data-audience=\"member\" blocks")
     sub.add_parser("ef-universe", help="Phase C: choose the Florida E&F universe from the IRS BMF -> data/ef_universe.csv")
     sub.add_parser("ef-load", help="Phase C: universe -> ProPublica summaries -> IRS 990 XML -> 990 signals (data/ef.duckdb)")
     sub.add_parser("ef-signals", help="Phase C: rebuild the 990 signals from stored filings")
@@ -37,7 +41,9 @@ def main(argv: list[str] | None = None) -> int:
     ep.add_argument("--follow", action="store_true", help="keep going while a crawl is adding documents")
     np_ = sub.add_parser("nightly", help="registry policy -> crawl -> extract -> policy approvals -> index -> wall")
     np_.add_argument("--max-docs", type=int, default=150)
-    sub.add_parser("hash-password", help="print the sha256 for RADAR_AUTH_PASSWORD_HASH (reads the password from stdin)")
+    hp = sub.add_parser("hash-password", help="print a salted pbkdf2 hash for RADAR_MEMBER_/RADAR_ADMIN_/RADAR_AUTH_PASSWORD_HASH "
+                        "and the gated Worker (reads the password from stdin)")
+    hp.add_argument("--sha256", action="store_true", help="legacy unsalted sha256 hex instead")
     sub.add_parser("approve-pending", help="apply config/review_policy.yaml to pending signals (and the registry)")
     rs = sub.add_parser("rescore", help="recompute stored prefilter terms with the current vocabulary; re-extract documents that gained hit pages")
     rs.add_argument("--no-extract", action="store_true", help="only update the stored terms")
@@ -94,6 +100,14 @@ def main(argv: list[str] | None = None) -> int:
         print("database ready")
     elif args.cmd == "serve":
         import uvicorn
+        from radar.settings import get_settings
+        if get_settings().gate_on:  # fail before uvicorn starts, with the reason
+            from radar.web.gate import GateConfigError, check_config
+            try:
+                check_config(get_settings())
+            except GateConfigError as e:
+                print(f"radar serve: {e}", file=sys.stderr)
+                return 2
         uvicorn.run("radar.web.app:create_app", factory=True, host=args.host, port=args.port, reload=args.reload)
     elif args.cmd == "discover":
         from radar import db
@@ -180,7 +194,14 @@ def main(argv: list[str] | None = None) -> int:
         import getpass
         import hashlib
         pw = getpass.getpass("password: ") if sys.stdin.isatty() else sys.stdin.readline().rstrip("\n")
-        print(hashlib.sha256(pw.encode()).hexdigest())
+        if not pw:
+            print("empty password", file=sys.stderr)
+            return 2
+        if args.sha256:
+            print(hashlib.sha256(pw.encode()).hexdigest())
+        else:
+            from radar.web.gate import hash_password
+            print(hash_password(pw))
     elif args.cmd == "approve-pending":
         from radar import db, review
         from radar.registry import approve as reg
@@ -472,7 +493,7 @@ def main(argv: list[str] | None = None) -> int:
         import json
         from radar import db, static_export
         db.init_db()
-        print(json.dumps(static_export.export(args.out)))
+        print(json.dumps(static_export.export(args.out, audience=args.audience)))
     elif args.cmd == "ef-committee":
         import json
         from radar import db
@@ -501,7 +522,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{pipeline.derive_signals()} signals from 990s")
     elif args.cmd == "wall-static":
         from radar.wall import static_site
-        return static_site.main(args.dir)
+        return static_site.main(args.dir, audience=args.audience)
     return 0
 
 

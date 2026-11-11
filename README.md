@@ -231,6 +231,58 @@ Treasure Coast (St. Lucie and Indian River), plus the statewide Florida Retireme
 of them, set `region: florida` in `config/scope.yaml`. Scope only filters what the pages, the review
 queue and the export show.
 
+## Access gate
+
+**Off by default.** With no `RADAR_GATE` set, the local app and `make deploy-public` behave exactly as
+before: the local app is the owner's full app, and the public site is the open read-only snapshot.
+
+Three audiences:
+
+| Audience | Sees |
+|---|---|
+| public | the open read-only site: approved signals, briefs, gaps, how it works. No contacts, no export. With the gate on, only the password page. |
+| member | the full read-only site, including contacts. No review, tools or export. |
+| admin | everything: review, tasks, export, manual facts, records requests, registry. |
+
+Every template gets `audience` (`public`, `member` or `admin`) plus `can_see_contacts` and `can_admin`.
+Without the gate the local app is `admin` and the public build is `public`; with the gate it is the
+signed-in role.
+
+**Local app with the gate on.** Make the password hashes and a session secret, put them in `.env`
+(git-ignored; see `.env.example`), and start the app:
+
+```bash
+uv run radar hash-password        # prompts; prints pbkdf2_sha256$100000$<salt>$<hash>
+# .env
+RADAR_GATE=on
+RADAR_MEMBER_PASSWORD_HASH=pbkdf2_sha256$...
+RADAR_ADMIN_PASSWORD_HASH=pbkdf2_sha256$...
+RADAR_SESSION_SECRET=...          # python -c 'import secrets; print(secrets.token_hex(32))'
+make serve
+```
+
+`/login` takes a password (no username) and sets a signed, HttpOnly, SameSite=Lax cookie that records
+the role for 12 hours (`RADAR_SESSION_TTL_HOURS`). `/logout` clears it. Every other path except
+`/static/*` and `/healthz` redirects to `/login` without it, and a member gets 403 on the admin paths.
+Repeated wrong passwords back off. Without `RADAR_SESSION_SECRET` or a password hash, the app refuses
+to start. The gate replaces `RADAR_AUTH_MODE=basic` while it is on; basic auth still works with the
+gate off, and accepts the same `radar hash-password` output (or the old sha256 hex).
+
+**Gated members site.** A separate Worker (`deploy/gate-worker.js`, `wrangler.gated.jsonc`) serves the
+member build only after the password check; otherwise it serves only the login page. Set its two
+secrets once, then deploy:
+
+```bash
+npx wrangler secret put GATE_SESSION_SECRET -c wrangler.gated.jsonc        # random, 32+ characters
+npx wrangler secret put GATE_MEMBER_PASSWORD_HASH -c wrangler.gated.jsonc  # radar hash-password output
+make deploy-gated   # export-static --audience member -> wall-static --audience member -> wrangler deploy
+```
+
+Pick its hostname in `wrangler.gated.jsonc` first. The wall check knows which build it is reading: in
+the public build any block marked `data-audience="member"` or `"admin"` (or `class="contacts"`) fails
+it; in the member build contact details may appear only inside member blocks, and admin pages and links
+still fail it.
+
 ## Deploy
 
 **Public site.** [allocator.amagna.co](https://allocator.amagna.co/) is a static snapshot on
@@ -243,6 +295,9 @@ redeploy to refresh the data.
 **Full app.** `docker compose up -d` runs the app (login required) and a nightly worker. Put it
 behind your own tunnel or reverse proxy on a subdomain. Server notes are in `deploy/VPS.md`. DuckDB
 is the default store; the SQL is kept portable so it can move to Postgres.
+
+**Members site.** See [Access gate](#access-gate): `make deploy-gated` deploys a separate, password-gated
+Worker. It does not touch the public site.
 
 ## Status
 

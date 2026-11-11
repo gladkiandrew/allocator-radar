@@ -11,5 +11,8 @@ __pycache__/
 secrets/
 registry/*.lock
 dist/
+dist-member/
+.env.*
+!.env.example
 .wrangler/
 node_modules/

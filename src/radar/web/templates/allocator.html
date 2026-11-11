@@ -1,6 +1,8 @@
 {% extends "base.html" %}
+{% import "_when.html" as W with context %}
 {% block title %}{{ a.display_name }} · Allocator Radar{% endblock %}
 {% macro cites(evs) %}{% for e in (evs|uniq_cites)[:2] %}{% set h = cite_href(e) %}{% if h %}<a class="cite" href="{{ h }}" target="_blank" rel="noopener" title="{{ e.quote|clean_quote }}">{{ (e.doc_title or 'source')|truncate(24) }}{% if e.page %} · p.{{ e.page }}{% endif %}</a>{% else %}<span class="cite" title="{{ no_url_title }}">{{ (e.doc_title or 'source')|truncate(24) }}{% if e.page %} · p.{{ e.page }}{% endif %} · manual source</span>{% endif %}{% endfor %}{% endmacro %}
+{% macro cite1(e) %}{{ cites([e]) }}{% endmacro %}
 {% macro money(v) %}{% if v is not none %}${{ '{:,.0f}'.format(v) }}{% endif %}{% endmacro %}
 {% block body %}{% set r = a.readiness %}{% set f = a.facts %}{% set reason_ids = r.reasons|map(attribute='signal_id')|list %}
 <p class="crumb"><a href="/">← All allocators</a></p>
@@ -20,6 +22,13 @@
   <span class="txt">{{ r.rule_meaning }}{% if r.reasons %} Latest qualifying signal: <span class="mono">{{ r.reasons[0].event_date }}</span>.{% endif %}</span>
   {% if r.reasons %}<a class="btn ghost" href="#signals">See the evidence ↓</a>{% endif %}
 </div>
+<section class="card when-card" aria-labelledby="when-title" style="margin-top:14px">
+  <h2 id="when-title" style="margin-top:0">When</h2>
+  {% set w = a.when %}
+  {% if r.tier == 'DEPLOYING' and w.lead %}{{ W.deploying(w, cite1) }}{{ W.tracker(w, cite1) }}
+  {% elif r.tier == 'PREPARING' and w.lead %}{{ W.preparing(w, cite1) }}{% endif %}
+  {{ W.last_deployment(w, cite1) }}{{ W.next_meeting(w) }}
+</section>
 {% if a.bar_reasons %}<div class="notice">Not on the main table yet: {{ a.bar_reasons|join('; ') }}.</div>{% endif %}
 
 {% macro fact(label, x, big=False) %}<div class="fact"><div class="l">{{ label }}</div>
@@ -108,7 +117,19 @@
 <div class="table-card"><div class="scroll"><table class="stack"><thead><tr><th scope="col">Name</th><th scope="col">Title</th><th scope="col">As of</th><th scope="col">Source</th></tr></thead><tbody>
 {% for o in a.officers %}<tr><td>{{ o.name_as_printed }}</td><td>{{ o.title_as_printed }}</td><td class="mono">{{ o.as_of }}</td><td>{{ cites(o.evidence) }}</td></tr>{% endfor %}
 </tbody></table></div></div>
-<p class="faint small">Names and titles only, exactly as the documents print them. No contact details are stored.</p>{% endif %}
+<p class="faint small">Names and titles exactly as the documents print them. Contact details are shown only to signed-in members, never on the public site.</p>{% endif %}
+
+{% if (can_see_contacts if can_see_contacts is defined else not public) and a.contacts %}
+<section class="contacts" data-audience="member" aria-labelledby="contacts-title">
+<h2 id="contacts-title">Contacts <span class="count">as printed, members only</span></h2>
+<div class="table-card"><div class="scroll"><table class="stack"><thead><tr><th scope="col">Name</th><th scope="col">Title</th><th scope="col">Email</th><th scope="col">Phone</th><th scope="col">Document date</th><th scope="col">Source</th></tr></thead><tbody>
+{% for c in a.contacts[:60] %}<tr><td>{{ c.cname or '' }}</td><td>{{ c.ctitle or '' }}{% if c.office_address %}<div class="faint small">{{ c.office_address }}</div>{% endif %}</td>
+  <td>{% if c.email %}<span class="mono">{{ c.email }}</span>{% else %}<span class="faint">not published</span>{% endif %}</td>
+  <td>{% if c.phone %}<span class="mono">{{ c.phone }}</span>{% else %}<span class="faint">not published</span>{% endif %}</td>
+  <td class="mono">{{ c.as_of or 'not published' }}</td><td>{{ cites(c.evidence) }}</td></tr>{% endfor %}
+</tbody></table></div></div>
+<p class="faint small">Business contact details exactly as printed in the cited public document{% if a.contacts|length > 60 %}; showing 60 of {{ a.contacts|length }}, newest documents first{% endif %}. Shown to signed-in members only.</p>
+</section>{% endif %}
 
 {% if not static_site %}<h2 id="search">Search this plan's documents</h2>
 <div class="search-field">

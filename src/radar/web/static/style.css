@@ -441,3 +441,14 @@ footer.site a { color: var(--fg-2); }
   .ef-hf td.ef-hf-rank { display: none; }
   .ef-hf td[data-l]::before { content: attr(data-l); display: block; margin-top: 8px; font: 600 11px/1.4 var(--sans); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 }
+
+/* "When" lines on the table and plan page */
+.when-line { margin: 2px 0 4px; line-height: 1.5; }
+.when-k { display: inline-block; min-width: 7.5em; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted, #6b7280); margin-right: 6px; }
+.when-more { margin-top: 6px; font-size: 13px; }
+.when-more summary { cursor: pointer; color: var(--muted, #6b7280); }
+.stage-tracker { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; padding: 0; margin: 10px 0; }
+.stage-tracker li { border: 1px solid var(--line, #ddd); border-radius: 8px; padding: 8px; min-width: 0; opacity: .55; }
+.stage-tracker li.on { opacity: 1; border-color: var(--accent, #3ccf9d); }
+.stage-tracker .st-label { display: block; font-weight: 600; font-size: 13px; }
+.stage-tracker .st-date { display: block; font-size: 12px; margin: 2px 0; }

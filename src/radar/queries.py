@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 
 from radar import db
@@ -41,6 +42,12 @@ def signals_for(con, allocator_ids: list[str] | None = None,
     ev = _evidence_for(con, "signal", [s["signal_id"] for s in sigs])
     for s in sigs:
         s["evidence"] = ev.get(s["signal_id"], [])
+    from radar.settings import get_settings
+
+    if get_settings().public_mode:  # public and member builds: verified signals only (they alone set tiers there)
+        from radar.web.present import is_verified
+
+        sigs = [s for s in sigs if is_verified(s)]
     return sigs
 
 
@@ -85,8 +92,10 @@ def allocator_table(con, scoped: bool = True) -> list[dict]:
     sigs_by: dict[str, list[dict]] = defaultdict(list)
     for s in signals_for(con):
         sigs_by[s["allocator_id"]].append(s)
+    tl_alloc, tl_search = timeline_rows(con)
     out = []
     for a in allocs:
+        a["tl"], a["tl_searches"] = tl_alloc.get(a["allocator_id"]), tl_search.get(a["allocator_id"], [])
         d = docs.get(a["allocator_id"], {})
         sigs = sigs_by.get(a["allocator_id"], [])
         r = compute(sigs, d.get("last_new_document"))
@@ -107,6 +116,9 @@ def allocator_table(con, scoped: bool = True) -> list[dict]:
             consultant=consultants.get(a["allocator_id"]),
             pending=[s for s in sigs if s["review_status"] == "new"],
         )
+        from radar.web import when as timeline
+
+        a["when"] = timeline.when(a, sigs)
         out.append(a)
     out.sort(key=lambda a: (TIER_ORDER.index(a["readiness"].tier),
                             -(a["readiness"].reasons[0]["event_date"].toordinal() if a["readiness"].reasons else 0),
@@ -193,11 +205,93 @@ def allocator_brief(con, allocator_id: str) -> dict | None:
                                                 if a["consultant_engagements"] and e["as_of"] == a["consultant_engagements"][0]["as_of"]])
     from radar import coverage
 
+    a["contacts"] = contacts_for(con, allocator_id)
     a["facts"] = plan_facts(con, allocator_id)
     a["managers_as_of"], a["managers"] = managers_by_class(a["mandates"])
     a["coverage"] = coverage.checklist(con, allocator_id)
     a["bar_reasons"] = coverage.bar(con, a)
+    from datetime import date as _date
+
+    from radar.web import when as timeline
+
+    ahead = [d["doc_date"] for d in a["documents"] if d.get("doc_date") and d["doc_date"] > _date.today()]
+    tl_alloc, tl_search = timeline_rows(con)
+    a["tl"], a["tl_searches"] = tl_alloc.get(allocator_id), tl_search.get(allocator_id, [])
+    a["when"] = timeline.when({**a, "next_meeting": a["facts"].get("next_meeting"),
+                               "upcoming_doc_date": min(ahead) if ahead else None}, sigs)
     return a
+
+
+def timeline_rows(con) -> tuple[dict, dict]:
+    """DATA's timeline tables (D-B37) if present: ({allocator_id: row}, {allocator_id: [search rows]})."""
+    have = {r[0] for r in con.execute("SELECT table_name FROM information_schema.tables "
+                                      "WHERE table_name IN ('timeline_allocators', 'timeline_searches')").fetchall()}
+    alloc, searches = {}, defaultdict(list)
+    if "timeline_allocators" in have:
+        alloc = {r["allocator_id"]: r for r in db.rows(con, "SELECT * FROM timeline_allocators")}
+    if "timeline_searches" in have:
+        for r in db.rows(con, "SELECT * FROM timeline_searches ORDER BY last_date DESC NULLS LAST"):
+            searches[r["allocator_id"]].append(r)
+    return alloc, searches
+
+
+_CJUNK = re.compile(r"(?i)\b(address|card|act|trail|street|avenue|road|blvd|property|program|pharmacy|suite|floor|"
+                    r"drive|highway|phone|fax|email|contact person)\b")
+
+
+def _contact_paired(r: dict) -> bool:
+    """Display precision for contacts (until DATA's extraction pairs reliably): a person row shows only when the email's
+    local part contains one of the person's name words; an office row shows only with a printed title."""
+    name = (r.get("cname") or "").strip()
+    if not name or _CJUNK.search(name):
+        return False
+    if r.get("role_type") == "office":
+        return bool((r.get("ctitle") or "").strip())
+    email = (r.get("email") or "").lower()
+    local = re.sub(r"[^a-z]", "", email.split("@")[0]) if "@" in email else ""
+    toks = [t for t in re.findall(r"[a-z]{3,}", name.lower())]
+    return bool(local and toks and any(t in local for t in toks))
+
+
+def contacts_for(con, allocator_id: str) -> list[dict]:
+    """Business contacts as printed in public documents (DATA's `contacts` table, D-B35), each cited to its document
+    and page. [] when the table does not exist. Rendering is gated to member/admin audiences by the template."""
+    if not con.execute("SELECT 1 FROM information_schema.tables WHERE table_name = 'contacts'").fetchone():
+        return []
+    cols = {r[0] for r in con.execute("DESCRIBE contacts").fetchall()}
+    # Precision gate: render only contacts DATA has verified as this plan's own contacts (R13). The raw extraction
+    # pairs names with other people's details and picks up unrelated agenda contacts, so without the flag none show.
+    flag = next((c for c in ("verification_status", "plan_contact", "display_ok") if c in cols), None)
+    if flag is None:
+        return []
+    where_flag = (f"AND c.{flag} IN ('verified', 'verified_after_fix')" if flag == "verification_status"
+                  else f"AND c.{flag}")
+    name = "name" if "name" in cols else "name_as_printed"
+    title = "title" if "title" in cols else "title_as_printed"
+    sha = "c.document_sha256" if "document_sha256" in cols else "NULL"
+    rows = db.rows(con, f"""SELECT c.*, c.{name} AS cname, c.{title} AS ctitle, {sha} AS csha,
+                                   du.title AS doc_title, du.doc_date
+                            FROM contacts c
+                            LEFT JOIN (SELECT sha256, any_value(title) AS title, max(doc_date) AS doc_date
+                                       FROM document_urls GROUP BY sha256) du ON du.sha256 = {sha}
+                            WHERE c.allocator_id = ? {where_flag} ORDER BY du.doc_date DESC NULLS LAST""", [allocator_id])
+    out, seen = [], set()
+    for r in rows:
+        if not (r.get("source_url") or r.get("csha")):
+            continue  # uncited contacts never render
+        if not (r.get("email") or r.get("phone")):
+            continue  # a name with no contact detail is an officer row, not a contact
+        if not _contact_paired(r):
+            continue  # the name and the detail may belong to different people: don't show a guess
+        k = (r.get("cname"), r.get("email"), r.get("phone"))
+        if k in seen:
+            continue
+        seen.add(k)
+        r["evidence"] = [{"source_url": r.get("source_url") or "", "document_sha256": r.get("csha"), "page": r.get("page"),
+                          "doc_title": r.get("doc_title") or "source", "quote": r.get("context") or ""}]
+        r["as_of"] = r.get("doc_date") or r.get("as_of")
+        out.append(r)
+    return out
 
 
 def _norm_label(s: str | None) -> str:

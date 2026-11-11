@@ -16,6 +16,7 @@
   <a href="/review?status=rejected" class="{{ 'on' if status == 'rejected' }}">Rejected <span class="n">{{ counts.rejected }}</span></a>
 </div>
 {% if status == 'new' and signals %}<p><a class="btn" href="/review/next">Focus mode: one signal per screen, keys a / r / s →</a></p>{% endif %}
+<p class="small"><a href="/review/ef">E&amp;F spot-check: check the sampled endowment and foundation signals, keys a / r / s →</a></p>
 {% if not signals %}<div class="card empty">Nothing here. The queue is clear.</div>{% endif %}
 {% for s in signals %}{% include "review_card.html" %}{% endfor %}
 {% endblock %}

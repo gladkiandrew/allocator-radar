@@ -23,10 +23,21 @@
   <div class="kpi"><div class="v">{% if card.reviewed_pct is not none %}{{ card.reviewed_pct }}%{% else %}—{% endif %}</div>
     <div class="l">Signals reviewed by a person</div>
     <div class="faint small">{{ card.reviewed }} of {{ card.public_signals }} public signals. The rest passed the four automatic checks and are labeled as such.</div></div>
+  <div class="kpi"><div class="v">{% if card.verified_pct is not none %}{{ card.verified_pct }}%{% else %}—{% endif %}</div>
+    <div class="l">Signals verified against source</div>
+    <div class="faint small">{{ card.verified }} of {{ card.public_signals }}: the quote matches the cited page, or the row was read from a table or filing field. Only these are shown.</div></div>
   <div class="kpi"><div class="v">{% if card.spot %}{{ card.spot.pct }}%{% else %}—{% endif %}</div>
     <div class="l">Latest spot-check accuracy</div>
     <div class="faint small">{% if card.spot %}{{ card.spot.correct }} of {{ card.spot.checked }} signals correct against their source pages, checked {{ card.spot.date }}.{% else %}No spot check recorded yet.{% endif %}</div></div>
 </section>
+
+<h2 id="phase-c">Phase C status <span class="mono count">Florida endowments, foundations, hospitals</span></h2>
+<div class="table-card"><div class="scroll"><table class="stack">
+  <thead><tr><th scope="col">Done when</th><th scope="col">Measured</th><th scope="col">Status</th></tr></thead>
+  <tbody>{% for c in card.phase_c %}
+  <tr><td>{{ c.criterion }}</td><td>{{ c.value }}</td><td>{% if c.met %}<span class="tag ok">met</span>{% else %}<span class="tag warn">not yet</span>{% endif %}</td></tr>
+  {% endfor %}</tbody></table></div></div>
+<p class="faint small">Phase C closes when all four are met. Criteria from ROADMAP.md.</p>
 
 <div class="flow" aria-label="Pipeline">
   <div class="step"><div class="k">01 · Discover</div><h3>Find the plans</h3><p>A registry of public plans and the pages where each one posts agendas, minutes and reports. A person approves it before any crawling.</p></div>
@@ -76,7 +87,7 @@
 
 <h2>The Wall</h2>
 <div class="grid-2">
-  <div class="card"><h3>No contact details anywhere</h3><p class="muted" style="margin:0">No model has an email, phone, address or social-profile field. People appear only by name and title, as the public documents print them.</p></div>
+  <div class="card"><h3>Contacts only behind the login</h3><p class="muted" style="margin:0">Business contact details that a public document prints are kept with their citation and shown only to signed-in members (D-B35). The public site shows none. Individual pay and identity numbers are never stored.</p></div>
   <div class="card"><h3>Scrubber first</h3><p class="muted" style="margin:0">All text is scrubbed before it reaches the language model, the search index or any table. Contact-shaped text becomes <span class="mono">[REDACTED-CONTACT]</span>.</p></div>
   <div class="card"><h3>No outbound capability</h3><p class="muted" style="margin:0">The crawler sends GET and HEAD requests only, to an allowlist of hosts. The system cannot send email or messages, and it cannot submit forms.</p></div>
   <div class="card"><h3>Tested every night</h3><p class="muted" style="margin:0">Wall tests sweep every stored text column. A canary packet full of fake contact details goes through the pipeline, and none of it may be stored.</p></div>
@@ -87,11 +98,10 @@
   <ul style="margin:0">
     <li>Only <strong>approved</strong> signals change a tier: approved by a person, or auto-approved under the four checks
       above. A new signal shows as <span class="pending">pending review</span> until it is approved or rejected.</li>
-    <li>Every signal shows its real review state. <span class="tag ok">reviewed</span>: a person read the source page and
-      approved it. <span class="tag">auto-approved (manual source)</span>: it passed the four checks, and its source file was
-      downloaded by hand from the publisher. <span class="tag">awaiting review</span>: it passed the four checks and counts
-      toward the tier, but no person has looked at it yet.{% if public %} Pending and rejected signals are never shown
-      here.{% endif %}</li>
+    <li>Only verified signals are shown on this site, and only they set a tier here. <span class="tag">verified against source</span>:
+      checked automatically, because its quote matches the cited page word for word or it was read from a table or a filing
+      field. <span class="tag ok">reviewed by a person</span>: a person read the source page and approved it. Unverified,
+      pending and rejected signals are never shown.</li>
     <li>A signal comes from one of two places. Either the extractor reads a fetched public document and quotes the page, or a person enters a fact from a manual-only source, with its URL and date.</li>
     <li>Summaries use factual verbs: reported, approved, voted, issued, awarded, terminated, placed on watch. A lint rejects evaluative words before anything is stored.</li>
     <li>The CSV export contains only signals a person has approved.</li>

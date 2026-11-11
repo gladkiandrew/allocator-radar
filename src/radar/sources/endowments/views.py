@@ -25,7 +25,11 @@ def _signals(con, eins: list[str] | None, public: bool) -> dict[str, list[dict]]
         where.append(f"ein IN ({','.join('?' * len(eins))})")
         params += eins
     out: dict[str, list[dict]] = defaultdict(list)
+    from radar.web.present import is_verified
+
     for s in store.rows(con, f"SELECT * FROM ef_signals WHERE {' AND '.join(where)} ORDER BY event_date DESC, signal_type", params):
+        if public and not is_verified(s):
+            continue
         s["source_label"] = SOURCE_LABEL.get(s["source_type"], s["source_type"])
         out[s["ein"]].append(s)
     return out
@@ -66,8 +70,12 @@ def org_table(public: bool = True) -> list[dict]:
                      "managers": sorted(set(inv.get(latest["object_id"], []))) if latest else [],
                      "hf_lines": hf_lines.get(latest["object_id"], 0) if latest else 0,
                      "total_assets": (latest or {}).get("total_assets") or o["bmf_assets"],
+                     # The endowment (Sch. D Part V line 1g) is the investable pool a reader means by "endowment";
+                     # total assets also counts buildings, receivables and hospital operations.
+                     "endowment": (latest or {}).get("endowment_eoy"),
+                     "endowment_cite": irs.citation(_filing_obj(latest), "endowment") if latest else None,
                      "propublica_url": PP_ORG.format(ein=int(o["ein"]))})
-    rows.sort(key=lambda r: (TIER_ORDER.index(r["readiness"].tier), -(r["total_assets"] or 0)))
+    rows.sort(key=lambda r: (TIER_ORDER.index(r["readiness"].tier), -((r["endowment"] or r["total_assets"]) or 0)))
     return rows
 
 
@@ -94,6 +102,7 @@ def org_brief(ein: str, public: bool = True) -> dict | None:
         f["contractors"] = contractors.get(f["object_id"], [])
         f["cite_contractors"] = irs.citation(_filing_obj(f), "contractors")
         f["cite_total"] = irs.citation(_filing_obj(f), "total_assets")
+        f["cite_endow"] = irs.citation(_filing_obj(f), "endowment")
         f["cite_other"] = irs.citation(_filing_obj(f), "investments_other")
         f["cite_public"] = irs.citation(_filing_obj(f), "investments_public")
         f["cite_other_list"] = irs.citation(_filing_obj(f), "other_investments")
@@ -133,9 +142,11 @@ def hf_rows(public: bool = True, limit: int = 6) -> list[dict]:
              + ("AND review_status IN ('approved', 'auto_approved') " if public else "")
              + "ORDER BY signal_type = 'EF_MANAGER_ADDED', event_date DESC")  # new hedge fund lines first
         sigs = store.rows(con, q)
+    from radar.web.present import is_verified
+
     seen, out = defaultdict(int), []
     for s in sigs:
-        if not strip_qualifies(s):
+        if not strip_qualifies(s) or (public and not is_verified(s)):
             continue
         if seen[s["ein"]] >= 2:
             continue

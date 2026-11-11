@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_when.html" as W with context %}
 {% macro cite(e) %}{% set h = cite_href(e) %}{% if h %}<a class="cite" href="{{ h }}" target="_blank" rel="noopener" title="{{ e.quote|clean_quote }}">{{ (e.doc_title or 'source')|truncate(26) }}{% if e.page %} · p.{{ e.page }}{% endif %}</a>{% else %}<span class="cite" title="{{ no_url_title }}">{{ (e.doc_title or 'source')|truncate(26) }}{% if e.page %} · p.{{ e.page }}{% endif %} · manual source</span>{% endif %}{% endmacro %}
 {% block body %}
 
@@ -123,12 +124,12 @@
   {% if strategy == 'hf' %}<p class="muted small" style="margin:-4px 0 10px">Hedge fund preset: hedge fund, diversifying, managed futures, multi-strategy, quant and absolute return signals.</p>{% endif %}
 
   {% if not rows %}
-  <div class="card empty">{% if n_gaps %}No plan matches this view. Try <a href="/">all strategies</a>, or see <a href="/gaps">Coverage gaps</a>.{% elif public %}No allocators yet.{% else %}No allocators yet. The registry has not been loaded and approved. Go to <a href="/registry">Registry</a>.{% endif %}</div>
+  <div class="card empty">{% if n_gaps %}No plan matches this view. Try <a href="/">all strategies</a>, or see <a href="/gaps">Coverage gaps</a>.{% elif not can_admin %}No allocators yet.{% else %}No allocators yet. The registry has not been loaded and approved. Go to <a href="/registry">Registry</a>.{% endif %}</div>
   {% else %}
   <div class="table-card"><div class="scroll">
   <table class="stack">
     <thead><tr>
-      <th scope="col">Allocator</th><th scope="col">Readiness</th><th scope="col">Why: latest qualifying signal</th><th scope="col" class="hide-sm">Consultant</th><th scope="col" class="hide-sm">Coverage</th>
+      <th scope="col">Allocator</th><th scope="col">Readiness</th><th scope="col">When: what is happening and the next dated step</th><th scope="col" class="hide-sm">Consultant</th><th scope="col" class="hide-sm">Coverage</th>
     </tr></thead>
     <tbody>
     {% for a in rows %}{% set r = a.readiness %}
@@ -138,19 +139,23 @@
       <td><span class="tier {{ r.tier }}">{{ r.tier }}</span>
         {% if r.coverage_stale and r.tier not in ('STALE',) %}<div class="faint small" style="margin-top:6px">coverage stale</div>{% endif %}</td>
       <td class="why">
+        {% set w = a.when %}
+        {% if r.tier == 'DEPLOYING' and w.lead %}{{ W.deploying(w, cite) }}
+        {% elif r.tier == 'PREPARING' and w.lead %}{{ W.preparing(w, cite) }}
+        {% else %}{{ W.last_deployment(w, cite) }}{{ W.next_meeting(w) }}{% endif %}
         {% if r.reasons %}{% set s = r.reasons[0] %}
-          <span class="date">{{ s.event_date }}</span>{{ s.summary }}
-          {% for e in (s.evidence|uniq_cites)[:1] %}{{ cite(e) }}{% endfor %}
+          <details class="when-more"><summary>Latest qualifying signal · <span class="mono">{{ s.event_date }}</span></summary>
+          <span class="date">{{ s.event_date }}</span> {{ s.summary }}
+          {% for e in (s.evidence|uniq_cites)[:1] %}{{ cite(e) }}{% endfor %}</details>
           <div class="meta">
             {% if s.hf_relevant %}<span class="tag hf">HF</span>{% endif %}
             {% set sl = strategy_label(s) %}<span>{{ sl.text }}{% if sl.inferred %} <span class="faint">(inferred)</span>{% endif %}</span>
             {% if s.date_basis %}<span class="basis">dated by {{ s.date_basis|replace('_',' ') }}</span>{% endif %}
             {% set ap = approval(s) %}<span class="tag {{ ap.cls }}" title="{{ ap.title }}">{{ ap.label }}</span>
-            <span>next meeting {{ a.next_meeting or 'not published' }}</span>
             {% if r.reasons|length > 1 %}<a href="/a/{{ a.allocator_id }}#signals">+{{ r.reasons|length - 1 }} more qualifying</a>{% endif %}
           </div>
-        {% elif r.tier == 'STALE' %}<span class="muted">{{ 'No documents fetched yet.' if not a.last_fetched else 'No new document in ' ~ stale_days ~ ' days.' }}</span>
-        {% else %}{% set cn = coverage_note(a.newest_doc_date) %}<span class="muted">No qualifying signal in the window. {{ 'Coverage is current.' if not cn else cn[0]|upper ~ cn[1:] ~ '.' }}{% if a.upcoming_doc_date %} Upcoming meeting {{ a.upcoming_doc_date }}.{% endif %}</span>{% endif %}
+        {% elif r.tier == 'STALE' %}<div class="muted small">{{ 'No documents fetched yet.' if not a.last_fetched else 'No new document in ' ~ stale_days ~ ' days.' }}</div>
+        {% else %}{% set cn = coverage_note(a.newest_doc_date) %}<div class="muted small">No qualifying signal in the window. {{ 'Coverage is current.' if not cn else cn[0]|upper ~ cn[1:] ~ '.' }}</div>{% endif %}
         {% if a.pending and not public %}<div style="margin-top:6px"><span class="pending">{{ a.pending|length }} pending review</span></div>{% endif %}
       </td>
       <td class="hide-sm">{% if a.consultant %}{{ a.consultant.consultant|consultant }}<div class="faint mono" style="font-size:11px;margin-top:3px">as of {{ a.consultant.as_of }}</div>{% else %}<span class="faint">—</span>{% endif %}</td>

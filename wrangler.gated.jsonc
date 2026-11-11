@@ -1,0 +1,27 @@
+// Gated members site of Allocator Radar: a Worker (deploy/gate-worker.js) in front of the member static build.
+// Build and deploy with `make deploy-gated`: export-static --audience member -> wall-static --audience member ->
+// wrangler deploy -c wrangler.gated.jsonc. The public site (wrangler.jsonc, `make deploy-public`) is separate and
+// unchanged.
+//
+// Secrets, set once (never in this file or the repo):
+//   npx wrangler secret put GATE_SESSION_SECRET -c wrangler.gated.jsonc        # random, 32+ characters
+//   npx wrangler secret put GATE_MEMBER_PASSWORD_HASH -c wrangler.gated.jsonc  # output of `radar hash-password`
+// Without them the Worker answers 503 and serves nothing (fails closed).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "allocator-radar-members",
+  "main": "deploy/gate-worker.js",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist-member",
+    "binding": "ASSETS",
+    // Every request goes through the Worker first, so no asset is served without the cookie check.
+    "run_worker_first": true,
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  // Pick the hostname before the first deploy, e.g. a custom domain on the amagna.co zone:
+  // "routes": [ { "pattern": "members.allocator.amagna.co", "custom_domain": true } ],
+  "workers_dev": true,
+  "preview_urls": false
+}

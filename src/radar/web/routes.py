@@ -12,6 +12,9 @@ from radar.web.auth import require_user
 
 def templates_partial(request, name, **ctx):
     from radar.web.app import templates
+    from radar.web.gate import audience_context
+
+    ctx.update(audience_context(request))
     return templates.TemplateResponse(request, name, ctx)
 
 
@@ -119,6 +122,59 @@ def register(app: FastAPI, render) -> None:
         except (review.ReviewError, ValueError) as e:
             return RedirectResponse(_next_url(skipped, err=str(e)), status_code=303)
         return RedirectResponse(_next_url(skipped, done=decision), status_code=303)
+
+    # ---- E&F spot-check: data/ef_spotcheck_25.md, decisions to a JSONL file, never the database ----
+    from radar.web import ef_spotcheck as efs
+
+    def _ef_url(skip: list[str], err: str | None = None, done: str | None = None) -> str:
+        return "/review/ef" + _next_url(skip, err, done)[len("/review/next"):]
+
+    @app.get("/review/ef", response_class=HTMLResponse)
+    def review_ef(request: Request, skip: str | None = None, err: str | None = None, done: str | None = None):
+        import duckdb
+
+        from radar.sources.endowments.universe import KIND_LABEL
+        from radar.web.app import public_href
+        from radar.web.ef_routes import pretty
+
+        skipped = _skips(skip)
+        try:
+            signals = efs.load_signals()
+        except duckdb.Error as e:  # e.g. the DATA session holds the write lock
+            return render(request, "review_ef.html", s=None, st=None, exists=True, skip="", err=None, done=None,
+                          load_err=f"could not open the E&F store read-only: {e}", n_skipped=0)
+        ids, exists = efs.sample(signals)
+        st = efs.state(ids, efs.read_decisions())
+        left = [i for i in st["undecided"] if i not in skipped]
+        s = None
+        if left:
+            s = dict(signals[left[0]])
+            s["org_pretty"] = pretty(s.get("org_name")) or s["ein"]
+            s["kind_label"] = KIND_LABEL.get(s.get("org_kind"), s.get("org_kind") or "")
+            url = public_href(s.get("source_url"))
+            if url and s.get("page") and "#" not in url:  # some stored URLs already carry their #page=
+                url += f"#page={s['page']}"
+            s["href"] = url
+            s["page_in_cite"] = bool(s.get("page")) and f"page {s['page']}" in (s.get("cite") or "").lower()
+        return render(request, "review_ef.html", s=s, st=st, exists=exists, skip=",".join(skipped), err=err,
+                      done=done, load_err=None, n_skipped=len(st["undecided"]) - len(left))
+
+    @app.post("/review/ef/{signal_id}")
+    def review_ef_decide(signal_id: str, decision: str = Form(...), skip: str = Form(default=""),
+                         note: str = Form(default=""), user: str = Depends(require_user)):
+        skipped = _skips(skip)
+        ids, _ = efs.sample(efs.load_signals())
+        if signal_id not in ids:
+            return RedirectResponse(_ef_url(skipped, err="that signal is not in data/ef_spotcheck_25.md"), status_code=303)
+        if decision == "skip":
+            if signal_id not in skipped:
+                skipped.append(signal_id)
+            return RedirectResponse(_ef_url(skipped), status_code=303)
+        try:
+            efs.append_decision(signal_id, decision, user, note)
+        except efs.SpotcheckError as e:
+            return RedirectResponse(_ef_url(skipped, err=str(e)), status_code=303)
+        return RedirectResponse(_ef_url(skipped, done=decision), status_code=303)
 
     @app.get("/review", response_class=HTMLResponse)
     def review_page(request: Request, status: str = "new"):

@@ -18,6 +18,8 @@
 </div>
 
 <section class="facts" aria-label="At a glance">
+  {% if f and f.endowment_eoy is not none %}<div class="fact"><div class="l">Endowment</div><div class="v big">{{ money(f.endowment_eoy) }}</div>
+    <span class="as">end of TY{{ f.tax_year }}, Schedule D Part V line 1g</span><div style="margin-top:6px">{{ cite(f.url, 'Form ' ~ f.form ~ ' TY' ~ f.tax_year, f.cite_endow) }}</div></div>{% endif %}
   <div class="fact"><div class="l">Total assets</div>{% if f and f.total_assets is not none %}<div class="v big">{{ money(f.total_assets) }}</div>
     <span class="as">end of TY{{ f.tax_year }} ({{ f.tax_period_end }})</span><div style="margin-top:6px">{{ cite(f.url, 'Form ' ~ f.form ~ ' TY' ~ f.tax_year, f.cite_total) }}</div>
     {% else %}<div class="v big">{{ money(o.bmf_assets) }}</div><span class="as">IRS master file</span>{% endif %}</div>
@@ -37,7 +39,7 @@
   <li class="{{ r.tier if s in r.reasons else '' }}">
     <div class="t-head">
       <span class="t-date">{{ s.event_date }}</span>
-      <span class="t-type">{{ s.signal_type|replace('EF_', '')|replace('_', ' ')|lower }}</span>
+      <span class="t-type">{{ ef_signal_label(s) or s.signal_type|replace('EF_', '')|replace('_', ' ')|lower }}</span>
       <span class="tag">{{ s.source_label }}</span>
       {% if s.hf_relevant %}<span class="tag hf">HF</span>{% endif %}
       {% set ap = approval(s) %}<span class="tag {{ ap.cls }}" title="{{ ap.title }}">{{ ap.label }}</span>
@@ -68,7 +70,7 @@
 {% for c in x.contractors %}<tr><td>{{ c.firm }}{% if c.investment %} <span class="tag hf">investment</span>{% endif %}</td><td>{{ c.service|lower }}</td><td class="mono">{{ money(c.amount) }}</td></tr>{% endfor %}
 </tbody></table></div></div>{% endif %}
 {% endfor %}
-<p class="faint small">{{ o.filings[0].cite_contractors }}. Only firm names are kept from this list. No emails, phone numbers or addresses are stored.</p>{% endif %}
+<p class="faint small">{{ o.filings[0].cite_contractors }}. Only firm names are kept from this list. Individual pay is never stored.</p>{% endif %}
 
 <h2 id="alternatives">Other investments as reported <span class="count">{{ o.n_other_latest }}</span></h2>
 {% if not o.other_latest %}<div class="card empty">No itemized "other investments" in the latest return read.</div>{% else %}

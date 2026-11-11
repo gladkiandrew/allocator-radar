@@ -24,7 +24,7 @@
 {% if not rows %}<div class="card empty">No organizations loaded yet.</div>{% else %}
 <div class="table-card" style="margin-top:18px"><div class="scroll">
 <table class="stack">
-  <thead><tr><th scope="col">Organization</th><th scope="col">Readiness</th><th scope="col">Assets (latest 990)</th>
+  <thead><tr><th scope="col">Organization</th><th scope="col">Readiness</th><th scope="col">Endowment (latest 990)</th>
     <th scope="col">Latest signal</th><th scope="col" class="hide-sm">Investment firms named</th></tr></thead>
   <tbody>
   {% for o in rows %}{% set r = o.readiness %}{% set f = o.latest %}
@@ -32,12 +32,12 @@
     <td class="plan"><a class="pname" href="/ef/{{ o.ein }}">{{ o.name|pretty }}</a>
       <div class="where">{{ o.kind_label }} · {{ o.city }}</div></td>
     <td><span class="tier {{ r.tier }}">{{ r.tier }}</span></td>
-    <td class="mono">{{ money(o.total_assets) }}
-      {% if o.filings|length > 1 %}<div class="faint" style="font-size:11px;margin-top:3px">{% for x in o.filings %}TY{{ x.tax_year }} {{ money(x.total_assets) }}{{ ' · ' if not loop.last }}{% endfor %}</div>{% endif %}
+    <td class="mono">{% if o.endowment is not none %}{{ money(o.endowment) }}<div class="faint" style="font-size:11px;margin-top:3px" title="{{ o.endowment_cite }}">endowment, Sch. D Part V line 1g · total assets {{ money(o.total_assets) }}</div>
+      {% else %}{{ money(o.total_assets) }}<div class="faint" style="font-size:11px;margin-top:3px">total assets (no endowment schedule on this return)</div>{% endif %}
       {% if f %}<div class="faint" style="font-size:11px;margin-top:3px">Form {{ f.form }} TY{{ f.tax_year }}</div>{% else %}<div class="faint" style="font-size:11px;margin-top:3px">IRS master file</div>{% endif %}</td>
     <td class="why">
       {% if o.signals %}{% set s = o.signals[0] %}
-        <span class="date">{{ s.event_date }}</span>{{ s.summary }}
+        <span class="date">{{ s.event_date }}</span> {% set lbl = ef_signal_label(s) %}{% if lbl %}<b>{{ lbl }}:</b> {% endif %}{{ s.summary }}
         <a class="cite" href="{{ s.source_url }}" target="_blank" rel="noopener" title="{{ s.cite }}">{{ s.doc_title or s.cite|truncate(26) }}</a>
         <div class="meta"><span class="tag">{{ s.source_label }}</span>{% if s.hf_relevant %}<span class="tag hf">HF</span>{% endif %}
           {% set ap = approval(s) %}<span class="tag {{ ap.cls }}" title="{{ ap.title }}">{{ ap.label }}</span>
@@ -53,6 +53,6 @@
 </table></div></div>
 <p class="muted small">Universe: IRS Exempt Organizations Business Master File (eo_fl.csv), ranked by assets within each kind.
   Filings: IRS e-file XML (TEOS), read directly; summaries from the ProPublica Nonprofit Explorer API. Only firm names are
-  kept from the contractor lists. No emails, phone numbers or addresses are stored.</p>
+  kept from the contractor lists. Individual pay is never stored.</p>
 {% endif %}
 {% endblock %}

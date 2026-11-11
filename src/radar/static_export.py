@@ -1,5 +1,7 @@
 """Render the public read-only site to plain HTML (D-B15): `radar export-static --out dist/`.
 
+`--audience member` renders the members build for the gated Worker instead (contacts shown; see README "Access gate").
+
 The pages come from the real app in public mode, so the static snapshot shows exactly what the public
 server would: approved and auto-approved signals only (each labeled), no review queue, no tools, no export,
 and citations that point to the original public document, never to the lake.
@@ -127,13 +129,25 @@ def _updated_date() -> str:
     return (ts.date() if ts else date.today()).isoformat()
 
 
-def export(out: Path) -> dict:
-    """Write the snapshot to `out` (replaced). Returns counts."""
+AUDIENCES = ("public", "member")
+
+
+def export(out: Path, audience: str = "public") -> dict:
+    """Write the snapshot to `out` (replaced). Returns counts.
+
+    audience="public" (default) is the open site: no contacts, no export. audience="member" is the build for the
+    gated Worker (`make deploy-gated`): contacts visible, still read-only, still no admin pages, review or export.
+    There is no admin static build."""
     from radar import db, queries
     from radar import settings as S
 
+    if audience not in AUDIENCES:
+        raise ExportError(f"unknown audience {audience!r}: the static site is built for {' or '.join(AUDIENCES)}")
+    saved = {k: os.environ.get(k) for k in ("RADAR_PUBLIC_MODE", "RADAR_AUTH_MODE", "RADAR_PUBLIC_AUDIENCE", "RADAR_GATE")}
     os.environ["RADAR_PUBLIC_MODE"] = "true"
     os.environ["RADAR_AUTH_MODE"] = "none"
+    os.environ["RADAR_PUBLIC_AUDIENCE"] = audience
+    os.environ["RADAR_GATE"] = "off"  # the static build is rendered ungated; the Worker does the gating
     S.get_settings.cache_clear()
     from radar.web import app as webapp
 
@@ -186,11 +200,14 @@ def export(out: Path) -> dict:
         return {"pages": n_html, "briefs": sum(1 for p in written if p.startswith("a/")),
                 "ef_briefs": sum(1 for p in written if p.startswith("ef/")),
                 "views": sum(1 for p in written if p.startswith("view-")), "assets": n_assets,
-                "updated": webapp.templates.env.globals["updated"], "out": str(out)}
+                "updated": webapp.templates.env.globals["updated"], "audience": audience, "out": str(out)}
     finally:
         webapp.templates.env.globals.update(static_site=False)
-        os.environ.pop("RADAR_PUBLIC_MODE", None)
-        os.environ.pop("RADAR_AUTH_MODE", None)
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
         S.get_settings.cache_clear()
 
 
@@ -199,10 +216,11 @@ def _write_404(out: Path, webapp) -> None:
     from types import SimpleNamespace
 
     from radar import scope
+    from radar.web.gate import audience_context
 
     req = SimpleNamespace(url=SimpleNamespace(path="/404"))
     body = webapp.templates.get_template("stub.html").render(
-        request=req, title="Page not found", nav={"pending": 0}, scope=scope.config(),
+        request=req, title="Page not found", nav={"pending": 0}, scope=scope.config(), **audience_context(req),
         message="That page is not part of this snapshot. Start from the allocator table.")
     body, _ = rewrite(body, "404.html", absolute=True)
     (out / "404.html").write_text(body)
