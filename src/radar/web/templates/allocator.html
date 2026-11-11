@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ a.display_name }} · Allocator Radar{% endblock %}
-{% macro cites(evs) %}{% for e in (evs|uniq_cites)[:2] %}{% set h = cite_href(e) %}{% if h %}<a class="cite" href="{{ h }}" target="_blank" rel="noopener" title="{{ e.quote }}">{{ (e.doc_title or 'source')|truncate(24) }}{% if e.page %} · p.{{ e.page }}{% endif %}</a>{% else %}<span class="cite" title="{{ no_url_title }}">{{ (e.doc_title or 'source')|truncate(24) }}{% if e.page %} · p.{{ e.page }}{% endif %} · manual source</span>{% endif %}{% endfor %}{% endmacro %}
+{% macro cites(evs) %}{% for e in (evs|uniq_cites)[:2] %}{% set h = cite_href(e) %}{% if h %}<a class="cite" href="{{ h }}" target="_blank" rel="noopener" title="{{ e.quote|clean_quote }}">{{ (e.doc_title or 'source')|truncate(24) }}{% if e.page %} · p.{{ e.page }}{% endif %}</a>{% else %}<span class="cite" title="{{ no_url_title }}">{{ (e.doc_title or 'source')|truncate(24) }}{% if e.page %} · p.{{ e.page }}{% endif %} · manual source</span>{% endif %}{% endfor %}{% endmacro %}
 {% macro money(v) %}{% if v is not none %}${{ '{:,.0f}'.format(v) }}{% endif %}{% endmacro %}
 {% block body %}{% set r = a.readiness %}{% set f = a.facts %}{% set reason_ids = r.reasons|map(attribute='signal_id')|list %}
 <p class="crumb"><a href="/">← All allocators</a></p>
@@ -28,8 +28,8 @@
 <section class="facts" aria-label="At a glance">
   {% call fact('Total assets', f.total_assets, True) %}{{ money(f.total_assets.value_num) }}{% endcall %}
   <div class="fact"><div class="l">Investment consultant</div>
-    {% if a.consultant_engagements %}{% set c = a.consultant_engagements[0] %}<div class="v">{{ c.consultant_name_as_disclosed }}</div><span class="as">as of {{ c.as_of }}</span><div style="margin-top:6px">{{ cites(c.evidence[:1]) }}</div>
-    {% elif f.providers.INVESTMENT_CONSULTANT %}{% set c = f.providers.INVESTMENT_CONSULTANT %}<div class="v">{{ c.label }}</div><span class="as">as of {{ c.as_of }}</span><div style="margin-top:6px">{{ cites(c.evidence[:1]) }}</div>
+    {% if a.consultant_engagements %}{% set c = a.consultant_engagements[0] %}<div class="v">{{ c.consultant_name_as_disclosed|consultant }}</div><span class="as">as of {{ c.as_of }}</span><div style="margin-top:6px">{{ cites(c.evidence[:1]) }}</div>
+    {% elif f.providers.INVESTMENT_CONSULTANT %}{% set c = f.providers.INVESTMENT_CONSULTANT %}<div class="v">{{ c.label|consultant }}</div><span class="as">as of {{ c.as_of }}</span><div style="margin-top:6px">{{ cites(c.evidence[:1]) }}</div>
     {% else %}<div class="none">Not found in fetched documents</div>{% endif %}</div>
   {% call fact('Assumed return', f.assumed_return, True) %}{{ '%g'|format(f.assumed_return.value_num) }}%{% endcall %}
   {% call fact('Next meeting', f.next_meeting, True) %}<span class="num">{{ f.next_meeting.as_of }}</span>{% endcall %}
@@ -54,11 +54,11 @@
       <span class="t-date">{{ s.event_date }}</span>
       <span class="t-type">{{ s.signal_type }}{% if s.qualifier %} · {{ s.qualifier }}{% endif %}</span>
       {% if s.hf_relevant %}<span class="tag hf">HF</span>{% endif %}
-      {% if s.review_status == 'approved' %}<span class="tag ok">approved by a person</span>{% elif s.review_status == 'auto_approved' %}<span class="tag" title="{{ s.review_note }}">auto-approved</span>{% elif s.review_status == 'new' %}<span class="pending">pending review</span>{% else %}<span class="tag bad">rejected</span>{% endif %}
+      {% if s.review_status == 'approved' %}<span class="tag ok">approved by a person</span>{% elif s.review_status == 'auto_approved' %}<span class="tag" title="{{ s.review_note|clean_quote }}">auto-approved</span>{% elif s.review_status == 'new' %}<span class="pending">pending review</span>{% else %}<span class="tag bad">rejected</span>{% endif %}
       {% if s.origin == 'MANUAL' %}<span class="tag">manual entry</span>{% endif %}
     </div>
     <div class="t-sum">{{ s.summary }} {{ cites(s.evidence) }}</div>
-    {% for e in s.evidence[:1] %}<blockquote>{{ e.quote }}</blockquote>{% endfor %}
+    {% for e in s.evidence[:1] %}<blockquote>{{ e.quote|clean_quote }}</blockquote>{% endfor %}
   </li>{% endmacro %}
 <ol class="timeline">{% for s in a.signals[:20] %}{{ sig_item(s) }}{% endfor %}</ol>
 {% if a.signals|length > 20 %}<details><summary class="btn" style="margin:4px 0 0 30px">Show {{ a.signals|length - 20 }} earlier signals</summary>

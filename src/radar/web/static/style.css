@@ -394,3 +394,38 @@ footer.site a { color: var(--fg-2); }
   .mission { padding: 24px 18px 16px; }
   .mission p.lead { font-size: 18px; }
 }
+
+/* ---- Hedge fund highlights strip (main page) ---- */
+.hf-strip { margin: 0 0 26px; }
+.hf-list { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-1); overflow: hidden; }
+.hf-row { display: grid; grid-template-columns: 148px minmax(0, 1fr); gap: 16px; padding: 14px 18px; border-top: 1px solid var(--line); }
+.hf-row:first-child { border-top: 0; }
+.hf-when { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; font-size: 12.5px; color: var(--muted); }
+.hf-kind { font: 600 11px/1 var(--sans); letter-spacing: .04em; text-transform: uppercase; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--sunken); color: var(--fg-2); }
+.hf-kind.search, .hf-kind.hire { background: var(--deploy-bg); border-color: var(--deploy-bd); color: var(--deploy); }
+.hf-kind.termination, .hf-kind.allocation-change { background: var(--prep-bg); border-color: var(--prep-bd); color: var(--prep); }
+.hf-body .name { font-weight: 650; color: var(--fg); text-decoration: none; }
+.hf-body .name:hover { text-decoration: underline; }
+.hf-body p { margin: 4px 0 8px; color: var(--fg-2); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.hf-body .meta { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--muted); }
+.hf-body .meta b { color: var(--fg-2); font-weight: 600; }
+@media (max-width: 720px) {
+  .hf-row { grid-template-columns: 1fr; gap: 8px; padding: 14px; }
+  .hf-when { flex-direction: row; align-items: center; gap: 10px; }
+}
+
+/* ---- About: the method ---- */
+.method { margin: 26px 0 8px; padding: 20px 24px; }
+.method h2 { margin: 0 0 10px; font-size: 19px; }
+.method ol { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.method li { color: var(--fg-2); line-height: 1.55; }
+.method li b { color: var(--fg); }
+@media (max-width: 720px) { .method { padding: 16px 16px; } }
+
+/* Grid children may shrink below their content width, so wide tables scroll inside .scroll instead of
+   stretching the page on phones (the brief's allocation and coverage tables). */
+.grid-2 > *, .grid2 > *, .grid-3 > *, .grid-4 > *, .facts > *, .spot > * { min-width: 0; }
+.page-head > * { min-width: 0; }
+.page-head .sub, .notice, .muted.small { overflow-wrap: anywhere; }
+.hf-sub { font-size: 15px; margin: 18px 0 10px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.hf-sub .muted { font: 400 13px var(--sans); }

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% macro cite(e) %}{% set h = cite_href(e) %}{% if h %}<a class="cite" href="{{ h }}" target="_blank" rel="noopener" title="{{ e.quote or '' }}">{{ (e.doc_title or 'source')|truncate(26) }}{% if e.page %} · p.{{ e.page }}{% endif %}</a>{% else %}<span class="cite" title="{{ no_url_title }}">{{ (e.doc_title or 'source')|truncate(26) }}{% if e.page %} · p.{{ e.page }}{% endif %} · manual source</span>{% endif %}{% endmacro %}
+{% macro cite(e) %}{% set h = cite_href(e) %}{% if h %}<a class="cite" href="{{ h }}" target="_blank" rel="noopener" title="{{ e.quote|clean_quote }}">{{ (e.doc_title or 'source')|truncate(26) }}{% if e.page %} · p.{{ e.page }}{% endif %}</a>{% else %}<span class="cite" title="{{ no_url_title }}">{{ (e.doc_title or 'source')|truncate(26) }}{% if e.page %} · p.{{ e.page }}{% endif %} · manual source</span>{% endif %}{% endmacro %}
 {% block body %}
 
 <section class="hero rise" aria-labelledby="hero-title">
@@ -13,6 +13,48 @@
     <span>Built by <a href="/about">Andrew Gladki</a>, Financial AI Engineer · <a href="/about">About this project →</a></span>
   </div>
 </section>
+
+{% if highlights or ef_highlights %}
+<section class="hf-strip rise d1" aria-labelledby="hf-title">
+  <div class="section-title"><h2 id="hf-title">Hedge fund activity, last 12 months</h2>
+    <span class="muted">Searches, hires, terminations and target changes for hedge fund, absolute return, risk-mitigation,
+      managed futures and diversifying-strategy mandates. Newest first; every row links to its source page.</span></div>
+  <div class="hf-list">
+  {% for h in highlights %}{% set s = h.signal %}{% set p = h.plan %}
+    <article class="hf-row">
+      <div class="hf-when"><span class="hf-kind {{ h.kind|replace(' ', '-')|lower }}">{{ h.kind }}</span><span class="mono">{{ s.event_date }}</span></div>
+      <div class="hf-body">
+        <a class="name" href="/a/{{ p.allocator_id }}">{{ p.display_name }}</a>
+        <p>{{ s.summary }}</p>
+        <div class="meta">
+          <span>Consultant <b>{{ h.consultant or 'not identified' }}</b></span>
+          {% for e in (s.evidence|uniq_cites)[:1] %}<span>Source {{ cite(e) }}</span>{% endfor %}
+          <span class="faint">{{ 'auto-approved' if s.review_status == 'auto_approved' else 'approved by a person' }}</span>
+          {% if h.more %}<a href="/a/{{ p.allocator_id }}#signals">+{{ h.more }} more</a>{% endif %}
+        </div>
+      </div>
+    </article>
+  {% endfor %}
+  {% if not highlights %}<div class="hf-row"><div class="hf-when"></div><div class="hf-body"><p class="muted">No pension board action of this kind in the last 12 months.</p></div></div>{% endif %}
+  </div>
+  {% if ef_highlights %}
+  <h3 class="hf-sub">Endowments &amp; foundations <span class="muted">from IRS 990 filings: annual and lagging, so these are context, not timing</span></h3>
+  <div class="hf-list">
+  {% for s in ef_highlights %}
+    <article class="hf-row">
+      <div class="hf-when"><span class="hf-kind">{{ 'New holding' if s.signal_type == 'EF_ALT_HOLDING_ADDED' else 'Firm newly listed' }}</span><span class="mono">TY end {{ s.event_date }}</span></div>
+      <div class="hf-body">
+        <a class="name" href="/ef/{{ s.ein }}">{{ s.org_name|pretty }}</a>
+        <p>{{ s.summary }}</p>
+        <div class="meta"><span class="tag">IRS 990</span><span>Source <a class="cite" href="{{ s.source_url }}" target="_blank" rel="noopener" title="{{ s.cite }}">{{ s.doc_title }}</a></span>
+          <span class="faint">{{ s.cite }}</span></div>
+      </div>
+    </article>
+  {% endfor %}
+  </div>
+  {% endif %}
+</section>
+{% endif %}
 
 <section class="kpis rise d1" aria-label="Key figures">
   <div class="kpi"><div class="v">{{ kpi.plans }}</div><div class="l">{{ scope.label }} plans tracked</div></div>
@@ -39,7 +81,7 @@
         {% for e in (s.evidence|uniq_cites)[:1] %}{{ cite(e) }}{% endfor %}</div>
       <div class="meta">
         <span>Strategy <b>{{ (s.bucket or 'other')|replace('_',' ')|lower }}</b>{% if not s.bucket_label %} <span class="faint">(inferred)</span>{% endif %}</span>
-        {% if a.consultant %}<span>Consultant <b>{{ a.consultant.consultant|truncate(34) }}</b></span>{% endif %}
+        {% if a.consultant %}<span>Consultant <b>{{ a.consultant.consultant|consultant|truncate(34) }}</b></span>{% endif %}
         <span>Next meeting <b>{{ a.next_meeting or 'not published' }}</b></span>
         {% if r.reasons|length > 1 %}<a href="/a/{{ a.allocator_id }}#signals">+{{ r.reasons|length - 1 }} more</a>{% endif %}
       </div>
@@ -108,10 +150,10 @@
             {% if r.reasons|length > 1 %}<a href="/a/{{ a.allocator_id }}#signals">+{{ r.reasons|length - 1 }} more qualifying</a>{% endif %}
           </div>
         {% elif r.tier == 'STALE' %}<span class="muted">{{ 'No documents fetched yet.' if not a.last_fetched else 'No new document in ' ~ stale_days ~ ' days.' }}</span>
-        {% else %}<span class="muted">No qualifying signal in the window. Coverage is current.</span>{% endif %}
+        {% else %}{% set cn = coverage_note(a.newest_doc_date) %}<span class="muted">No qualifying signal in the window. {{ 'Coverage is current.' if not cn else cn[0]|upper ~ cn[1:] ~ '.' }}</span>{% endif %}
         {% if a.pending and not public %}<div style="margin-top:6px"><span class="pending">{{ a.pending|length }} pending review</span></div>{% endif %}
       </td>
-      <td class="hide-sm">{% if a.consultant %}{{ a.consultant.consultant }}<div class="faint mono" style="font-size:11px;margin-top:3px">as of {{ a.consultant.as_of }}</div>{% else %}<span class="faint">—</span>{% endif %}</td>
+      <td class="hide-sm">{% if a.consultant %}{{ a.consultant.consultant|consultant }}<div class="faint mono" style="font-size:11px;margin-top:3px">as of {{ a.consultant.as_of }}</div>{% else %}<span class="faint">—</span>{% endif %}</td>
       <td class="hide-sm cov"><span class="bar" aria-hidden="true"><i style="width:{{ [a.coverage_pct, 100]|min }}%"></i></span><span class="mono">{{ a.coverage_pct }}%</span>
         <div class="faint mono" style="font-size:11px;margin-top:4px">{{ a.n_docs }} docs · newest {{ a.newest_doc_date or '—' }}</div></td>
     </tr>

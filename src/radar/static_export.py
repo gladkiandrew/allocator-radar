@@ -22,8 +22,8 @@ from collections import deque
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlsplit
 
-SEEDS = ["/", "/how", "/about", "/gaps"]
-PAGES = {"/how": "how.html", "/about": "about.html", "/gaps": "gaps.html"}
+SEEDS = ["/", "/how", "/about", "/gaps", "/ef"]
+PAGES = {"/how": "how.html", "/about": "about.html", "/gaps": "gaps.html", "/ef": "ef.html"}
 ATTR = re.compile(r'\b(href|src|action|data-href)="([^"]*)"')
 CSS_URL = re.compile(r'url\("(/[^"]*)"\)')
 ALLOCATOR_ID = re.compile(r"[a-z0-9][a-z0-9-]*")
@@ -48,6 +48,9 @@ def out_path(path: str, query: str = "") -> str:
     m = re.fullmatch(r"/a/([^/]+)", path)
     if m and ALLOCATOR_ID.fullmatch(m.group(1)):
         return f"a/{m.group(1)}.html"
+    m = re.fullmatch(r"/ef/(\d{9})", path)
+    if m:
+        return f"ef/{m.group(1)}.html"
     if path.startswith("/static/") and ".." not in path:
         return path.lstrip("/")
     raise ExportError(f"link to a page the public snapshot does not hold: {path}{'?' + query if query else ''}")
@@ -143,6 +146,9 @@ def export(out: Path) -> dict:
 
         with db.connect() as con:
             seeds = SEEDS + [f"/a/{r['allocator_id']}" for r in queries.allocator_table(con)]
+        from radar.sources.endowments import views as ef_views
+
+        seeds += [f"/ef/{e}" for e in ef_views.eins()]
         queue, seen, written = deque(seeds), set(seeds), {}
         while queue:
             key = queue.popleft()
@@ -177,6 +183,7 @@ def export(out: Path) -> dict:
                 n_assets += 1
         n_html = sum(1 for _ in out.rglob("*.html"))
         return {"pages": n_html, "briefs": sum(1 for p in written if p.startswith("a/")),
+                "ef_briefs": sum(1 for p in written if p.startswith("ef/")),
                 "views": sum(1 for p in written if p.startswith("view-")), "assets": n_assets,
                 "updated": webapp.templates.env.globals["updated"], "out": str(out)}
     finally:

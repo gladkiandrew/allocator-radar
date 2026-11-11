@@ -29,6 +29,7 @@
     </button>
     <nav class="main" id="mainnav" aria-label="Main">
       <a href="/" {% if path == '/' or path.startswith('/a/') %}aria-current="page"{% endif %}>Allocators</a>
+      <a href="/ef" {% if path.startswith('/ef') %}aria-current="page"{% endif %}>Endowments &amp; Foundations</a>
       <a href="/gaps" {% if path == '/gaps' %}aria-current="page"{% endif %}>Coverage gaps</a>
       {% if not public %}<a href="/review" {% if path.startswith('/review') %}aria-current="page"{% endif %}>Signal review{% if nav.pending %} <span class="badge" aria-label="{{ nav.pending }} pending">{{ nav.pending }}</span>{% endif %}</a>{% endif %}
       <a href="/how" {% if path == '/how' %}aria-current="page"{% endif %}>How it works</a>

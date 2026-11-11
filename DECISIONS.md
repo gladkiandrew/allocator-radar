@@ -332,3 +332,23 @@ are the irreversible ones, which went to the repo owner.
   that fails to load (a link that is a file download, a timeout) no longer aborts discovery and marks the plan
   MANUAL; this had flipped Coral Gables to MANUAL and dropped its Legistar feed, now restored. Coral Gables'
   2026 agenda PDFs stay unfetched (robots.txt on legistar1.com) and are listed in data/manual_downloads.md.
+- **D-B20 Hedge fund strip, public-page fixes, and Phase C: Florida endowments and foundations.**
+  *Site.* The main page opens with a hedge fund strip: approved searches, hires, terminations and target changes from the
+  last 12 months whose strategy is hedge fund, absolute return, risk mitigation, managed futures/CTA or diversifying
+  (bucket, `hf_relevant`, or wording), up to three rows per plan, each with its consultant and source page; E&F rows from
+  990s follow in their own labeled group. "Coverage is current" shows only when the newest document is under 6 months old,
+  otherwise "Last document: <Month YYYY>". Displayed quotes are cleaned of PDF extraction artifacts (unmapped `(cid:415)`
+  ligatures, interleaved vote-tally fragments, soft hyphens); stored quotes stay verbatim for the quote-on-page check.
+  Consultant names go through `data/consultant_map.*` or `data/consultant_aliases.yaml` (D-B18) when present, else the raw name. About states the
+  method in five lines. Grid children may shrink (`min-width: 0`), so no page scrolls sideways at 360-390 px.
+  *Phase C.* Universe: the 48 largest Florida 501(c)(3)s in four kinds (12 university/college foundations, 6 private
+  universities, 10 community foundations, 20 private foundations), chosen by rule and ranked by assets from the IRS EO BMF
+  (`eo_fl.csv`; street, in-care-of and ZIP dropped at load), saved with sources to `data/ef_universe.csv`. UF Investment
+  Corp files no 990 and so is not in the universe. Filings: the IRS's own e-file XML, read one member at a time from the
+  TEOS zip batches with ranged GETs (Deflate64 via `inflate64` for the 2025 batches); ProPublica's API for filing
+  summaries only (its XML and PDF paths are disallowed by robots.txt). Raw XML is parsed in memory and never stored.
+  Contractors: firm names only; a `PersonNm` entry is kept only with a strong corporate token, so no individual is stored.
+  990 signals (contractor listed / added / dropped, hedge fund lines, new hedge fund lines) cite form, tax year, part and
+  line and are capped at WATCHING; DEPLOYING or PREPARING needs a dated committee or board document the organization
+  publishes (UWF, UCF and FAU Foundation pages, allowlisted), read by the model with the quote-on-page check. E&F lives in
+  its own store, `data/ef.duckdb`, swept by the Wall nightly.
