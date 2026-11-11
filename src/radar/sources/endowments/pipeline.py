@@ -79,7 +79,8 @@ def load_propublica(client, eins: list[str]) -> int:
     return n
 
 
-def load_irs(client, eins: list[str]) -> dict:
+def load_irs(client, eins: list[str], reparse: bool = False) -> dict:
+    """reparse: re-read returns already stored (the raw XML is never kept, so new fields mean a fresh ranged GET)."""
     rows: list[irs.IndexRow] = []
     for y in INDEX_YEARS:
         rows += irs.index_rows(client, y, set(eins), _cache())
@@ -100,7 +101,8 @@ def load_irs(client, eins: list[str]) -> dict:
         stats["orgs_with_returns"] += 1
         for _, r in periods:
             with store.connect() as con:
-                if con.execute("SELECT 1 FROM ef_filings WHERE object_id = ?", [r.object_id]).fetchone():
+                if con.execute("SELECT 1 FROM ef_filings WHERE object_id = ?" + (" AND officers_read" if reparse else ""),
+                               [r.object_id]).fetchone():
                     continue
             try:
                 f = irs.parse_return(irs.fetch_return(client, r, _cache()), r)
@@ -111,18 +113,28 @@ def load_irs(client, eins: list[str]) -> dict:
                 stats["failed"] += 1
                 continue
             with store.connect() as con:
-                con.execute("INSERT OR REPLACE INTO ef_filings VALUES (?,?,?,?,?,?,?,?,?,?,?, now())",
+                con.execute("""INSERT OR REPLACE INTO ef_filings (object_id, ein, return_type, tax_year, tax_period_end,
+                                   total_assets, investments_public, investments_other, contractors_over_100k, index_year,
+                                   batch, fetched_at, endowment_eoy, endowment_boy, investments_program, investments_land,
+                                   investments_mortgage, officers_read)
+                               VALUES (?,?,?,?,?,?,?,?,?,?,?, now(), ?,?,?,?,?, true)""",
                             [f.object_id, ein, f.return_type, f.tax_year, f.tax_period_end or None, f.total_assets_eoy,
                              f.investments_public_eoy, f.investments_other_eoy, f.contractor_count_over_100k,
-                             r.index_year, r.batch])
+                             r.index_year, r.batch, f.endowment_eoy, f.endowment_boy, f.investments_program_eoy,
+                             f.investments_land_eoy, f.investments_mortgage_eoy])
+                con.execute("DELETE FROM ef_officers WHERE object_id = ?", [f.object_id])
+                ocite = irs.citation(f, "officers")
+                for o in f.officers:
+                    con.execute("INSERT INTO ef_officers VALUES (?,?,?,?,?,?,?)",
+                                [f.object_id, ein, f.tax_year, o.name[:120], o.title[:120], o.role, ocite])
                 con.execute("DELETE FROM ef_contractors WHERE object_id = ?", [f.object_id])
                 con.execute("DELETE FROM ef_other_investments WHERE object_id = ?", [f.object_id])
                 for c in f.contractors:
-                    con.execute("INSERT INTO ef_contractors VALUES (?,?,?,?,?,?,?)",
-                                [f.object_id, ein, f.tax_year, c.firm, c.service, c.amount, c.investment])
+                    con.execute("INSERT INTO ef_contractors (object_id, ein, tax_year, firm, service, amount, investment) "
+                                "VALUES (?,?,?,?,?,?,?)", [f.object_id, ein, f.tax_year, c.firm, c.service, c.amount, c.investment])
                 for o in f.other_investments:
-                    con.execute("INSERT INTO ef_other_investments VALUES (?,?,?,?,?,?)",
-                                [f.object_id, ein, f.tax_year, o.description, o.book_value, o.fmv])
+                    con.execute("INSERT INTO ef_other_investments (object_id, ein, tax_year, description, book_value, fmv) "
+                                "VALUES (?,?,?,?,?,?)", [f.object_id, ein, f.tax_year, o.description, o.book_value, o.fmv])
             stats["returns"] += 1
     return stats
 
@@ -130,9 +142,25 @@ def load_irs(client, eins: list[str]) -> dict:
 def derive_signals() -> int:
     """Rebuild the 990 signals from the stored filings (committee signals are kept)."""
     with store.connect() as con:
-        for svc, in con.execute("SELECT DISTINCT service FROM ef_contractors").fetchall():  # current rule, every rebuild
-            con.execute("UPDATE ef_contractors SET investment = ? WHERE service IS NOT DISTINCT FROM ?",
-                        [irs.is_investment_service(svc), svc])
+        lists = irs._firm_lists()
+        for firm, svc in con.execute("SELECT DISTINCT firm, service FROM ef_contractors").fetchall():  # current rules
+            cls, basis = irs.classify_contractor(firm, svc, lists)
+            con.execute("UPDATE ef_contractors SET contractor_class = ?, class_basis = ?, investment = ? "
+                        "WHERE firm = ? AND service IS NOT DISTINCT FROM ?",
+                        [cls, basis, cls in ("manager", "consultant"), firm, svc])
+        from radar.sources.endowments import exposure as X
+        for oid, desc, bv, fmv in con.execute("SELECT object_id, description, book_value, fmv FROM ef_other_investments").fetchall():
+            con.execute("UPDATE ef_other_investments SET value_status = ? WHERE object_id = ? AND description = ? "
+                        "AND book_value IS NOT DISTINCT FROM ? AND fmv IS NOT DISTINCT FROM ?",
+                        [X.value_status({"book_value": bv, "fmv": fmv}), oid, desc, bv, fmv])
+        con.execute("DELETE FROM ef_exposure")
+        for f in store.rows(con, "SELECT * FROM ef_filings"):
+            lines = store.rows(con, "SELECT * FROM ef_other_investments WHERE object_id = ?", [f["object_id"]])
+            e = X.compute(f, lines)
+            con.execute("INSERT INTO ef_exposure VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        [f["object_id"], f["ein"], f["tax_year"], _cite_form(f), e["investments_total"], e["hf_usd"],
+                         e["alt_usd"], e["hf_pct"], e["alt_pct"], e["hf_status"], e["alt_status"], e["basis"],
+                         _cite(f, "other_investments"), _cite(f, "investments_total"), e["n_lines"]])
         orgs = store.rows(con, "SELECT * FROM ef_orgs")
         con.execute("DELETE FROM ef_signals WHERE source_type = '990'")
         n = 0
@@ -158,6 +186,10 @@ def derive_signals() -> int:
                                             "review_status", "reviewed_by")])
                 n += 1
     return n
+
+
+def _cite_form(f: dict) -> str:
+    return "990-PF" if str(f["return_type"]).upper().startswith("990PF") else "990"
 
 
 def _cite(f: dict, what: str) -> str:

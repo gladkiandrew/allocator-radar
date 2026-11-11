@@ -104,6 +104,24 @@ def discover(client, ein: str) -> list[tuple[str, str]]:
     return out[:PER_ORG]
 
 
+_COMMITTEE = [(re.compile(p, re.I), n) for p, n in [
+    (r"invest", "Investment Committee"), (r"exec", "Executive Committee"), (r"audit", "Audit Committee"),
+    (r"financ", "Finance Committee"), (r"full[- ]?board|board[- ]of[- ]directors|fbod|\bboard\b", "Board of Directors")]]
+_KIND = {"MINUTES": "minutes", "AGENDA": "agenda", "MATERIALS": "materials"}
+
+
+def citation_label(org: str, label: str, url: str, doc_date: date | None, kind: str | None) -> str:
+    """Our own citation label (D-B25): organization, committee, document kind and the meeting date read from the
+    document. The listing's link text is not used for the date, because it can be wrong (UWF lists the August 26,
+    2026 Executive Committee minutes as "9/26/26 Executive Committee Minutes")."""
+    hay = f"{label} {url.rsplit('/', 1)[-1]}"
+    committee = next((n for pat, n in _COMMITTEE if pat.search(hay)), "")
+    k = _KIND.get(kind or "", "") or ("minutes" if re.search(r"minute", hay, re.I) else
+                                      "agenda" if re.search(r"agenda", hay, re.I) else "document")
+    when = f", {doc_date:%B} {doc_date.day}, {doc_date.year}" if doc_date else f" ({label[:80]})"
+    return " ".join(x for x in (org, committee, k) if x) + when
+
+
 def _pages(pdf: bytes) -> list[str]:
     import pdfplumber
 
@@ -131,6 +149,7 @@ def read_document(client, provider, ein: str, url: str, label: str) -> dict:
                                    purpose="ef-committee")
     excluded = set((load_yaml("auto_approval.yaml") or {}).get("excluded_signal_types", []))
     sha = hashlib.sha256(r.content).hexdigest()
+    cite_label = citation_label(SOURCES.get(ein, {}).get("name", ""), label, url, res.document_date, res.document_kind)
     kept = dropped = 0
     with store.connect() as con:
         con.execute("INSERT OR REPLACE INTO ef_documents (sha256, ein, url, title, doc_date, doc_type, page_count) "
@@ -145,7 +164,7 @@ def read_document(client, provider, ein: str, url: str, label: str) -> dict:
                            source_type, source_url, doc_title, cite, page, quote, hf_relevant, review_status, reviewed_by)
                            VALUES (?,?,?,?,?,?,?,'committee',?,?,?,?,?,?,?,?)""",
                         [sid, ein, s.signal_type, None if s.qualifier == "none" else s.qualifier, s.event_date,
-                         "meeting_date", s.summary, f"{url}#page={s.page}", label[:120], f"{label[:120]}, page {s.page}",
+                         "meeting_date", s.summary, f"{url}#page={s.page}", cite_label[:160], f"{cite_label[:160]}, page {s.page}",
                          s.page, s.quote, s.hedge_fund_related, "auto_approved" if ok else "new",
                          "ef-committee (quote on page, lint)" if ok else None])
             kept += 1

@@ -1,7 +1,7 @@
 """Curated extraction (D-B22): a signal read off a page by the data session when the extraction pass missed it.
 
-It is held to the extractor's own validators: the quote must be on the cited page, the quote must carry the
-summary's names and numbers, the summary must pass the lint and the contact detector, and the date must fall in
+It is held to the extractor's own validators: the quote must be on the cited page, the quote must share the
+summary's specific names or numbers (supports()), the summary must pass the lint and the contact detector, and the date must fall in
 the extractor's window (SEARCH_SCHEDULED may be up to 90 days ahead, D-B10). The row is stored pending
 (`review_status = 'new'`) with an evidence row whose extractor is `curated-extraction`, so it is distinguishable
 from model output, and the tiered auto-approval rules decide it like any other row.
@@ -52,7 +52,7 @@ def add_signal(sha_prefix: str, allocator_id: str, page: int, quote: str, signal
         if not text or not quote_on_page(quote, text[0]):
             raise CuratedError("quote not on the cited page")
         if not supports(summary, quote, name):
-            raise CuratedError("quote does not support the summary's names and numbers")
+            raise CuratedError("quote does not support the summary (no shared name or number)")
         key = _dedupe_key(allocator_id, signal_type, qualifier, event_date)
         con.execute("BEGIN")
         eid = new_id()

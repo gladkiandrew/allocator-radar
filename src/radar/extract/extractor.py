@@ -205,6 +205,13 @@ def _num_in(v: float, quote: str) -> bool:
     return any(c in q for c in cands)
 
 
+def _as_of(s: str, today: date) -> date | None:
+    """Holdings, officers, consultants and facts read off an agenda for an upcoming meeting (D-B23): a date up to
+    90 days ahead is the meeting date, and the row is true as of the day the agenda was read, so it is dated today."""
+    d = _date(s, today + timedelta(days=90))
+    return min(d, today) if d else None
+
+
 def _date(s: str, today: date) -> date | None:
     try:
         d = date.fromisoformat(s[:10])
@@ -316,7 +323,7 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
         stats["signals"] += 1
 
     for m in res.mandates:
-        d = _date(m.as_of, today)
+        d = _as_of(m.as_of, today)
         eid = evidence(m.page, m.quote, 0.9) if d else None
         if eid is None:
             drop("mandate date/quote")
@@ -334,7 +341,7 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
         stats["mandates"] += 1
 
     for o in res.officers:
-        d = _date(o.as_of, today)
+        d = _as_of(o.as_of, today)
         if detect(o.name_as_printed + " " + o.title_as_printed):
             drop("officer contact-shaped")
             continue
@@ -354,7 +361,7 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
         stats["officers"] += 1
 
     for f in res.facts:
-        d = _date(f.as_of, today + timedelta(days=400) if f.fact_kind == "NEXT_MEETING" else today)
+        d = _date(f.as_of, today + timedelta(days=400)) if f.fact_kind == "NEXT_MEETING" else _as_of(f.as_of, today)
         if d is None:
             drop(f"fact date {f.as_of!r}")
             continue
@@ -390,7 +397,7 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
                 link("engagement", cid, eid)
 
     for c in res.consultants:
-        d = _date(c.as_of, today)
+        d = _as_of(c.as_of, today)
         eid = evidence(c.page, c.quote, 0.9) if d else None
         if eid is None:
             drop("consultant date/quote")

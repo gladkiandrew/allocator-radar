@@ -23,6 +23,8 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("ef-universe", help="Phase C: choose the Florida E&F universe from the IRS BMF -> data/ef_universe.csv")
     sub.add_parser("ef-load", help="Phase C: universe -> ProPublica summaries -> IRS 990 XML -> 990 signals (data/ef.duckdb)")
     sub.add_parser("ef-signals", help="Phase C: rebuild the 990 signals from stored filings")
+    rp = sub.add_parser("ef-reparse", help="re-read stored 990s from the IRS batches for new fields (officers, endowment), then rebuild")
+    rp.add_argument("--eins", nargs="*", help="only these organizations (default: every organization in ef_orgs)")
     sub.add_parser("ef-committee", help="Phase C: read the foundations' own committee/board documents for dated signals")
     cp = sub.add_parser("crawl", help="crawl approved allocators' listing pages and fetch documents")
     cp.add_argument("--only", nargs="*", help="allocator ids")
@@ -465,7 +467,7 @@ def main(argv: list[str] | None = None) -> int:
         db.init_db()
         for r in committee.run():
             print(json.dumps(r, default=str), flush=True)
-    elif args.cmd in ("ef-universe", "ef-load", "ef-signals"):
+    elif args.cmd in ("ef-universe", "ef-load", "ef-signals", "ef-reparse"):
         import json
         from radar import db
         from radar.net.client import PoliteClient
@@ -475,6 +477,13 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{len(pipeline.build_universe(PoliteClient(purpose='ef-bmf')))} organizations -> data/ef_universe.csv")
         elif args.cmd == "ef-load":
             print(json.dumps(pipeline.run()))
+        elif args.cmd == "ef-reparse":
+            from radar.sources.endowments import store
+            store.init()
+            with store.connect() as con:
+                eins = args.eins or [r[0] for r in con.execute("SELECT ein FROM ef_orgs ORDER BY ein").fetchall()]
+            print(json.dumps(pipeline.load_irs(PoliteClient(purpose="ef-990"), eins, reparse=True)))
+            print(f"{pipeline.derive_signals()} signals from 990s")
         else:
             print(f"{pipeline.derive_signals()} signals from 990s")
     elif args.cmd == "wall-static":

@@ -1,8 +1,9 @@
 """The E&F store: its own DuckDB file (data/ef.duckdb), so Phase C never contends with the pension
 pipeline for the main database's write lock and never changes the pension schema.
 
-THE WALL: no column may match config/wall.yaml banned_column_pattern (email, phone, address ...),
-and the only names stored are organizations' and firms'.
+THE WALL: no column may match config/wall.yaml banned_column_pattern (email, phone, address ...).
+Names stored: organizations', firms', and officers', directors' and trustees' names with their titles as printed
+(D-B26). Never stored: anyone's compensation, hours, benefits, address or contact details.
 """
 
 from __future__ import annotations
@@ -71,6 +72,29 @@ CREATE TABLE IF NOT EXISTS ef_signals (
 """
 
 
+MIGRATIONS = [
+    # D-B26: re-read filings
+    "ALTER TABLE ef_filings ADD COLUMN IF NOT EXISTS endowment_eoy DOUBLE",       # Sch. D Part V line 1g (a)
+    "ALTER TABLE ef_filings ADD COLUMN IF NOT EXISTS endowment_boy DOUBLE",       # Sch. D Part V line 1a (a)
+    "ALTER TABLE ef_filings ADD COLUMN IF NOT EXISTS investments_program DOUBLE", # 990 Part X line 13
+    "ALTER TABLE ef_filings ADD COLUMN IF NOT EXISTS investments_land DOUBLE",    # 990-PF Part II line 11
+    "ALTER TABLE ef_filings ADD COLUMN IF NOT EXISTS investments_mortgage DOUBLE",# 990-PF Part II line 12
+    "ALTER TABLE ef_filings ADD COLUMN IF NOT EXISTS officers_read BOOLEAN DEFAULT false",
+    "ALTER TABLE ef_contractors ADD COLUMN IF NOT EXISTS contractor_class VARCHAR",  # manager|consultant|custodian|bank|law_firm|other
+    "ALTER TABLE ef_contractors ADD COLUMN IF NOT EXISTS class_basis VARCHAR",
+    "ALTER TABLE ef_other_investments ADD COLUMN IF NOT EXISTS value_status VARCHAR",  # stated | not_stated (placeholder 0/$1)
+    """CREATE TABLE IF NOT EXISTS ef_officers (     -- names and titles as printed; nothing else about the person
+        object_id VARCHAR, ein VARCHAR, tax_year INTEGER, name_as_printed VARCHAR, title_as_printed VARCHAR, role VARCHAR,
+        cite VARCHAR)""",
+    """CREATE TABLE IF NOT EXISTS ef_exposure (     -- hedge fund / alternatives share of investments, per filing
+        object_id VARCHAR PRIMARY KEY, ein VARCHAR, tax_year INTEGER, form VARCHAR,
+        investments_total DOUBLE, hf_usd DOUBLE, alt_usd DOUBLE, hf_pct DOUBLE, alt_pct DOUBLE,
+        hf_status VARCHAR, alt_status VARCHAR,       -- computed | not_disclosed
+        basis VARCHAR, cite VARCHAR, cite_total VARCHAR, n_lines INTEGER)""",
+    "ALTER TABLE ef_orgs ADD COLUMN IF NOT EXISTS signal_note VARCHAR",  # why there is no change signal, when there is none
+]
+
+
 def path() -> Path:
     return get_settings().data_dir / "ef.duckdb"
 
@@ -102,6 +126,8 @@ def _connect(read_only: bool):
 def init() -> None:
     with connect() as con:
         con.execute(SCHEMA)
+        for m in MIGRATIONS:
+            con.execute(m)
 
 
 def rows(con, sql: str, params=()) -> list[dict]:
