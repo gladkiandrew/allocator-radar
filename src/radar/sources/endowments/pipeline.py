@@ -203,7 +203,36 @@ def derive_signals() -> int:
                                             "source_type", "source_url", "doc_title", "cite", "page", "quote", "hf_relevant",
                                             "review_status", "reviewed_by")])
                 n += 1
+        _signal_notes(con)
     return n
+
+
+def _signal_notes(con) -> None:
+    """3d: for an organization with no 990 change signal, say why, from what its filings show (D-B29)."""
+    for o in store.rows(con, "SELECT ein FROM ef_orgs"):
+        ein = o["ein"]
+        has = con.execute("SELECT count(*) FROM ef_signals WHERE ein = ? AND signal_type IN "
+                          "('EF_MANAGER_ADDED','EF_MANAGER_DROPPED','EF_ALT_HOLDING_ADDED') OR (ein = ? AND source_type='committee')",
+                          [ein, ein]).fetchone()[0]
+        fs = store.rows(con, "SELECT * FROM ef_filings WHERE ein = ? ORDER BY tax_period_end DESC", [ein])
+        if has:
+            note = None
+        elif not fs:
+            note = "No e-filed 990 or 990-PF in the IRS TEOS indexes read (2022-2026); nothing to compare."
+        else:
+            f = fs[0]
+            inv = con.execute("SELECT count(*) FROM ef_contractors WHERE object_id = ? AND contractor_class IN ('manager','consultant')",
+                              [f["object_id"]]).fetchone()[0]
+            lines = con.execute("SELECT count(*) FROM ef_other_investments WHERE object_id = ?", [f["object_id"]]).fetchone()[0]
+            parts = [f"Filings re-read through TY{f['tax_year']} ({len(fs)} return{'s' if len(fs) != 1 else ''})."]
+            parts.append(f"{inv} investment manager or consultant among the highest-paid contractors" if inv else
+                         "No investment manager or consultant among the highest-paid contractors")
+            parts.append(f"{lines} itemized other-investment lines, none new against the prior return" if lines else
+                         "no itemized other-investment lines (Schedule D Part VII / 990-PF line 13 statement)")
+            if len(fs) < 2:
+                parts.append("only one return on file, so no year-on-year change can be read")
+            note = parts[0] + " " + "; ".join(parts[1:]) + "."
+        con.execute("UPDATE ef_orgs SET signal_note = ? WHERE ein = ?", [note, ein])
 
 
 def _cite_form(f: dict) -> str:

@@ -125,11 +125,23 @@ def central_directory(client, url: str, cache_dir: Path) -> dict[str, _Member]:
 
 def fetch_return(client, row: IndexRow, cache_dir: Path) -> bytes:
     """The XML bytes of one return (in memory only)."""
-    members = central_directory(client, row.zip_url, cache_dir)
+    url = row.zip_url
+    members = central_directory(client, url, cache_dir)
     m = members.get(f"{row.object_id}_public.xml")
     if m is None:
-        raise KeyError(f"{row.object_id} not in {row.batch}")
-    blob = _range(client, row.zip_url, f"{m.offset}-{m.offset + 30 + len(m.name.encode()) + 2048 + m.csize}")
+        # The 2025 index names batch 05A for returns filed after that batch was cut (D-B28): look in the year's other
+        # batches whose directories are already cached, then in the year's later batches.
+        for cand in _sibling_batches(row, cache_dir):
+            try:
+                mm = central_directory(client, cand, cache_dir).get(f"{row.object_id}_public.xml")
+            except RuntimeError:  # no such batch (404) or no Range support
+                continue
+            if mm is not None:
+                m, url = mm, cand
+                break
+    if m is None:
+        raise KeyError(f"{row.object_id} not in {row.batch} or its sibling batches")
+    blob = _range(client, url, f"{m.offset}-{m.offset + 30 + len(m.name.encode()) + 2048 + m.csize}")
     nlen, xlen = struct.unpack("<HH", blob[26:30])
     data = blob[30 + nlen + xlen:30 + nlen + xlen + m.csize]
     if m.method == 0:
@@ -141,6 +153,19 @@ def fetch_return(client, row: IndexRow, cache_dir: Path) -> bytes:
 
         return inflate64.Inflater().inflate(data)
     raise RuntimeError(f"unsupported zip method {m.method}")
+
+
+def _sibling_batches(row: IndexRow, cache_dir: Path) -> list[str]:
+    """Other batch zips of the same index year: cached directories first, then 05B-12D probed in order."""
+    y = row.index_year
+    cached = sorted(p.name[len(f"cd_{y}_"):-len(".json")] for p in cache_dir.glob(f"cd_{y}_{y}_TEOS_XML_*.zip.json"))
+    out = [f"{BASE}/{y}/{n}" for n in cached if n != row.zip_url.rsplit("/", 1)[-1]]
+    for mo in range(int(row.batch.split("_")[-1][:2]), 13):
+        for letter in "ABCD":
+            u = f"{BASE}/{y}/{y}_TEOS_XML_{mo:02d}{letter}.zip"
+            if u != row.zip_url and u not in out:
+                out.append(u)
+    return out
 
 
 # ---------------- parsing (firm names and amounts only) ----------------
