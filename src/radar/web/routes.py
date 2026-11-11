@@ -60,6 +60,66 @@ def register(app: FastAPI, render) -> None:
             s["tier_effect"] = trial.tier if trial.tier in ("DEPLOYING", "PREPARING") else None
         return sigs
 
+    def _pending_sorted(con) -> list[dict]:
+        """Pending signals in scope, in the order the queue shows them: what could move a tier first, newest first."""
+        from radar import scope
+
+        ids = scope.ids(con)
+        sigs = _enrich(con, [s for s in queries.signals_for(con, statuses=("new",))
+                             if ids is None or s["allocator_id"] in ids])
+        sigs.sort(key=lambda s: (s["tier_effect"] is None, s["tier_effect"] != "DEPLOYING", -s["event_date"].toordinal()))
+        return sigs
+
+    # ---- focus mode: one pending signal per screen, keys a / r / s ----
+    import re as _re
+    from urllib.parse import quote as _quote
+
+    _SIG_ID = _re.compile(r"[A-Za-z0-9_-]{1,80}")
+
+    def _skips(raw: str | None) -> list[str]:
+        out: list[str] = []
+        for x in (raw or "").split(","):
+            x = x.strip()
+            if _SIG_ID.fullmatch(x) and x not in out:
+                out.append(x)
+        return out[-500:]
+
+    def _next_url(skip: list[str], err: str | None = None, done: str | None = None) -> str:
+        q = []
+        if skip:
+            q.append("skip=" + ",".join(skip))
+        if err:
+            q.append("err=" + _quote(err))
+        if done:
+            q.append("done=" + _quote(done))
+        return "/review/next" + ("?" + "&".join(q) if q else "")
+
+    @app.get("/review/next", response_class=HTMLResponse)
+    def review_next(request: Request, skip: str | None = None, err: str | None = None, done: str | None = None):
+        skipped = _skips(skip)
+        with db.connect() as con:
+            pending = _pending_sorted(con)
+        left = [s for s in pending if s["signal_id"] not in skipped]
+        n_skipped = len(pending) - len(left)
+        return render(request, "review_focus.html", s=left[0] if left else None, remaining=len(left),
+                      total=len(pending), n_skipped=n_skipped, skip=",".join(skipped), err=err, done=done)
+
+    @app.post("/review/next/{signal_id}")
+    def review_next_decide(signal_id: str, decision: str = Form(...), skip: str = Form(default=""),
+                           user: str = Depends(require_user)):
+        skipped = _skips(skip)
+        if decision == "skip":
+            if _SIG_ID.fullmatch(signal_id) and signal_id not in skipped:
+                skipped.append(signal_id)
+            return RedirectResponse(_next_url(skipped), status_code=303)
+        if decision not in ("approved", "rejected"):
+            return RedirectResponse(_next_url(skipped, err="decision must be approve, reject or skip"), status_code=303)
+        try:
+            review.decide(signal_id, decision, user)
+        except (review.ReviewError, ValueError) as e:
+            return RedirectResponse(_next_url(skipped, err=str(e)), status_code=303)
+        return RedirectResponse(_next_url(skipped, done=decision), status_code=303)
+
     @app.get("/review", response_class=HTMLResponse)
     def review_page(request: Request, status: str = "new"):
         status = status if status in ("new", "approved", "auto_approved", "rejected") else "new"
