@@ -28,7 +28,7 @@ from radar.extract.prefilter import is_hit
 from radar.llm.provider import ProviderError, get_provider
 from radar.models import new_id
 from radar.wall.lint import lint
-from radar.wall.scrubber import detect
+from radar.wall.scrubber import contacts_allowed, detect
 
 log = logging.getLogger(__name__)
 EXTRACTOR = "page-extractor"
@@ -272,7 +272,7 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
     aid, sha, url = meta["allocator_id"], meta["sha256"], meta["url"]
 
     def evidence(page: int, quote: str, conf: float) -> str | None:
-        if page not in pages or not quote_on_page(quote, pages[page]) or detect(quote):
+        if page not in pages or not quote_on_page(quote, pages[page]) or (detect(quote) and not contacts_allowed()):
             return None
         eid = new_id()
         con.execute("INSERT INTO evidence VALUES (?, ?, ?, ?, ?, ?, ?, ?, now(), ?, 'CRAWL')",
@@ -304,19 +304,21 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
             drop("signal quote not on page")
             continue
         q = None if s.qualifier == "none" else s.qualifier
-        key = _dedupe_key(aid, s.signal_type, q, d)
+        from radar.extract import definitions
+        stype, q, defnote = definitions.apply(con, aid, s.signal_type, q, summary, s.quote, event_date=d)  # D-B36
+        key = _dedupe_key(aid, stype, q, d)
         existing = con.execute("SELECT signal_id FROM signals WHERE dedupe_key = ? AND review_status != 'rejected'", [key]).fetchone()
         if existing:
             link("signal", existing[0], eid)
             continue
         sid = new_id()
         from radar.buckets import hf_relevant, signal_bucket
-        bucket, blabel = signal_bucket(s.signal_type, q, summary, s.quote)
+        bucket, blabel = signal_bucket(stype, q, summary, s.quote)
         con.execute(
             "INSERT INTO signals (signal_id, allocator_id, signal_type, qualifier, event_date, observed_at, summary, "
-            "review_status, origin, dedupe_key, hf_relevant, bucket, bucket_label) "
-            "VALUES (?, ?, ?, ?, ?, now(), ?, 'new', 'MACHINE', ?, ?, ?, ?)",
-            [sid, aid, s.signal_type, q, d, summary, key, hf_relevant(bucket, summary, blabel), bucket, blabel])
+            "review_status, origin, dedupe_key, hf_relevant, bucket, bucket_label, review_note) "
+            "VALUES (?, ?, ?, ?, ?, now(), ?, 'new', 'MACHINE', ?, ?, ?, ?, ?)",
+            [sid, aid, stype, q, d, summary, key, hf_relevant(bucket, summary, blabel), bucket, blabel, defnote])
         link("signal", sid, eid)
         if auto_actor:
             con.execute("UPDATE signals SET review_status = 'approved', reviewed_by = ?, reviewed_at = now(), "

@@ -69,8 +69,11 @@ def _sha(s: str) -> str:
 
 
 def _guard(*texts: str) -> None:
+    from radar.wall.scrubber import CONTACT_KINDS, contacts_allowed
     for t in texts:
         hits = detect(t)
+        if contacts_allowed():  # D-B35: public documents with contacts may be sent; social profiles still may not
+            hits = [h for h in hits if h.kind not in CONTACT_KINDS]
         if hits:
             kinds = sorted({h.kind for h in hits})
             raise UnscrubbedPrompt(f"prompt contains contact-shaped text ({', '.join(kinds)}); scrub first")

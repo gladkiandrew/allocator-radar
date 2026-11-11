@@ -4,7 +4,7 @@ It is held to the extractor's own validators: the quote must be on the cited pag
 summary's specific names or numbers (supports()), the summary must pass the lint and the contact detector, and the date must fall in
 the extractor's window (SEARCH_SCHEDULED may be up to 90 days ahead, D-B10). The row is stored pending
 (`review_status = 'new'`) with an evidence row whose extractor is `curated-extraction`, so it is distinguishable
-from model output, and the tiered auto-approval rules decide it like any other row.
+from model output and its origin is CURATED (D-B36), and the tiered auto-approval rules decide it like any other row.
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from typing import get_args
 from radar.extract.extractor import SignalTypeLit, _dedupe_key, quote_on_page, supports
 from radar.models import new_id
 from radar.wall.lint import lint
-from radar.wall.scrubber import detect
+from radar.wall.scrubber import contacts_allowed, detect
 
 SIGNAL_TYPES = set(get_args(SignalTypeLit))
 CURATED = "curated-extraction"
@@ -39,7 +39,7 @@ def add_signal(sha_prefix: str, allocator_id: str, page: int, quote: str, signal
     lr = lint(summary)
     if not lr.ok:
         raise CuratedError(f"summary lint: {lr.banned_found}")
-    if detect(summary) or detect(quote):
+    if (detect(summary) or detect(quote)) and not contacts_allowed():
         raise CuratedError("contact-shaped text in summary or quote")
     with db.connect() as con:
         row = con.execute("""SELECT du.sha256, du.url, a.display_name FROM document_urls du JOIN allocators a USING (allocator_id)
@@ -53,6 +53,8 @@ def add_signal(sha_prefix: str, allocator_id: str, page: int, quote: str, signal
             raise CuratedError("quote not on the cited page")
         if not supports(summary, quote, name):
             raise CuratedError("quote does not support the summary (no shared name or number)")
+        from radar.extract import definitions
+        signal_type, qualifier, defnote = definitions.apply(con, allocator_id, signal_type, qualifier, summary, quote, event_date=event_date)
         key = _dedupe_key(allocator_id, signal_type, qualifier, event_date)
         con.execute("BEGIN")
         eid = new_id()
@@ -68,9 +70,9 @@ def add_signal(sha_prefix: str, allocator_id: str, page: int, quote: str, signal
             con.execute(
                 "INSERT INTO signals (signal_id, allocator_id, signal_type, qualifier, event_date, observed_at, summary, "
                 "review_status, origin, dedupe_key, hf_relevant, bucket, review_note) "
-                "VALUES (?, ?, ?, ?, ?, now(), ?, 'new', 'MACHINE', ?, ?, ?, ?)",
+                "VALUES (?, ?, ?, ?, ?, now(), ?, 'new', 'CURATED', ?, ?, ?, ?)",
                 [sid, allocator_id, signal_type, qualifier, event_date, summary, key, hf_relevant(bucket, summary),
-                 bucket, f"{CURATED} by {actor}: extraction pass missed this item"])
+                 bucket, f"{CURATED} by {actor}: extraction pass missed this item" + (f"; {defnote}" if defnote else "")])
         con.execute("INSERT INTO row_evidence VALUES ('signal', ?, ?) ON CONFLICT DO NOTHING", [sid, eid])
         db.audit(con, actor, "curated_signal", sid, detail={"sha256": sha, "page": page, "linked_existing": bool(existing)})
         con.execute("COMMIT")

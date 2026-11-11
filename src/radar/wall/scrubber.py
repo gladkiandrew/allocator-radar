@@ -158,9 +158,20 @@ class ScrubResult:
     redactions: int
 
 
+CONTACT_KINDS = {"email", "mailto", "phone", "fax", "street", "state_zip", "po_box", "contact_block"}
+
+
+def contacts_allowed() -> bool:
+    from radar.settings import get_settings
+    return not get_settings().scrub_contacts
+
+
 def scrub(text: str, *, use_gliner: bool | None = None) -> ScrubResult:
     if not text:
         return ScrubResult(text or "", 0)
+    if contacts_allowed():  # D-B35: contacts are kept; only person social-profile URLs are still removed
+        hits = [(h.start, h.end) for h in detect(text) if h.kind not in CONTACT_KINDS]
+        return ScrubResult(_apply(text, _merge(hits)), len(hits)) if hits else ScrubResult(text, 0)
     if use_gliner is None:
         from radar.settings import get_settings
 

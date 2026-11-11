@@ -118,7 +118,8 @@ def _form(f: dict) -> str:
 def ef_readiness(signals: list[dict], has_filings: bool, today: date | None = None) -> Readiness:
     """Pension rules on committee/board signals only; 990 signals can at most make an organization WATCHING."""
     today = today or date.today()
-    committee = [s for s in signals if s["source_type"] == "committee"]
+    # committee/board documents, plus meeting calendars (an OCIO_SEARCH from a calendar counts as PREPARING at most, D-B36)
+    committee = [s for s in signals if s["source_type"] in ("committee", "meeting_calendar")]
     r = compute(committee, datetime.now(timezone.utc), today)  # coverage judged below, not by fetch date
     if r.tier in ("DEPLOYING", "PREPARING"):
         return r

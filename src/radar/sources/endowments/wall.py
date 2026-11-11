@@ -28,6 +28,9 @@ def check() -> list[str]:
                 continue
             for (val,) in con.execute(f'SELECT "{col}" FROM "{table}" WHERE "{col}" IS NOT NULL').fetchall():
                 hits = detect(val)
+                from radar.wall.scrubber import CONTACT_KINDS, contacts_allowed
+                if contacts_allowed():  # D-B35
+                    hits = [h for h in hits if h.kind not in CONTACT_KINDS]
                 if (table, col) in URL_COLUMNS:
                     hits = [h for h in hits if h.kind in ("email", "mailto", "social_url")]
                 if hits:

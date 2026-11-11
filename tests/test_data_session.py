@@ -92,3 +92,74 @@ def test_staging_ingest_rechecks_files(tmp_path, monkeypatch):
     with db.connect() as con:
         assert con.execute("SELECT retrieved_by, doc_date FROM document_urls WHERE allocator_id='p1'").fetchone() == \
             ("browser-agent", date(2026, 10, 1))
+
+
+def _plan(con, aid="p1", name="Test Plan"):
+    con.execute("INSERT INTO allocators (allocator_id, legal_name, display_name, allocator_type, jurisdiction_city, "
+                "jurisdiction_state, jurisdiction_country, home_url, template, access, source_id, registry_version, updated_at) "
+                "VALUES (?, ?, ?, 'GENERAL','X','FL','US','https://x.test','T','AUTO','S','v',now()) ON CONFLICT DO NOTHING",
+                [aid, name, name])
+
+
+def _mandate(con, aid, name):
+    con.execute("INSERT INTO mandates (mandate_id, allocator_id, manager_name_as_disclosed, bucket_label_as_disclosed, bucket, "
+                "amount_usd_as_disclosed, amount_kind, as_of, status, fee_as_disclosed, dedupe_key) "
+                "VALUES (?, ?, ?, 'Private Credit', 'PRIVATE_CREDIT', 1, 'market_value', DATE '2026-06-30', 'active', NULL, ?)",
+                [name + aid, aid, name, name + aid])
+
+
+def test_definitions_hollywood_brightwood_is_incumbent_presentation():
+    from radar.extract.definitions import apply
+    with db.connect() as con:
+        _plan(con, "hw"); _mandate(con, "hw", "Brightwood Capital Fund V")
+        st, q, note = apply(con, "hw", "SEARCH_SCHEDULED", "manager",
+                            "The agenda lists a Private Credit: Brightwood Presentation.", "C. Private Credit: Brightwood Presentation")
+    assert st == "MANAGER_PRESENTATION" and note.startswith("definition 1")
+    with db.connect() as con:  # even if it said "candidate", a held firm is an incumbent update
+        st, q, note = apply(con, "hw", "FINALISTS_NAMED", "manager", "Brightwood named a candidate.", "Brightwood candidate interview",
+                            event_date=date(2026, 9, 22))
+    assert st == "INCUMBENT_UPDATE" and "Brightwood" in note
+
+
+def test_definitions_vero_cohen_presentation_not_a_search_but_search_words_qualify():
+    from radar.extract.definitions import apply
+    with db.connect() as con:
+        _plan(con, "vb"); _mandate(con, "vb", "Dana Large Cap Value")
+        st, *_ = apply(con, "vb", "SEARCH_SCHEDULED", "manager", "lists a Cohen & Steers presentation",
+                       "c. Cohen & Steers presentation by Brian Casey")
+        assert st == "MANAGER_PRESENTATION"
+        st, q, _ = apply(con, "vb", "SEARCH_OPENED", "manager", "packet includes a US Large Cap Value manager search report",
+                         "US Large Cap Value Manager Search as of 6/30/2026")
+        assert (st, q) == ("SEARCH_OPENED", "manager")
+
+
+def test_definitions_service_providers_never_manager():
+    from radar.extract.definitions import apply
+    with db.connect() as con:
+        _plan(con, "ucf")
+        assert apply(con, "ucf", "RFP_ISSUED", "manager", "The board approved an RFP for an independent auditor.",
+                     "approve an RFP for an independent auditor")[1] == "service_provider"
+        assert apply(con, "ucf", "SEARCH_OPENED", "manager", "The board opened an OCIO search.", "OCIO search")[1] == "consultant"
+        # a manager search that merely mentions the consultant stays a manager search
+        assert apply(con, "ucf", "SEARCH_SCHEDULED", "manager", "The board held international manager interviews led by the consultant.",
+                     "international manager interviews; consultant Mariner")[1] == "manager"
+
+
+def test_ocio_calendar_caps_at_preparing():
+    from datetime import date, timedelta
+    from radar.sources.endowments.signals import ef_readiness
+    s = {"source_type": "meeting_calendar", "signal_type": "OCIO_SEARCH", "qualifier": "manager", "review_status": "auto_approved",
+         "event_date": date.today() + timedelta(days=8)}
+    assert ef_readiness([s], True).tier == "PREPARING"
+
+
+def test_d_b35_contacts_kept_by_default(monkeypatch):
+    from radar import settings as S
+    monkeypatch.setenv("RADAR_SCRUB_CONTACTS", "false"); S.get_settings.cache_clear()
+    from radar.wall.scrubber import scrub
+    t = "Plan Administrator Jane Doe, jdoe@example.org, (954) 555-1212, 100 Main Street, Suite 2, Hollywood, FL 33020"
+    assert scrub(t).text == t
+    assert "[REDACTED" in scrub("see https://www.linkedin.com/in/someone").text  # person social profiles still removed
+    from radar.llm.provider import _guard
+    _guard(t)  # no refusal
+    S.get_settings.cache_clear()
