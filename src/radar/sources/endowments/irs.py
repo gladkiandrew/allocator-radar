@@ -194,8 +194,13 @@ def _contractor_name(g: ET.Element) -> tuple[str, bool]:
 
 
 INVESTMENT_SERVICE = re.compile(
-    r"invest|portfolio|asset manag|fund manag|money manag|wealth manag|advis|hedge|private equity|"
+    r"invest|portfolio|asset manag|fund manag|money manag|wealth manag|financial advis|hedge|private equity|"
     r"real estate fund|endowment|ocio|outsourced chief|custod|trust serv", re.I)
+NOT_INVESTMENT = re.compile(r"\btax\b|audit|legal|attorney|fundrais|construct|architect|software|marketing", re.I)
+
+
+def is_investment_service(svc: str) -> bool:
+    return bool(INVESTMENT_SERVICE.search(svc or "")) and not NOT_INVESTMENT.search(svc or "")
 
 
 @dataclass
@@ -247,7 +252,7 @@ def parse_return(xml: bytes, row: IndexRow) -> Filing:
             if not is_firm_name(name, as_person):
                 continue  # people are never stored
             svc = _txt(g.find("ServicesDesc"))
-            f.contractors.append(Contractor(name, svc, _num(g.find("CompensationAmt")), bool(INVESTMENT_SERVICE.search(svc))))
+            f.contractors.append(Contractor(name, svc, _num(g.find("CompensationAmt")), is_investment_service(svc)))
         sd = data.find("IRS990ScheduleD")
         if sd is not None:  # Part VII Investments - Other Securities
             for tag, label in (("FinancialDerivativesGrp", "Financial derivatives"),
@@ -270,7 +275,7 @@ def parse_return(xml: bytes, row: IndexRow) -> Filing:
             if not is_firm_name(name, as_person):
                 continue
             svc = _txt(g.find("ServiceTypeTxt"))
-            f.contractors.append(Contractor(name, svc, _num(g.find("CompensationAmt")), bool(INVESTMENT_SERVICE.search(svc))))
+            f.contractors.append(Contractor(name, svc, _num(g.find("CompensationAmt")), is_investment_service(svc)))
         for g in data.findall(".//InvestmentsOtherSchedule2/InvestmentsOtherGrp") + data.findall(".//InvestmentsOtherSchedule/InvestmentsOtherGrp"):
             desc = _txt(g.find("CategoryOrItemTxt")) or _txt(g.find("Desc"))
             if desc:

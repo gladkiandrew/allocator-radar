@@ -29,9 +29,10 @@ log = logging.getLogger(__name__)
 # Organization -> its own published meeting-document pages. Hosts are allowlisted in config/sources.yaml (Phase C).
 SOURCES = {
     "596166292": {"name": "UWF Foundation", "pages": ["https://uwf.edu/university-advancement/departments/foundation/board/meeting-documents/"]},
-    "596211832": {"name": "UCF Foundation", "pages": ["https://ucffoundation.org/?p=429"]},
-    "590917284": {"name": "FAU Foundation", "pages": ["https://fauf.fau.edu/foundation-board-meetings/"]},
+    "590917284": {"name": "FAU Foundation", "pages": ["https://fauf.fau.edu/past-meeting-agendas/"]},
 }
+# UCF Foundation (596211832) is not read: its Board of Directors page (ucffoundation.org/?p=429) now redirects to a 404
+# on advance.ucf.edu, and the newest public minutes found are from April 2025. Listed in data/manual_downloads.md.
 DOC_LINK = re.compile(r"invest|minutes|agenda|binder|executive|board|meeting|committee", re.I)
 RECENT = re.compile(r"20(25|26)")
 PER_ORG = 8
@@ -106,10 +107,10 @@ def discover(client, ein: str) -> list[tuple[str, str]]:
 def _pages(pdf: bytes) -> list[str]:
     import pdfplumber
 
-    from radar.wall.scrubber import scrub
+    from radar.wall.scrubber import scrub_text
 
     with pdfplumber.open(io.BytesIO(pdf)) as doc:
-        return [scrub(p.extract_text() or "") for p in doc.pages]
+        return [scrub_text(p.extract_text() or "") for p in doc.pages]
 
 
 def read_document(client, provider, ein: str, url: str, label: str) -> dict:

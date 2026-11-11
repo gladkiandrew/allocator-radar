@@ -106,6 +106,8 @@ def load_irs(client, eins: list[str]) -> dict:
                 f = irs.parse_return(irs.fetch_return(client, r, _cache()), r)
             except Exception as e:  # noqa: BLE001
                 log.warning("irs %s %s: %s", ein, r.object_id, e)
+                manual_note(f"IRS e-file XML for EIN {ein}, object {r.object_id} (TY ending {r.tax_period})",
+                            f"{type(e).__name__}: {str(e)[:100]}; the PDF can be opened on ProPublica's filing page")
                 stats["failed"] += 1
                 continue
             with store.connect() as con:
@@ -128,6 +130,9 @@ def load_irs(client, eins: list[str]) -> dict:
 def derive_signals() -> int:
     """Rebuild the 990 signals from the stored filings (committee signals are kept)."""
     with store.connect() as con:
+        for svc, in con.execute("SELECT DISTINCT service FROM ef_contractors").fetchall():  # current rule, every rebuild
+            con.execute("UPDATE ef_contractors SET investment = ? WHERE service IS NOT DISTINCT FROM ?",
+                        [irs.is_investment_service(svc), svc])
         orgs = store.rows(con, "SELECT * FROM ef_orgs")
         con.execute("DELETE FROM ef_signals WHERE source_type = '990'")
         n = 0

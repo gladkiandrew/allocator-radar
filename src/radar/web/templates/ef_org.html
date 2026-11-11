@@ -23,10 +23,10 @@
     {% else %}<div class="v big">{{ money(o.bmf_assets) }}</div><span class="as">IRS master file</span>{% endif %}</div>
   <div class="fact"><div class="l">{{ 'Investments, other' if not f or f.form == '990-PF' else 'Investments, other securities' }}</div>
     {% if f and f.investments_other is not none %}<div class="v big">{{ money(f.investments_other) }}</div><span class="as">end of TY{{ f.tax_year }}</span>
-    <div style="margin-top:6px">{{ cite(f.url, 'line', f.cite_other) }}</div>{% else %}<div class="none">Not reported in the filings read</div>{% endif %}</div>
+    <div style="margin-top:6px">{{ cite(f.url, 'Form ' ~ f.form ~ ' TY' ~ f.tax_year, f.cite_other) }}</div>{% else %}<div class="none">Not reported in the filings read</div>{% endif %}</div>
   <div class="fact"><div class="l">Investments, public securities</div>
     {% if f and f.investments_public is not none %}<div class="v big">{{ money(f.investments_public) }}</div><span class="as">end of TY{{ f.tax_year }}</span>
-    <div style="margin-top:6px">{{ cite(f.url, 'line', f.cite_public) }}</div>{% else %}<div class="none">Not reported in the filings read</div>{% endif %}</div>
+    <div style="margin-top:6px">{{ cite(f.url, 'Form ' ~ f.form ~ ' TY' ~ f.tax_year, f.cite_public) }}</div>{% else %}<div class="none">Not reported in the filings read</div>{% endif %}</div>
   <div class="fact"><div class="l">Returns read</div><div class="v big">{{ o.filings|length }}</div><span class="as">IRS e-file XML</span></div>
 </section>
 

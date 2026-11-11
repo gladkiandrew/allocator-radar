@@ -120,7 +120,7 @@ def hf_rows(public: bool = True, limit: int = 6) -> list[dict]:
         names = dict(con.execute("SELECT ein, name FROM ef_orgs").fetchall())
         q = ("SELECT * FROM ef_signals WHERE signal_type IN ('EF_ALT_HOLDING_ADDED', 'EF_MANAGER_ADDED') "
              + ("AND review_status IN ('approved', 'auto_approved') " if public else "")
-             + "ORDER BY event_date DESC")
+             + "ORDER BY signal_type = 'EF_MANAGER_ADDED', event_date DESC")  # new hedge fund lines first
         sigs = store.rows(con, q)
     seen, out = defaultdict(int), []
     for s in sigs:

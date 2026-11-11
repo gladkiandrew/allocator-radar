@@ -286,3 +286,40 @@ def test_committee_signals_need_the_quote_on_the_page(monkeypatch):
         sigs = store.rows(con, "SELECT * FROM ef_signals")
     assert S.ef_readiness(sigs, True).tier == "DEPLOYING"  # a dated committee document can set DEPLOYING
     assert C.read_document(client, provider, "596166292", "https://uwf.edu/x/minutes.pdf", "x")["skipped"]
+
+
+def test_committee_pages_are_scrubbed_text():
+    """_pages reads a real PDF and returns scrubbed strings (contact details redacted before any model sees them)."""
+    from fpdf import FPDF
+
+    from radar.sources.endowments import committee as C
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Helvetica", size=11)
+    pdf.multi_cell(0, 6, "Investment Committee minutes. The Committee voted to issue an RFP for a hedge fund manager. "
+                         "Questions: call 850-555-0142.")
+    pages = C._pages(bytes(pdf.output()))
+    assert len(pages) == 1 and isinstance(pages[0], str)
+    assert "hedge fund manager" in pages[0] and "850-555-0142" not in pages[0] and "REDACTED" in pages[0]
+
+
+def test_hf_flag_and_investment_service_are_tight():
+    assert S.HF.search("ABSOLUTE RETURN AND HEDGE FUNDS") and S.HF.search("ROKOS GLOBAL MACRO FUND LTD")
+    assert S.HF.search("Quantitative strategies") and S.HF.search("ALTERNATIVE INVESTMENTS")
+    assert not S.HF.search("GREEN THUMB INDUSTRIES WARRANTS 35,270.000 QUANTITY")
+    assert not S.HF.search("BRIDGES PROPERTY ALTERNATIVES FUND V")
+    xml = _990(_contractor(BIZ("DELOITTE TAX LLP"), "TAX PREPARATION AND ADVISORY", 200000)
+               + _contractor(BIZ("PRIME BUCHHOLZ AND ASSOC INC"), "INVESTMENT CONSULTING", 300000))
+    inv = {c.firm: c.investment for c in irs.parse_return(xml, _row()).contractors}
+    assert inv == {"DELOITTE TAX LLP": False, "PRIME BUCHHOLZ AND ASSOC INC": True}
+
+
+def test_garbled_firm_name_is_not_a_change():
+    org = {"ein": "1"}
+    f1 = {"object_id": "B", "ein": "1", "return_type": "990PF", "tax_year": 2023, "tax_period_end": date(2024, 6, 30)}
+    f0 = {"object_id": "A", "ein": "1", "return_type": "990PF", "tax_year": 2022, "tax_period_end": date(2023, 6, 30)}
+    c = lambda firm: {"firm": firm, "service": "INVESTMENT MANAGEMENT FEES", "amount": 1e5, "investment": True}
+    out = S.derive(org, [f1, f0], {"B": [c("SOUTHERN SUN ASSET MANAGEMENT")], "A": [c("SOUTHERN SUN ASSET MANAGESOUTHERN SUN ASMENT")]},
+                   {}, irs.filing_url, lambda f, w: "cite")
+    assert not [s for s in out if s["signal_type"] in ("EF_MANAGER_ADDED", "EF_MANAGER_DROPPED")]

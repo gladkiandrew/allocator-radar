@@ -15,7 +15,8 @@
 
 <section class="kpis" aria-label="Key figures" style="margin-top:18px">
   <div class="kpi"><div class="v">{{ rows|length }}</div><div class="l">Organizations</div></div>
-  {% for k, label in kinds.items() %}<div class="kpi"><div class="v">{{ counts[k] }}</div><div class="l">{{ label }}s</div></div>{% endfor %}
+  {% set plural = {'University foundation': 'University foundations', 'Private university': 'Private universities', 'Community foundation': 'Community foundations', 'Private foundation': 'Private foundations'} %}
+  {% for k, label in kinds.items() %}<div class="kpi"><div class="v">{{ counts[k] }}</div><div class="l">{{ plural.get(label, label) }}</div></div>{% endfor %}
   <div class="kpi"><div class="v">{{ n_signals }}</div><div class="l">Cited signals</div></div>
 </section>
 

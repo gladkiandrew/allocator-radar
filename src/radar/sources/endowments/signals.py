@@ -25,7 +25,7 @@ from radar.wall.lint import lint
 
 HF = re.compile(r"hedge|absolute return|diversif|managed futures|\bcta\b|multi[- ]?strat|global macro|\bmacro\b|"
                 r"risk mitigat|crisis risk|tail risk|market neutral|long[/ -]short|arbitrage|event driven|"
-                r"systematic|quant|alternative|marketable alt|opportunistic", re.I)
+                r"\bsystematic\b|\bquant(itative)?\b|alternative investment|marketable alt", re.I)
 DETERMINISTIC = "ef-990-parser (deterministic)"
 CAP_MEANING = ("990 data only. Annual filings lag by a year or more, so a 990 alone never sets a tier above "
                "WATCHING; DEPLOYING or PREPARING needs a dated committee or board document.")
@@ -68,6 +68,11 @@ def derive(org: dict, filings: list[dict], contractors: dict[str, list[dict]], o
     latest, prev = filings[0], (filings[1] if len(filings) > 1 else None)
     inv = lambda f: {_norm(c["firm"]): c for c in contractors.get(f["object_id"], []) if c["investment"]}
     now_inv = inv(latest)
+
+    def same_firm(k: str, others: dict) -> bool:
+        """Exact normalized match, or the same first two words (filers garble long names across name lines)."""
+        head = " ".join(k.split()[:2])
+        return k in others or any(" ".join(o.split()[:2]) == head and len(head) >= 8 for o in others)
     for c in now_inv.values():
         sig(latest, "EF_CONTRACTOR_LISTED",
             f"The TY{latest['tax_year']} return lists {c['firm']} ({c['service'].lower() or 'services not described'}, "
@@ -75,13 +80,13 @@ def derive(org: dict, filings: list[dict], contractors: dict[str, list[dict]], o
     if prev is not None and prev["object_id"] in contractors and latest["object_id"] in contractors:
         before = inv(prev)
         for k, c in now_inv.items():
-            if k not in before:
+            if not same_firm(k, before):
                 sig(latest, "EF_MANAGER_ADDED",
                     f"{c['firm']} ({c['service'].lower() or 'services not described'}) is listed among the five highest-paid "
                     f"independent contractors on the TY{latest['tax_year']} return; the TY{prev['tax_year']} return did not list it.",
                     "contractors", [c["firm"], c["service"]], qualifier="manager")
         for k, c in before.items():
-            if k not in now_inv:
+            if not same_firm(k, now_inv):
                 sig(latest, "EF_MANAGER_DROPPED",
                     f"{c['firm']} ({c['service'].lower() or 'services not described'}) was listed among the five highest-paid "
                     f"independent contractors on the TY{prev['tax_year']} return and is not listed on the TY{latest['tax_year']} return.",
