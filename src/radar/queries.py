@@ -116,7 +116,7 @@ def allocator_table(con, scoped: bool = True) -> list[dict]:
             consultant=consultants.get(a["allocator_id"]),
             pending=[s for s in sigs if s["review_status"] == "new"],
         )
-        from radar import timeline
+        from radar.web import when as timeline
 
         a["when"] = timeline.when(a, sigs)
         out.append(a)
@@ -212,7 +212,7 @@ def allocator_brief(con, allocator_id: str) -> dict | None:
     a["bar_reasons"] = coverage.bar(con, a)
     from datetime import date as _date
 
-    from radar import timeline
+    from radar.web import when as timeline
 
     ahead = [d["doc_date"] for d in a["documents"] if d.get("doc_date") and d["doc_date"] > _date.today()]
     tl_alloc, tl_search = timeline_rows(con)
