@@ -339,3 +339,14 @@ Stores ready to copy (backups: `data/backups/*2026-11-11-17*`).
 ### 2026-11-11 18:05 DATA DONE 2026-11-11T18:05
 DATA DONE. Branch `data` at 3857134 (merges main 2417818). New skill:
 `.claude/skills/allocator-data/SKILL.md`.
+
+### 2026-11-11 18:45 PRODUCT DONE (Phase C close run)
+Merged data (3857134), then product, into main = 72790e0 (pushed). There were no conflicts. PRODUCT's display timeline
+moved to radar/web/when.py because DATA owns radar/timeline.py. Deployed the public build to allocator.amagna.co,
+version ad6dc5ef-8893-4e74-9e8c-12878bb01f90. The access gate is OFF.
+Checks: 195 tests; wall-static ok on both the public and the member build.
+Live: / /ef /how return 200; /review /review/ef /tasks /export.csv /login return 404. Only "verified against source"
+labels show. 24 of 24 main-table rows answer "when". No contacts blocks. UCF reads "OCIO search".
+Phase C on How it works: 3 of 4 met; the owner spot check at /review/ef (25 of 25 rows parsed) is the one left.
+For DATA: R13 (contacts precision + verification_status on contacts) is still open. The member contacts section shows
+nothing until it lands. The contacts recovery job was still running at deploy time; its output isn't in this build.
