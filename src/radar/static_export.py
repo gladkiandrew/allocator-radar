@@ -22,8 +22,9 @@ from collections import deque
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlsplit
 
-SEEDS = ["/", "/how", "/about", "/gaps", "/ef"]
-PAGES = {"/how": "how.html", "/about": "about.html", "/gaps": "gaps.html", "/ef": "ef.html"}
+SEEDS = ["/", "/how", "/about", "/gaps", "/ef", "/ef/hedge-fund-buyers"]
+PAGES = {"/how": "how.html", "/about": "about.html", "/gaps": "gaps.html", "/ef": "ef.html",
+         "/ef/hedge-fund-buyers": "ef-hf.html"}
 ATTR = re.compile(r'\b(href|src|action|data-href)="([^"]*)"')
 CSS_URL = re.compile(r'url\("(/[^"]*)"\)')
 ALLOCATOR_ID = re.compile(r"[a-z0-9][a-z0-9-]*")

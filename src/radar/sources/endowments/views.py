@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 
 from radar.readiness import TIER_ORDER
@@ -131,3 +132,87 @@ def hf_rows(public: bool = True, limit: int = 6) -> list[dict]:
         if len(out) >= limit:
             break
     return out
+
+
+# ---------------- Hedge fund buyers (/ef/hedge-fund-buyers) ----------------
+# A line counts toward the hedge fund figure only when its own description names a hedge fund strategy. This is
+# signals.HF without its generic "alternative investment" / "marketable alt" / bare "diversif" wording (an
+# "ALTERNATIVE INVESTMENTS" line can hold private equity or real estate), plus truncated "MULTI-STR" labels.
+HF_NAMED = re.compile(r"hedge|absolute return|diversifying strat|managed futures|\bcta\b|multi[- ]?str(at|\b)|global macro|"
+                      r"\bmacro\b|risk mitigat|crisis risk|tail risk|market neutral|long[/ -]short|arbitrage|"
+                      r"event driven|\bsystematic\b|\bquant(itative)?\b", re.I)
+ALT_WORDING = re.compile(r"alternative|marketable alt", re.I)
+
+
+def _short_cite(c: str) -> str:
+    """'Form 990 TY2023 Part X line 12 (investments, other securities)' -> without the parenthetical."""
+    return c.split(" (")[0]
+
+
+def hf_buyers() -> list[dict]:
+    """Organizations ranked by the hedge fund exposure their latest 990 / 990-PF discloses (read-only, no writes).
+
+    hf:    sum of the latest return's other-investment lines whose description names a hedge fund strategy (990:
+           Schedule D Part VII; 990-PF: Part II line 13 statement). FMV when the line carries one, else book value.
+    alt:   the broader "alternatives (other investments)" total: 990 Part X line 12 (book value, end of year) or
+           990-PF Part II line 13 (fair market value). It also holds anything else the filer put there.
+    denom: investments = public securities + other investments (990 Part X lines 11 + 12; 990-PF Part II lines
+           10a-10c + 13). A line left blank on the return counts as zero; if both are blank, no percent is computed.
+    Rank: hedge fund figure first; rows without one follow, by the broader figure; then rows with neither.
+    Values not on the return are None ("not disclosed"), never 0."""
+    with store.connect(read_only=True) as con:
+        orgs = store.rows(con, "SELECT * FROM ef_orgs")
+        fil = _filings(con, [o["ein"] for o in orgs])
+        latest_ids = [fs[0]["object_id"] for fs in fil.values() if fs]
+        lines = defaultdict(list)
+        if latest_ids:
+            for x in store.rows(con, f"SELECT * FROM ef_other_investments WHERE object_id IN ({','.join('?' * len(latest_ids))})",
+                                latest_ids):
+                lines[x["object_id"]].append(x)
+    rows = []
+    for o in orgs:
+        fs = fil.get(o["ein"], [])
+        f = fs[0] if fs else None
+        row = {"ein": o["ein"], "name": o["name"], "kind_label": KIND_LABEL.get(o["kind"], o["kind"]), "city": o["city"],
+               "latest": f, "hf": None, "alt": None, "denom": None, "hf_pct": None, "alt_pct": None,
+               "alt_named": [], "n_lines": 0}
+        if f is not None:
+            fo = _filing_obj(f)
+            ls = lines.get(f["object_id"], [])
+            row["n_lines"] = len(ls)
+            named = []
+            for x in ls:
+                val, basis = (x["fmv"], "FMV") if x["fmv"] is not None else (x["book_value"], "book value")
+                if val is None:
+                    continue
+                item = {"description": x["description"], "value": val, "basis": basis}
+                if HF_NAMED.search(x["description"] or ""):
+                    named.append(item)
+                elif ALT_WORDING.search(x["description"] or ""):
+                    row["alt_named"].append(item)
+            if named:
+                bases = {i["basis"] for i in named}
+                row["hf"] = {"amount": sum(i["value"] for i in named), "lines": sorted(named, key=lambda i: -i["value"]),
+                             "basis": bases.pop() if len(bases) == 1 else "FMV where reported, else book value",
+                             "cite": irs.citation(fo, "other_investments")}
+            pf = f["form"] == "990-PF"
+            if f["investments_other"] is not None:
+                row["alt"] = {"amount": f["investments_other"], "basis": "FMV" if pf else "book value",
+                              "cite": irs.citation(fo, "investments_other")}
+            parts = [("public securities", f["investments_public"], irs.citation(fo, "investments_public")),
+                     ("other investments", f["investments_other"], irs.citation(fo, "investments_other"))]
+            if any(v is not None for _, v, _ in parts):
+                row["denom"] = {"amount": sum(v or 0 for _, v, _ in parts), "basis": "FMV" if pf else "book value",
+                                "blank": [label for label, v, _ in parts if v is None],
+                                "cite": "; ".join(_short_cite(c) for _, _, c in parts)}
+            d = row["denom"]["amount"] if row["denom"] else 0
+            if d > 0:
+                row["hf_pct"] = 100 * row["hf"]["amount"] / d if row["hf"] else None
+                row["alt_pct"] = 100 * row["alt"]["amount"] / d if row["alt"] else None
+        rows.append(row)
+    amt = lambda x: x["amount"] if x else None
+    rows.sort(key=lambda r: (r["hf"] is None, -(amt(r["hf"]) or 0), r["alt"] is None, -(amt(r["alt"]) or 0),
+                             r["latest"] is None, r["name"]))
+    for i, r in enumerate(rows, 1):
+        r["rank"] = i
+    return rows
