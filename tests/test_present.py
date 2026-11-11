@@ -177,3 +177,14 @@ def test_strategy_label_prefers_stored_bucket_then_type_then_inferred_wording():
     assert sl({"summary": "Custodian finalist presentations for the fixed income portfolio."})["text"] == "service provider"
     assert sl({"signal_type": "IPS_AMENDED", "summary": "The Board amended the IPS."}) == {"text": "total plan", "inferred": False}
     assert sl({"signal_type": "COMMITMENT_MADE", "summary": "Approved $5M to Affiliated Fund II."})["text"] == "not classified"
+
+
+def test_consultant_display_drops_rows_naming_the_deals_own_manager():
+    from radar.queries import shown_engagements
+
+    inv = {"consultant_name_as_disclosed": "Invesco", "evidence": [
+        {"quote": "Real Estate | Invesco Advisers Inc | Holland - Meridian at Midtown | $105,250,000 | Invesco | Joint Venture"}]}
+    mer = {"consultant_name_as_disclosed": "Mercer", "evidence": [
+        {"quote": "Active Credit | abrdn Inc. | Turtle Bay Partners EMD Fund | $231,250,000 | Mercer | Emerging Markets Debt"}]}
+    plain = {"consultant_name_as_disclosed": "AndCo Consulting", "evidence": [{"quote": "AndCo presented the report."}]}
+    assert shown_engagements([inv, mer, plain]) == [mer, plain]
