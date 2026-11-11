@@ -419,7 +419,10 @@ AUDITOR, each with the firm name in label and a quote that contains that firm na
 page states no other date. Signals, mandates and officers may be left empty."""
 SEARCH_VOCAB = re.compile(r"request for (proposals?|qualifications?|information)|\brfp\b|\brfq\b|\bsearch\b|finalist|"
                           r"interview|solicitation|semi-?finalist|short ?list|selection committee|evaluation committee|"
-                          r"proposals? (were )?received|responses? (were )?received|selected|hire|engage(d|ment)? (of|a|an|the)", re.I)
+                          r"proposals? (were )?received|responses? (were )?received|selected|hire|engage(d|ment)? (of|a|an|the)|"
+                          # D-B16: new-manager hires and fund commitments recorded without the word "search"
+                          r"new investment managers?|managers? candidates?|candidates? for the|subscription documents?|"
+                          r"subscription agreements?|side letters?|finalist presentations?", re.I)
 SEARCH_FOCUS = """
 
 This pass is a focused scan for SEARCHES. On these pages, look specifically for investment-manager and investment-consultant
@@ -520,3 +523,29 @@ def pending_documents(con, allocator_ids: list[str] | None = None) -> list[tuple
         if _pages_to_extract(con, r["sha256"]):
             out.append((r["sha256"], r["allocator_id"]))
     return out
+
+
+def rescore_pages(con) -> list[tuple[str, str]]:
+    """Recompute stored prefilter terms with the current vocabulary (D-B16).
+
+    Returns (sha, allocator_id) for documents that gained a hit page, so the caller can re-extract just those.
+    Rows already extracted are never deleted; extraction dedupe keys prevent duplicates on re-extraction.
+    """
+    from radar.extract.prefilter import match_terms, score
+
+    changed: set[str] = set()
+    updates = []
+    for sha, page_no, text, stored in con.execute("SELECT sha256, page_no, text_scrubbed, prefilter_terms FROM pages").fetchall():
+        terms = match_terms(text or "")
+        new = json.dumps(terms) if terms else None
+        if new != stored:
+            updates.append((new, sha, page_no))
+            was_hit = is_hit(json.loads(stored)) if stored else False
+            if is_hit(terms) and not was_hit:
+                changed.add(sha)
+    con.executemany("UPDATE pages SET prefilter_terms = ? WHERE sha256 = ? AND page_no = ?", updates)
+    if not changed:
+        return []
+    marks = ",".join("?" * len(changed))
+    return [(r[0], r[1]) for r in con.execute(
+        f"SELECT sha256, any_value(allocator_id) FROM document_urls WHERE sha256 IN ({marks}) GROUP BY 1", list(changed)).fetchall()]

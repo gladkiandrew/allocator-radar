@@ -11,7 +11,20 @@ import re
 # term -> weight. A page goes to extraction when its total weight >= THRESHOLD.
 VOCAB: dict[str, int] = {
     # searches and selection
-    r"request for proposals?": 3, r"\brfp\b": 3, r"\brfi\b": 2, r"manager search": 3, r"search for an?": 2,
+    r"request for proposals?": 3, r"\brfp\b": 3, r"\brfi\b": 2, r"search for an?": 2,
+    # D-B16: decisive manager-search phrasings that pass on their own (weight 5), learned from pages the
+    # threshold missed. Narrow on purpose: "city/town/county manager" hiring and bid boilerplate stay out.
+    r"(?<!city )(?<!town )(?<!county )managers? (?:search|selection)": 5,
+    r"(?<!city )(?<!town )(?<!county )managers? candidates?": 5,
+    r"invit(?:e|ed|ing) (?:the )?(?:firms?|managers?)\b[^.]{0,200}?to (?:interview|present)": 5,
+    r"candidates? for the (?:\w+'?s? ){0,6}(?:equit\w*|income|credit|estate|value|growth|core|cap|bond|infrastructure|alternatives?|investment) managers?": 5,
+    r"search for an? (?:\w+ ){0,5}(?:investment )?managers?": 5,
+    r"(?:rfp|request for proposals?) for (?:\w+ ){0,4}investment (?:management|managers?)": 5,
+    r"finalist (?:presentations?|interviews?)": 5,
+    r"thank\w* the board for the opportunity to (?:interview|present)": 5,
+    r"new investment managers?": 5,
+    r"terminat\w* [^.]{0,120}?(?:and|to) replace": 3,
+    r"subscription (?:documents?|agreements?)": 2, r"side letters?": 3,
     r"finalists?": 3, r"short ?list": 2, r"semi-?finalists?": 3, r"interview(?:ed|s)? (?:the )?(?:managers?|firms?|candidates?)": 2,
     r"selected": 1, r"hire[ds]?\b": 1, r"award(?:ed)?": 1, r"engag(?:e|ed|ement) of": 1,
     r"fund(?:ed|ing) (?:of|the)": 1, r"commit(?:ment|ted)": 1,

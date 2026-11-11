@@ -1,0 +1,68 @@
+# Recall set for the page prefilter and the search-scan vocabulary (D-B16).
+# Passages are trimmed from scrubbed public board documents in the corpus (2026-11-09); people's names removed.
+# positive: a manager search step, a new-manager hire, or a fund commitment. These must reach the extractor.
+# negative: wording that looks similar but is not one. These must not pass the page prefilter.
+
+positive:
+  - id: invite-to-interview-as-candidates
+    text: >-
+      MOTION: To invite the firms of Silvant Capital Management, Smith Group Asset Management, and Fiera Capital to
+      interview as candidates for the Board's large cap growth equities manager at the February 18, 2025 Board meeting,
+      as recommended by Southeastern Advisory Services, Inc. PASSED 8-0.
+  - id: manager-search-agenda-heading
+    text: >-
+      A. Presentation of Draft Financial Statements for the year ended September 30, 2025 B. Management Representation
+      Letter XI. LARGE CAP VALUE MANAGER SEARCH - DISCUSSION AND POSSIBLE ACTION A. Allspring Global Investments
+  - id: new-investment-manager-agenda-item
+    text: >-
+      5.3 Investment Options for Defined Contribution Plan; NEPC Financial Advisors 5.4 New Investment Manager -
+      Retirement Plan; NEPC Financial Advisors 5.5 New Investment Manager - Operating Plan; NEPC Financial Advisors
+  - id: subscription-documents-new-managers
+    text: >-
+      The plan attorney also confirmed progress on subscription documents and side letters for new investment managers
+      MAG and Vertus. Chairman - No report at this time.
+  - id: manager-candidate-presentations
+    text: >-
+      LARGE CAP VALUE DOMESTIC EQUITY MANAGER CANDIDATE PRESENTATIONS The consultant provided an overview and comparison
+      of the three manager candidates as profiled in the Large Cap Value search book.
+  - id: thanked-board-opportunity-to-interview
+    text: >-
+      The portfolio manager answered questions, reviewed the fee structure, thanked the Board for the opportunity to
+      interview and departed the meeting. Reinhart Partners was in attendance next.
+  - id: subscription-document-side-letter-motion
+    text: >-
+      Legal counsel reviewed and approved the Taurus Private Market Fund III Subscription Document and Side Letter.
+      MOTION: To approve the Subscription Document and Side Letter for the Taurus Private Market Fund III, as reviewed
+      and recommended by legal counsel.
+  - id: rfp-private-credit-search
+    text: >-
+      The Board voted to authorize the consultant to issue a Request for Proposals for a private credit manager search
+      and to bring finalists to the next meeting.
+
+negative:
+  - id: presentations-by-special-guests
+    text: >-
+      5. Proclamations/Awards/Announcements A. Town announcements and upcoming events 6. Presentations by Special Guests
+      (Maximum of 5 Minutes) 7. Public Comment (Non-Agenda Items)
+  - id: bid-form-solicitation
+    text: >-
+      By signing this document, the Bidder agrees to all Terms and Conditions of this Solicitation and the resulting
+      Contract/Agreement. THE EXECUTION OF THIS FORM CONSTITUTES THE UNEQUIVOCAL OFFER OF BIDDER TO BE BOUND.
+  - id: new-town-manager
+    text: >-
+      I am the new manager for the town of Melbourne Beach with a population of a little over 4,000 residents.
+  - id: state-mandate
+    text: >-
+      Implementation of House Bill 3 - the administrator reported on the new mandate from the governor's office and
+      state legislature, FL Statutes 112.662. The Comprehensive State report is due December 15th.
+  - id: city-manager-candidates
+    text: >-
+      The Commission discussed the schedule for City Manager candidates and agreed the candidates for the town manager
+      position will be interviewed at a special meeting.
+  - id: fund-disclaimer
+    text: >-
+      Any such offer may only be made pursuant to the Funds' confidential private placement memorandum and any related
+      supplements, subscription documents and constituent documents in their final form.
+  - id: elevator-state-mandate
+    text: >-
+      Elevator Repairs - State Mandate $49,511 $50,000 20 years Funding spaced out over two years.

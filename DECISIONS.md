@@ -300,3 +300,12 @@ are the irreversible ones, which went to the repo owner.
   or /doc/, no non-public link schemes, no posting forms, no data/key files. `make deploy-public` runs
   export -> wall -> `npx wrangler deploy` (`wrangler.jsonc`: static assets, custom domain allocator.amagna.co).
   No VPS, no tunnel.
+- **D-B16 Narrow manager-search vocabulary + rescore.** The page prefilter missed real manager-search pages
+  written in pension-board style ("invite the firms … to interview as candidates for the Board's … manager",
+  "LARGE CAP VALUE MANAGER SEARCH", "New Investment Manager – Retirement Plan", "subscription documents and side
+  letters"). Added decisive phrases at weight 5 (pass alone) and subscription/side-letter terms; broad words
+  ("mandate", "solicitation", "presentation by") were measured and rejected as mostly noise (bid forms, city
+  agendas, fund disclaimers). `tests/fixtures/search_passages.yaml` holds 8 real positives and 7 noise passages;
+  the recall test requires all positives to pass and no noise to. `radar rescore` recomputes stored page terms
+  and re-extracts only the documents that gained hit pages: 42 pages in 35 documents (+3.5% LLM input), 22 new
+  signals, 20 auto-approved under auto-approve-v2 (terminations stay for review).

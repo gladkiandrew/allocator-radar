@@ -33,6 +33,9 @@ def main(argv: list[str] | None = None) -> int:
     np_.add_argument("--max-docs", type=int, default=150)
     sub.add_parser("hash-password", help="print the sha256 for RADAR_AUTH_PASSWORD_HASH (reads the password from stdin)")
     sub.add_parser("approve-pending", help="apply config/review_policy.yaml to pending signals (and the registry)")
+    rs = sub.add_parser("rescore", help="recompute stored prefilter terms with the current vocabulary; re-extract documents that gained hit pages")
+    rs.add_argument("--no-extract", action="store_true", help="only update the stored terms")
+    rs.add_argument("--workers", type=int, default=3)
     sub.add_parser("reparse-scanned", help="re-parse documents that have scanned (empty) pages, with local OCR")
     sub.add_parser("resolve", help="entity resolution for firm names (auto-alias only)")
     sub.add_parser("report", help="main table vs coverage gaps, with coverage % per allocator")
@@ -168,6 +171,21 @@ def main(argv: list[str] | None = None) -> int:
         for r in review.integrity_cleanup():
             print(f"removed orphan: {r}")
         print(f"signals approved under policy: {review.approve_pending()}")
+    elif args.cmd == "rescore":
+        import json
+        from concurrent.futures import ThreadPoolExecutor
+        from radar import db
+        from radar.extract import extractor
+        db.init_db()
+        with db.connect() as con:
+            todo = extractor.rescore_pages(con)
+        print(f"{len(todo)} documents gained prefilter hit pages", flush=True)
+        if not args.no_extract:
+            def one(item):
+                st = extractor.extract_document(item[0], item[1], force=True)
+                print(json.dumps({"doc": item[0][:12], "allocator": item[1], **st}), flush=True)
+            with ThreadPoolExecutor(max_workers=args.workers) as ex:
+                list(ex.map(one, todo))
     elif args.cmd == "reparse-scanned":
         from radar import db
         from radar.parse import pdf
