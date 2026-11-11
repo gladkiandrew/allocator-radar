@@ -372,3 +372,84 @@ are the irreversible ones, which went to the repo owner.
   as a dry run that prints the count of rows it would change per table, and record both in HANDOFF.md. Only then run it
   for real. A backup was taken under this rule on 2026-11-11: `data/backups/radar.2026-11-11.duckdb` and
   `data/backups/ef.2026-11-11.duckdb`.
+
+## DATA session (2026-11-11)
+
+- **D-B24 Data-session tools.** `radar reextract <sha> --pages 1,9,150-160 [--search]` sends exactly those pages to the
+  extractor (a reviewer found the item; the vocabulary missed it). `radar add-page <plan> <url> <label>` adds a listing
+  page to `registry/florida.yaml` as text and re-approves the file with exactly the pages already selected plus the new
+  one, so no other plan's page list changes (registry auto-approval, D-A32). `radar add-signal` is a *curated
+  extraction*: a signal read off a cited page by the data session when the extraction pass missed it. It runs the
+  extractor's own validators (quote on the cited page, quote shares the summary's names or numbers, lint, contact
+  detector, date window) and is stored pending with an evidence row whose extractor is `curated-extraction`, so the
+  tiered auto-approval rules decide it like any other row. Used three times on 2026-11-11: Pompano P&F 2026-11-16 agenda
+  ("Update Re Fee Discussions with Private Credit Managers Bracco and Constitution Capital"), Vero Beach Police 2026-11-04
+  agenda ("Large cap value analysis", linked to the existing Cohen & Steers SEARCH_SCHEDULED row of that date), and
+  Hollywood ERF 2026-09-22 agenda ("Private Credit: Brightwood Presentation"). The search scan is now `search-scan-3`:
+  SEARCH_SCHEDULED also covers fee or contract negotiations with named candidate managers and a board-requested
+  comparison of named candidates for one mandate, with matching vocabulary.
+- **D-B25 Meeting date and retrieval date are kept apart.** `document_urls.doc_date` is the meeting or report date (an
+  agenda for an upcoming meeting is future-dated); `first_seen` is the retrieval date. The view `document_dates` exposes
+  `meeting_date`, `retrieved_on`, `as_of_date = least(meeting_date, retrieved_on)` and `upcoming_when_retrieved`.
+  Holdings, officers, consultants and facts read off an upcoming meeting's agenda are dated the day they were read (they
+  had been dropped as future-dated). The display-side fix (newest document never future) is PRODUCT's.
+- **D-B26 Hyphenated month-name dates** (`February-13-2024-Minutes.pdf`) are parsed from link text and file names.
+  Backfill under D-B23: 594 of 746 undated documents dated (93 from the title, 51 from the file name, 450 from the first
+  date on page 1); Miramar's four plans went from 103 undated rows to 6.
+- **D-B27 E&F citation labels are ours.** A committee citation reads "<organization> <committee> <minutes|agenda>,
+  <meeting date from the document>, page N". The listing's link text is no longer used for the date (UWF lists the
+  August 26, 2026 Executive Committee minutes as "9/26/26 Executive Committee Minutes"). Pension citations cannot have
+  this mismatch: their dates are parsed from the link text itself.
+- **D-B28 E&F officers, endowment and contractor classes.** Re-reading every stored 990 (`radar ef-reparse`; the raw XML
+  is never kept): officers, directors, trustees and key employees with their titles as printed (`ef_officers`, cited to
+  990 Part VII Section A line 1a or 990-PF Part VII line 1). No compensation, hours, benefits or address element is read
+  (D-B22). Highest-compensated employees who hold no office are not kept. Schedule D Part V line 1g column (a) is stored
+  as `ef_filings.endowment_eoy`, separately from total assets. Each 990 contractor is classified manager, consultant,
+  custodian, bank, law firm or other (`ef_contractors.contractor_class`, `class_basis`) from the printed service plus
+  `config/ef_firms.yaml`: a firm on the law-firm list is a law firm whatever its line says (Holland & Knight's DeLuca
+  TY2024 line reads "investment management"); consultant, bank and custodian lists override manager wording except for
+  OCIO, which is discretionary management. Only managers and consultants feed the manager added/dropped signals.
+  Parser fixes: the 990-PF line 13 statement's FMV tag is `EOYFMVAmt` (it was read as empty), the government-obligations
+  tag is `USGovtObligationsEOYFMVAmt` (it was never read), a printed 0 is kept distinct from blank, and the line 13 book
+  value and each line's valuation method (Schedule D `MethodValuationCd`, 990-PF cost/FMV) are stored.
+- **D-B29 E&F exposure and placeholder amounts.** Per filing, `ef_exposure` holds hedge fund and alternatives dollars
+  and percent of total investments (990 Part X lines 11-13; 990-PF Part II lines 10a-13), cited to Schedule D Part VII or
+  the 990-PF line 13 statement and labelled with the tax year. Lines are classed by their printed description. Hedge funds
+  are `not_disclosed` unless at least one line names a hedge fund strategy (a lump "Alternative investments" line counts
+  toward alternatives only); alternatives are `not_disclosed` when the filing itemizes nothing. A holding printed at
+  $0-$100 is a placeholder: its amount is "not stated" (`value_status`), it is left out of the dollars, and it never ranks
+  above a stated holding (Arison Arts' "$1" Rokos Global Macro Fund).
+- **D-B30 Strategy buckets for extracted signals.** The extractor now sets `bucket` and `bucket_label`
+  (`buckets.signal_bucket`). Non-strategy values: SERVICE_PROVIDER (service-provider and consultant engagements) and
+  TOTAL_PLAN (IPS, asset-liability, pacing, rebalance, CIO, target-allocation events with no asset class). `bucket_label`
+  is the matched wording, set only when it appears in the quote; a bucket found only in our summary has no label and shows
+  as inferred. Vocabulary (PRODUCT R3): hyphenated large-/mid-/small-cap, "growth equity" not after "cap", cash only as an
+  asset class, international / index fund / S&P / passive / SMID equity, multi-sector credit / core plus / short duration
+  / bank loans / TIPS fixed income, bitcoin / IBIT / digital assets, a long-only convertibles bucket; and narrower words
+  that were matching commentary ("re:" as real estate, "joint venture" as venture, "trend" as managed futures, "board
+  insurance" as insurance-linked). Backfill under D-B23: 246 inferred rows re-bucketed; "other (inferred)" fell from
+  about 194 to 27. SBA hedge fund rows: the page prints only "Hedge Fund", so Brevan Howard and Systematica stay
+  MULTI_STRATEGY (outside knowledge does not set a bucket); Pinnacle Natural Resources moves to COMMODITIES from its
+  printed fund name (D-A41).
+- **D-B31 Engagement role.** `consultant_engagements.role` is `consultant` or `per_deal_manager`. The SBA's per-deal
+  "Consultant" column names the deal's own manager or servicer for Heitman, Invesco, Stockbridge, MetLife and SitusAMC;
+  those 16 rows are `per_deal_manager`, and `data/consultant_aliases.yaml` lists them under `not_consultant`. Every bare
+  "Cambridge" in the corpus is that SBA column, so it maps to Cambridge Associates.
+- **D-B32 Florida hospital systems join the E&F universe.** Candidates: 501(c)(3), NTEE E20-E24, BMF assets of $300M or
+  more; one entry per system (its largest filer); hospitals belonging to another listed system are left out
+  (`universe.HOSPITAL_SUBSIDIARIES`, listed for review). A system stays only if its latest 990 shows investments of
+  $100M or more. Same treatment as the other E&F organizations (990 signals capped at WATCHING).
+- **D-B33 Wall failures fixed at their source.** The renderer refuses social-network widget requests (Facebook, X,
+  LinkedIn, Instagram, TikTok, YouTube embeds) before anything else and logs only that a widget was refused, never the
+  URL; subresources are logged without query strings (a Largo social-feed URL had carried a Facebook access token). Link
+  titles are scrubbed like page text when recorded. The wall's own audit row names table, column and kind, not the
+  matched text (echoing it stored the address again and failed the next run). Existing rows cleaned under D-B23: 20
+  egress rows, 4 wall audit rows, a Melbourne Beach bid notice ("Invitation to Bid - ... Storm Repair") misfiled as Police
+  minutes, and four St. Cloud city agendas (Recreation Advisory, Development Review) attached to its pension plans
+  (D-B02). The check was not loosened; it passes.
+- **D-B34 Browser collection.** Subagents navigate sites in the Playwright browser (each in its own isolated context),
+  download files with curl under the radar's declared user agent, honor robots.txt for our and Anthropic's tokens, stop
+  at any 403/CAPTCHA/login, and save to `data/staging/<group>/` with a manifest. They never open a database.
+  `radar ingest-staging <group> [--ef]` is the single writer: it re-checks each file and its robots verdict, stores it with
+  its real public URL (provenance CRAWL, `retrieved_by = browser-agent`) and parses it. Blocked items go to
+  `data/manual_tasks.yaml`.

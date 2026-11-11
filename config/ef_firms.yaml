@@ -1,0 +1,56 @@
+# Contractor classification for 990 contractors (D-B28). The service description decides first; these firm
+# lists decide when the description is missing, generic or contradicts what the firm plainly is (a law firm
+# whose return line reads "investment management"). Match is case-insensitive on the printed firm name.
+law_firm:
+  - holland & knight
+  - greenberg traurig
+  - akerman
+  - gunster
+  - shutts & bowen
+  - carlton fields
+  - grayrobinson
+  - gray robinson
+  - squire patton boggs
+  - foley & lardner
+  - choate hall & stewart
+  - bodman
+  - clark hill
+  - bryan cave
+  - nelson mullins
+  - stearns weaver
+  - bilzin sumberg
+  - hogan lovells
+  - kirkland & ellis
+  - proskauer
+  - ropes & gray
+  - debevoise
+  - simpson thacher
+  - skadden
+consultant:
+  - cambridge associates
+  - crewcial partners
+  - prime buchholz
+  - fund evaluation group
+  - mercer
+  - nepc
+  - callan
+  - marquette associates
+  - wilshire
+  - meketa
+  - segal marco
+  - mariner
+  - graystone
+  - sapient capital
+  - captrust
+  - ubs institutional consulting
+custodian:
+  - bny mellon asset servicing
+  - state street bank
+bank:
+  - pnc bank
+  - northern trust
+  - truist
+  - wells fargo bank
+  - bank of america
+  - jpmorgan chase bank
+  - regions bank

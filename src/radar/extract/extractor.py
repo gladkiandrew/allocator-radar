@@ -47,7 +47,7 @@ BucketLit = Literal[
     "STRUCTURED_CREDIT", "CONVERTIBLE_ARB", "FIXED_INCOME_RV", "GLOBAL_MACRO", "MANAGED_FUTURES_CTA",
     "MULTI_STRATEGY", "FUND_OF_HEDGE_FUNDS", "QUANT_SYSTEMATIC", "VOLATILITY", "INSURANCE_LINKED", "COMMODITIES",
     "DIGITAL_ASSETS", "PRIVATE_CREDIT", "PRIVATE_EQUITY", "VENTURE", "REAL_ESTATE", "INFRASTRUCTURE",
-    "NATURAL_RESOURCES", "LONG_ONLY_EQUITY", "LONG_ONLY_FIXED_INCOME", "CASH_OVERLAY", "OTHER",
+    "NATURAL_RESOURCES", "LONG_ONLY_EQUITY", "LONG_ONLY_FIXED_INCOME", "LONG_ONLY_CONVERTIBLES", "CASH_OVERLAY", "OTHER",
 ]
 
 
@@ -132,7 +132,10 @@ adopted or accepted, a consultant changed, a CIO changed, a rebalance or redempt
 An agenda line that only lists a general topic for discussion is not a signal, unless it records a decision or announces \
 an open solicitation. EXCEPTION, SEARCH_SCHEDULED: an agenda (or minutes) that schedules a search step is a signal: \
 interviews or finalist presentations by named candidate managers or consultants, an RFP or search-response review, \
-or a "manager search" / "consultant search" item. Use the meeting date for event_date and quote the agenda line.
+or a "manager search" / "consultant search" item, fee or contract negotiations with named candidate managers or \
+consultants (the step between interviews and hiring), or a comparison of named candidate managers presented to the board \
+for one mandate (e.g. a large cap value analysis of the incumbent against named alternatives). Use the meeting date for \
+event_date and quote the agenda line.
 - For SEARCH_OPENED / SEARCH_SCHEDULED / RFP_ISSUED / FINALISTS_NAMED / MANDATE_AWARDED set qualifier to manager (investment \
 manager), consultant (investment consultant), or service_provider (legal, actuary, custodian, auditor, other).
 - Summaries: one sentence, factual verbs only (reported, disclosed, approved, voted, issued, awarded, selected, \
@@ -200,6 +203,13 @@ def _num_in(v: float, quote: str) -> bool:
     if v >= 1e6:  # "$412.3 million" style
         cands |= {f"{v / 1e6:.1f}", f"{v / 1e6:g}", f"{v / 1e9:.2f}", f"{v / 1e9:.1f}"}
     return any(c in q for c in cands)
+
+
+def _as_of(s: str, today: date) -> date | None:
+    """Holdings, officers, consultants and facts read off an agenda for an upcoming meeting (D-B25): a date up to
+    90 days ahead is the meeting date, and the row is true as of the day the agenda was read, so it is dated today."""
+    d = _date(s, today + timedelta(days=90))
+    return min(d, today) if d else None
 
 
 def _date(s: str, today: date) -> date | None:
@@ -300,11 +310,13 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
             link("signal", existing[0], eid)
             continue
         sid = new_id()
-        from radar.buckets import hf_relevant
+        from radar.buckets import hf_relevant, signal_bucket
+        bucket, blabel = signal_bucket(s.signal_type, q, summary, s.quote)
         con.execute(
             "INSERT INTO signals (signal_id, allocator_id, signal_type, qualifier, event_date, observed_at, summary, "
-            "review_status, origin, dedupe_key, hf_relevant) VALUES (?, ?, ?, ?, ?, now(), ?, 'new', 'MACHINE', ?, ?)",
-            [sid, aid, s.signal_type, q, d, summary, key, hf_relevant(None, summary)])
+            "review_status, origin, dedupe_key, hf_relevant, bucket, bucket_label) "
+            "VALUES (?, ?, ?, ?, ?, now(), ?, 'new', 'MACHINE', ?, ?, ?, ?)",
+            [sid, aid, s.signal_type, q, d, summary, key, hf_relevant(bucket, summary, blabel), bucket, blabel])
         link("signal", sid, eid)
         if auto_actor:
             con.execute("UPDATE signals SET review_status = 'approved', reviewed_by = ?, reviewed_at = now(), "
@@ -313,7 +325,7 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
         stats["signals"] += 1
 
     for m in res.mandates:
-        d = _date(m.as_of, today)
+        d = _as_of(m.as_of, today)
         eid = evidence(m.page, m.quote, 0.9) if d else None
         if eid is None:
             drop("mandate date/quote")
@@ -331,7 +343,7 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
         stats["mandates"] += 1
 
     for o in res.officers:
-        d = _date(o.as_of, today)
+        d = _as_of(o.as_of, today)
         if detect(o.name_as_printed + " " + o.title_as_printed):
             drop("officer contact-shaped")
             continue
@@ -351,7 +363,7 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
         stats["officers"] += 1
 
     for f in res.facts:
-        d = _date(f.as_of, today + timedelta(days=400) if f.fact_kind == "NEXT_MEETING" else today)
+        d = _date(f.as_of, today + timedelta(days=400)) if f.fact_kind == "NEXT_MEETING" else _as_of(f.as_of, today)
         if d is None:
             drop(f"fact date {f.as_of!r}")
             continue
@@ -383,11 +395,11 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
             ckey = _dedupe_key(aid, label, d)
             if not con.execute("SELECT 1 FROM consultant_engagements WHERE dedupe_key = ?", [ckey]).fetchone():
                 cid = new_id()
-                con.execute("INSERT INTO consultant_engagements VALUES (?, ?, ?, ?, ?)", [cid, aid, label[:160], d, ckey])
+                con.execute("INSERT INTO consultant_engagements (engagement_id, allocator_id, consultant_name_as_disclosed, as_of, dedupe_key) VALUES (?, ?, ?, ?, ?)", [cid, aid, label[:160], d, ckey])
                 link("engagement", cid, eid)
 
     for c in res.consultants:
-        d = _date(c.as_of, today)
+        d = _as_of(c.as_of, today)
         eid = evidence(c.page, c.quote, 0.9) if d else None
         if eid is None:
             drop("consultant date/quote")
@@ -398,13 +410,13 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
             link("engagement", row[0], eid)
             continue
         cid = new_id()
-        con.execute("INSERT INTO consultant_engagements VALUES (?, ?, ?, ?, ?)", [cid, aid, c.consultant_name[:160], d, key])
+        con.execute("INSERT INTO consultant_engagements (engagement_id, allocator_id, consultant_name_as_disclosed, as_of, dedupe_key) VALUES (?, ?, ?, ?, ?)", [cid, aid, c.consultant_name[:160], d, key])
         link("engagement", cid, eid)
         stats["consultants"] += 1
     return stats
 
 
-SEARCH_SCAN_VERSION = "search-scan-2"  # v2 adds SEARCH_SCHEDULED
+SEARCH_SCAN_VERSION = "search-scan-3"  # v2 adds SEARCH_SCHEDULED; v3 adds fee negotiations and manager comparisons (D-B24)
 CONSULTANT_SCAN_VERSION = "consultant-scan-1"
 CONSULTANT_VOCAB = re.compile(
     r"investment consultant|performance consultant|investment monitor|consultant|consulting|"
@@ -422,7 +434,10 @@ SEARCH_VOCAB = re.compile(r"request for (proposals?|qualifications?|information)
                           r"proposals? (were )?received|responses? (were )?received|selected|hire|engage(d|ment)? (of|a|an|the)|"
                           # D-B16: new-manager hires and fund commitments recorded without the word "search"
                           r"new investment managers?|managers? candidates?|candidates? for the|subscription documents?|"
-                          r"subscription agreements?|side letters?|finalist presentations?", re.I)
+                          r"subscription agreements?|side letters?|finalist presentations?|"
+                          # D-B24: the steps either side of interviews
+                          r"fee (?:discussions?|negotiations?) with|contract negotiations?|"
+                          r"(?:cap|equity|income|credit|estate|value|growth|core) (?:manager )?(?:analysis|comparison|review of candidates)", re.I)
 SEARCH_FOCUS = """
 
 This pass is a focused scan for SEARCHES. On these pages, look specifically for investment-manager and investment-consultant
@@ -435,8 +450,10 @@ be left empty in this pass."""
 
 
 def extract_document(sha: str, allocator_id: str, provider=None, all_pages: bool = False, *, max_pages: int | None = None,
-                     force: bool = False, search_scan: bool = False, consultant_scan: bool = False) -> dict:
+                     force: bool = False, search_scan: bool = False, consultant_scan: bool = False,
+                     page_list: list[int] | None = None) -> dict:
     """all_pages: send every page with text (holdings lists the vocabularies do not select).
+    page_list: send exactly these page numbers (a reviewer found the item; the vocabularies missed it).
     force: re-extract even if this extractor version already ran (dedupe keys prevent duplicate rows).
     search_scan: search-focused pass, tracked under its own version tag."""
     version = CONSULTANT_SCAN_VERSION if consultant_scan else SEARCH_SCAN_VERSION if search_scan else EXTRACTOR_VERSION
@@ -453,18 +470,20 @@ def extract_document(sha: str, allocator_id: str, provider=None, all_pages: bool
         cap = max_pages or MAX_PAGES_PER_DOC
         if force:
             con.execute("DELETE FROM extraction_runs WHERE sha256 = ? AND extractor_version = ?", [sha, version])
-        if all_pages or search_scan or consultant_scan:
+        if all_pages or search_scan or consultant_scan or page_list:
             con.execute("DELETE FROM extraction_runs WHERE sha256 = ? AND extractor_version = ? AND status = 'none'",
                         [sha, version])
             done = con.execute("SELECT 1 FROM extraction_runs WHERE sha256 = ? AND extractor_version = ? LIMIT 1",
                                [sha, version]).fetchone()
             pages = db.rows(con, "SELECT page_no, text_scrubbed, prefilter_terms FROM pages WHERE sha256 = ? ORDER BY page_no", [sha])
-            if search_scan:
+            if page_list:
+                pages = [p for p in pages if p["page_no"] in set(page_list)]
+            elif search_scan:
                 pages = [p for p in pages if SEARCH_VOCAB.search(p["text_scrubbed"])]
             if consultant_scan:  # the pages that name providers most often, cover pages first
                 pages = sorted([p for p in pages if CONSULTANT_VOCAB.search(p["text_scrubbed"])],
                                key=lambda p: (-len(CONSULTANT_VOCAB.findall(p["text_scrubbed"])), p["page_no"]))
-            todo = [] if done else [p for p in pages if len(p["text_scrubbed"]) > 200][:cap]
+            todo = [] if done and not page_list else [p for p in pages if len(p["text_scrubbed"]) > 200][:cap]
         else:
             todo = _pages_to_extract(con, sha)
     system = SYSTEM + (SEARCH_FOCUS if search_scan else "") + (CONSULTANT_FOCUS if consultant_scan else "")

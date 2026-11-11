@@ -5,9 +5,10 @@ The IRS publishes e-filed returns as zip batches (~100 MB each) plus a yearly in
 the batch for a return, one ranged GET reads the zip's central directory, and one more reads the
 single XML member. Every request goes through radar.net.client (allowlist, robots, per-host delay).
 
-THE WALL: a raw return lists officers, trustees, employees and street addresses. The XML is parsed
-in memory and dropped; only firm names, dollar amounts and line labels are kept. Nothing from Part VII
-Section A (people) or any address element is ever read.
+THE WALL: a raw return lists officers, trustees, employees, their pay and street addresses. The XML is parsed
+in memory and dropped. Kept: firm names, dollar amounts, line labels, and (owner's decision, D-B28) the names and
+titles of officers, directors and trustees as printed. Never read: any compensation, hours or benefit element, any
+address element, and employees who are not officers, directors, trustees or key employees.
 """
 
 from __future__ import annotations
@@ -124,11 +125,23 @@ def central_directory(client, url: str, cache_dir: Path) -> dict[str, _Member]:
 
 def fetch_return(client, row: IndexRow, cache_dir: Path) -> bytes:
     """The XML bytes of one return (in memory only)."""
-    members = central_directory(client, row.zip_url, cache_dir)
+    url = row.zip_url
+    members = central_directory(client, url, cache_dir)
     m = members.get(f"{row.object_id}_public.xml")
     if m is None:
-        raise KeyError(f"{row.object_id} not in {row.batch}")
-    blob = _range(client, row.zip_url, f"{m.offset}-{m.offset + 30 + len(m.name.encode()) + 2048 + m.csize}")
+        # The 2025 index names batch 05A for returns filed after that batch was cut (D-B28): look in the year's other
+        # batches whose directories are already cached, then in the year's later batches.
+        for cand in _sibling_batches(row, cache_dir):
+            try:
+                mm = central_directory(client, cand, cache_dir).get(f"{row.object_id}_public.xml")
+            except RuntimeError:  # no such batch (404) or no Range support
+                continue
+            if mm is not None:
+                m, url = mm, cand
+                break
+    if m is None:
+        raise KeyError(f"{row.object_id} not in {row.batch} or its sibling batches")
+    blob = _range(client, url, f"{m.offset}-{m.offset + 30 + len(m.name.encode()) + 2048 + m.csize}")
     nlen, xlen = struct.unpack("<HH", blob[26:30])
     data = blob[30 + nlen + xlen:30 + nlen + xlen + m.csize]
     if m.method == 0:
@@ -140,6 +153,19 @@ def fetch_return(client, row: IndexRow, cache_dir: Path) -> bytes:
 
         return inflate64.Inflater().inflate(data)
     raise RuntimeError(f"unsupported zip method {m.method}")
+
+
+def _sibling_batches(row: IndexRow, cache_dir: Path) -> list[str]:
+    """Other batch zips of the same index year: cached directories first, then 05B-12D probed in order."""
+    y = row.index_year
+    cached = sorted(p.name[len(f"cd_{y}_"):-len(".json")] for p in cache_dir.glob(f"cd_{y}_{y}_TEOS_XML_*.zip.json"))
+    out = [f"{BASE}/{y}/{n}" for n in cached if n != row.zip_url.rsplit("/", 1)[-1]]
+    for mo in range(int(row.batch.split("_")[-1][:2]), 13):
+        for letter in "ABCD":
+            u = f"{BASE}/{y}/{y}_TEOS_XML_{mo:02d}{letter}.zip"
+            if u != row.zip_url and u not in out:
+                out.append(u)
+    return out
 
 
 # ---------------- parsing (firm names and amounts only) ----------------
@@ -193,6 +219,47 @@ def _contractor_name(g: ET.Element) -> tuple[str, bool]:
     return (_txt(person), True) if person is not None else ("", False)
 
 
+def _person_title(g: ET.Element) -> tuple[str, str]:
+    """(name, title) of one Part VII Section A / 990-PF Part VII line 1 entry. Pay, hours and address are not read."""
+    name = _txt(g.find("PersonNm"))
+    if not name and (biz := g.find("BusinessName")) is not None:
+        name = _txt(biz.find("BusinessNameLine1Txt"))
+    return name, _txt(g.find("TitleTxt"))
+
+
+def _officers_990(form: ET.Element) -> list[Officer]:
+    out = []
+    for g in form.findall("Form990PartVIISectionAGrp"):
+        if g.find("FormerOfcrDirectorTrusteeInd") is not None:
+            continue
+        if g.find("IndividualTrusteeOrDirectorInd") is not None or g.find("InstitutionalTrusteeInd") is not None:
+            role = "director_trustee"
+        elif g.find("OfficerInd") is not None:
+            role = "officer"
+        elif g.find("KeyEmployeeInd") is not None:
+            role = "key_employee"
+        else:
+            continue  # highest-compensated employees who hold no office are not kept
+        name, title = _person_title(g)
+        if name:
+            out.append(Officer(name, title, role))
+    return out
+
+
+_OFFICER_TITLE = re.compile(r"president|chair|treasurer|secretary|officer|\bceo\b|\bcfo\b|\bcoo\b|director of|executive director", re.I)
+
+
+def _officers_pf(form: ET.Element) -> list[Officer]:
+    out = []
+    for g in form.findall(".//OfficerDirTrstKeyEmplGrp"):
+        name, title = _person_title(g)
+        if not name:
+            continue
+        role = "officer" if _OFFICER_TITLE.search(title) else "director_trustee"
+        out.append(Officer(name, title, role))
+    return out
+
+
 INVESTMENT_SERVICE = re.compile(
     r"invest|portfolio|asset manag|fund manag|money manag|wealth manag|financial advis|hedge|private equity|"
     r"real estate fund|endowment|ocio|outsourced chief|custod|trust serv", re.I)
@@ -216,6 +283,14 @@ class OtherInvestment:
     description: str
     book_value: float | None
     fmv: float | None
+    valuation: str | None = None  # Sch. D Part VII MethodValuationCd (F = end-of-year market value, C = cost) / 990-PF "AT COST" or "FMV"
+
+
+@dataclass
+class Officer:
+    name: str
+    title: str
+    role: str  # director_trustee | officer | key_employee
 
 
 @dataclass
@@ -227,10 +302,17 @@ class Filing:
     tax_year: int
     total_assets_eoy: float | None = None
     investments_public_eoy: float | None = None  # 990 Part X line 11 / 990-PF Part II lines 10b+10c
-    investments_other_eoy: float | None = None  # 990 Part X line 12 / 990-PF Part II line 13
+    investments_other_eoy: float | None = None  # 990 Part X line 12 / 990-PF Part II line 13 (FMV column)
+    investments_other_book_eoy: float | None = None  # 990-PF Part II line 13 book value column
     contractors: list[Contractor] = field(default_factory=list)
     other_investments: list[OtherInvestment] = field(default_factory=list)  # Sch. D Part VII / 990-PF Part II line 13 statement
     contractor_count_over_100k: int | None = None
+    officers: list[Officer] = field(default_factory=list)  # names and titles only (D-B28)
+    endowment_eoy: float | None = None  # Schedule D Part V line 1g column (a), current year end balance
+    endowment_boy: float | None = None  # Schedule D Part V line 1a column (a)
+    investments_program_eoy: float | None = None  # 990 Part X line 13 (program-related investments)
+    investments_land_eoy: float | None = None  # 990-PF Part II line 11 (land, buildings held for investment)
+    investments_mortgage_eoy: float | None = None  # 990-PF Part II line 12 (mortgage loans)
 
 
 def parse_return(xml: bytes, row: IndexRow) -> Filing:
@@ -247,6 +329,8 @@ def parse_return(xml: bytes, row: IndexRow) -> Filing:
         f.investments_public_eoy = _num(form.find("InvestmentsPubTradedSecGrp/EOYAmt"))
         f.investments_other_eoy = _num(form.find("InvestmentsOtherSecuritiesGrp/EOYAmt"))
         f.contractor_count_over_100k = int(_num(form.find("CntrctRcvdGreaterThan100KCnt")) or 0)
+        f.investments_program_eoy = _num(form.find("InvestmentsProgramRelatedGrp/EOYAmt"))
+        f.officers = _officers_990(form)
         for g in form.findall("ContractorCompensationGrp"):  # Part VII Section B line 1
             name, as_person = _contractor_name(g)
             if not is_firm_name(name, as_person):
@@ -254,6 +338,9 @@ def parse_return(xml: bytes, row: IndexRow) -> Filing:
             svc = _txt(g.find("ServicesDesc"))
             f.contractors.append(Contractor(name, svc, _num(g.find("CompensationAmt")), is_investment_service(svc)))
         sd = data.find("IRS990ScheduleD")
+        if sd is not None and (e := sd.find("CYEndwmtFundGrp")) is not None:  # Part V Endowment Funds, current year
+            f.endowment_eoy = _num(e.find("EndYearBalanceAmt"))
+            f.endowment_boy = _num(e.find("BeginningYearBalanceAmt"))
         if sd is not None:  # Part VII Investments - Other Securities
             for tag, label in (("FinancialDerivativesGrp", "Financial derivatives"),
                                ("CloselyHeldEquityInterestsGrp", "Closely held equity interests")):
@@ -261,15 +348,22 @@ def parse_return(xml: bytes, row: IndexRow) -> Filing:
                 if g is not None and _num(g.find("BookValueAmt")):
                     f.other_investments.append(OtherInvestment(label, _num(g.find("BookValueAmt")), None))
             for g in sd.findall("OtherSecuritiesGrp"):
-                f.other_investments.append(OtherInvestment(_txt(g.find("Desc")) or "Other", _num(g.find("BookValueAmt")), None))
+                f.other_investments.append(OtherInvestment(_txt(g.find("Desc")) or "Other", _num(g.find("BookValueAmt")), None,
+                                                           _txt(g.find("MethodValuationCd")) or None))
     elif (form := data.find("IRS990PF")) is not None:
         f.total_assets_eoy = _num(form.find("Form990PFBalanceSheetsGrp/TotalAssetsEOYFMVAmt")) or \
             _num(form.find("Form990PFBalanceSheetsGrp/TotalAssetsEOYAmt"))
         bs = form.find("Form990PFBalanceSheetsGrp")
         if bs is not None:
-            pub = [_num(bs.find(t)) for t in ("CorporateStockEOYFMVAmt", "CorporateBondsEOYFMVAmt", "USGovernmentObligationsEOYFMVAmt")]
-            f.investments_public_eoy = sum(v for v in pub if v) or None
+            # The e-file schema spells the government line USGovtObligationsEOYFMVAmt; a printed 0 stays 0 (R6 d).
+            pub = [_num(bs.find(t)) for t in ("CorporateStockEOYFMVAmt", "CorporateBondsEOYFMVAmt", "USGovtObligationsEOYFMVAmt",
+                                             "USGovernmentObligationsEOYFMVAmt")]
+            f.investments_public_eoy = None if all(v is None for v in pub) else sum(v for v in pub if v is not None)
             f.investments_other_eoy = _num(bs.find("OtherInvestmentsEOYFMVAmt"))
+            f.investments_other_book_eoy = _num(bs.find("OtherInvestmentsEOYAmt"))
+            f.investments_land_eoy = _num(bs.find("InvestmentsLandEOYFMVAmt"))
+            f.investments_mortgage_eoy = _num(bs.find("MortgageLoansEOYFMVAmt"))
+        f.officers = _officers_pf(form)
         for g in form.findall(".//CompensationOfHghstPdCntrctGrp"):  # five highest-paid contractors, professional services
             name, as_person = _contractor_name(g)
             if not is_firm_name(name, as_person):
@@ -279,7 +373,10 @@ def parse_return(xml: bytes, row: IndexRow) -> Filing:
         for g in data.findall(".//InvestmentsOtherSchedule2/InvestmentsOtherGrp") + data.findall(".//InvestmentsOtherSchedule/InvestmentsOtherGrp"):
             desc = _txt(g.find("CategoryOrItemTxt")) or _txt(g.find("Desc"))
             if desc:
-                f.other_investments.append(OtherInvestment(desc, _num(g.find("BookValueAmt")), _num(g.find("EndOfYearFMVAmt"))))
+                fmv = _num(g.find("EOYFMVAmt"))
+                fmv = fmv if fmv is not None else _num(g.find("EndOfYearFMVAmt"))
+                f.other_investments.append(OtherInvestment(desc, _num(g.find("BookValueAmt")), fmv,
+                                                           _txt(g.find("ListedAtCostOrFMVCd")) or None))
     return f
 
 
@@ -293,14 +390,59 @@ def citation(f: Filing, what: str) -> str:
                 "total_assets": f"Form 990-PF TY{ty} Part II line 16 (total assets, fair market value)",
                 "investments_other": f"Form 990-PF TY{ty} Part II line 13 (investments, other)",
                 "other_investments": f"Form 990-PF TY{ty} Part II line 13 statement (investments, other)",
-                "investments_public": f"Form 990-PF TY{ty} Part II lines 10a-10c (securities, fair market value)"}[what]
+                "investments_public": f"Form 990-PF TY{ty} Part II lines 10a-10c (securities, fair market value)",
+                "investments_total": f"Form 990-PF TY{ty} Part II lines 10a-13 (investments, fair market value)",
+                "officers": f"Form 990-PF TY{ty} {part_vii} line 1 (officers, directors, trustees; names and titles)",
+                "endowment": f"Form 990-PF TY{ty}: no endowment schedule (Schedule D Part V is a Form 990 schedule)"}[what]
     return {"contractors": f"Form 990 TY{ty} Part VII Section B line 1 (five highest compensated independent contractors)",
             "total_assets": f"Form 990 TY{ty} Part X line 16 (total assets)",
             "investments_other": f"Form 990 TY{ty} Part X line 12 (investments, other securities)",
             "other_investments": f"Form 990 TY{ty} Schedule D Part VII (investments, other securities)",
-            "investments_public": f"Form 990 TY{ty} Part X line 11 (investments, publicly traded securities)"}[what]
+            "investments_public": f"Form 990 TY{ty} Part X line 11 (investments, publicly traded securities)",
+            "investments_total": f"Form 990 TY{ty} Part X lines 11-13 (investments)",
+            "officers": f"Form 990 TY{ty} Part VII Section A line 1a (officers, directors, trustees, key employees; names and titles)",
+            "endowment": f"Form 990 TY{ty} Schedule D Part V line 1g column (a) (endowment, end of year balance)"}[what]
 
 
 def filing_url(ein: str, object_id: str) -> str:
     """A page a reader can open for this return (ProPublica renders the IRS e-file)."""
     return f"https://projects.propublica.org/nonprofits/organizations/{int(ein)}/{object_id}/full"
+
+
+# ---------------- contractor classification (D-B28) ----------------
+_SVC_RULES = [
+    ("law_firm", re.compile(r"\blegal\b|attorney|\blaw\b|litigation", re.I)),
+    ("custodian", re.compile(r"custod", re.I)),
+    ("consultant", re.compile(r"invest\w*\.? consult|consult\w* invest|pension consult|investment advisory consult", re.I)),
+    ("manager", re.compile(r"invest\w*\.? (manag|mgmt|advis|services)|portfolio manag|asset manag|fund manag|money manag|"
+                           r"wealth manag|outsourced chief|\bocio\b|investment managers?\b|investment fees", re.I)),
+    ("bank", re.compile(r"\bbank(ing)?\b|trust services|trustee fees", re.I)),
+]
+
+
+def _firm_lists() -> dict[str, list[str]]:
+    from radar.settings import load_yaml
+    return load_yaml("ef_firms.yaml") or {}
+
+
+def classify_contractor(firm: str, service: str, lists: dict[str, list[str]] | None = None) -> tuple[str, str]:
+    """(class, basis): manager | consultant | custodian | bank | law_firm | other. A firm on the curated law-firm list
+    is a law firm whatever its line says; otherwise the printed service decides, and the firm lists settle generic or
+    missing descriptions."""
+    lists = _firm_lists() if lists is None else lists
+    f = (firm or "").lower()
+    named = next((k for k, names in lists.items() for n in names if n in f), None)
+    if named == "law_firm":
+        return "law_firm", "firm"
+    svc = service or ""
+    for cls, pat in _SVC_RULES:
+        if pat.search(svc):
+            if cls == "manager" and named in ("consultant", "bank", "custodian") and \
+                    not re.search(r"outsourced chief|\bocio\b", svc, re.I):
+                return named, "firm (service printed as manager)"
+            if cls == "custodian" and re.search(r"manag", svc, re.I):
+                return "custodian", "service (custodian and manager)"
+            return cls, "service"
+    if named:
+        return named, "firm"
+    return "other", "service"

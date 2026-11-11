@@ -33,7 +33,7 @@ def test_resolver_never_creates_mutual_aliases():
                        jurisdiction_state, home_url, template, access, updated_at)
                        VALUES ('m', 'M', 'M', 'POLICE_FIRE', 'Miami', 'FL', 'https://m.invalid', 'T-WP', 'AUTO', now())""")
         for i, name in enumerate(["MetLife", "Metlife"]):
-            con.execute("INSERT INTO consultant_engagements VALUES (?, 'm', ?, DATE '2026-01-01', ?)", [f"e{i}", name, f"k{i}"])
+            con.execute("INSERT INTO consultant_engagements (engagement_id, allocator_id, consultant_name_as_disclosed, as_of, dedupe_key) VALUES (?, 'm', ?, DATE '2026-01-01', ?)", [f"e{i}", name, f"k{i}"])
     resolve.run()
     with db.connect() as con:
         rows = con.execute("SELECT alias, canonical FROM entity_aliases WHERE kind = 'consultant' AND alias IN ('MetLife', 'Metlife')").fetchall()

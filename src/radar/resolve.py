@@ -117,3 +117,21 @@ def run() -> dict:
 def canonical_map(con, kind: str) -> dict[str, str]:
     con.execute(DDL)
     return dict(con.execute("SELECT alias, canonical FROM entity_aliases WHERE kind = ?", [kind]).fetchall())
+
+
+def not_consultant(name: str) -> bool:
+    """A name on the curated not_consultant list (data/consultant_aliases.yaml): a deal's own manager or servicer
+    printed in a per-deal consultant column (D-B31)."""
+    import functools
+
+    import yaml
+
+    from radar.settings import REPO_ROOT
+
+    @functools.lru_cache(maxsize=1)
+    def _names() -> frozenset[str]:
+        path = REPO_ROOT / "data" / CURATED_FILE
+        cfg = yaml.safe_load(path.read_text()) if path.exists() else {}
+        return frozenset(n.strip().lower() for n in (cfg or {}).get("not_consultant") or [])
+
+    return (name or "").strip().lower() in _names()

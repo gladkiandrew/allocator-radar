@@ -201,9 +201,9 @@ def _seed_store():
                     "('590000001', 'EXAMPLE UNIVERSITY FOUNDATION INC', 'UNIVERSITY_FOUNDATION', 'Gainesville', 3e9, 1)")
         con.execute("INSERT INTO ef_filings (object_id, ein, return_type, tax_year, tax_period_end, total_assets, investments_other) "
                     "VALUES ('202401319349300001', '590000001', '990', 2023, DATE '2024-06-30', 3e9, 2e9)")
-        con.execute("INSERT INTO ef_contractors VALUES ('202401319349300001', '590000001', 2023, 'CAMBRIDGE ASSOCIATES LLC', "
+        con.execute("INSERT INTO ef_contractors (object_id, ein, tax_year, firm, service, amount, investment) VALUES ('202401319349300001', '590000001', 2023, 'CAMBRIDGE ASSOCIATES LLC', "
                     "'INVESTMENT CONSULTING', 3e6, true)")
-        con.execute("INSERT INTO ef_other_investments VALUES ('202401319349300001', '590000001', 2023, 'HEDGE FUNDS', 4e8, NULL)")
+        con.execute("INSERT INTO ef_other_investments (object_id, ein, tax_year, description, book_value, fmv) VALUES ('202401319349300001', '590000001', 2023, 'HEDGE FUNDS', 4e8, NULL)")
     from radar.sources.endowments import pipeline
     return pipeline.derive_signals()
 

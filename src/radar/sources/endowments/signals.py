@@ -42,7 +42,7 @@ def _sid(*parts) -> str:
 
 
 def _money(v) -> str:
-    return f"${v:,.0f}" if v is not None else "an undisclosed amount"
+    return f"${v:,.0f}" if v is not None else "an amount not stated"
 
 
 def _status(summary: str, names: list[str]) -> str:
@@ -66,7 +66,8 @@ def derive(org: dict, filings: list[dict], contractors: dict[str, list[dict]], o
                         review_status=_status(summary, names), reviewed_by=DETERMINISTIC))
 
     latest, prev = filings[0], (filings[1] if len(filings) > 1 else None)
-    inv = lambda f: {_norm(c["firm"]): c for c in contractors.get(f["object_id"], []) if c["investment"]}
+    inv = lambda f: {_norm(c["firm"]): c for c in contractors.get(f["object_id"], [])
+                     if (c.get("contractor_class") in ("manager", "consultant") if c.get("contractor_class") else c["investment"])}
     now_inv = inv(latest)
 
     def same_firm(k: str, others: dict) -> bool:
@@ -96,8 +97,10 @@ def derive(org: dict, filings: list[dict], contractors: dict[str, list[dict]], o
         return {o["description"].upper(): o for o in others.get(f["object_id"], []) if HF.search(o["description"])}
     now_hf = hf_lines(latest)
     before_hf = hf_lines(prev) if prev is not None else None
-    for k, o in sorted(now_hf.items(), key=lambda kv: -((kv[1]["fmv"] or kv[1]["book_value"] or 0)))[:12]:
-        val = o["fmv"] if o["fmv"] is not None else o["book_value"]
+    from radar.sources.endowments.exposure import stated_value
+    # Placeholder amounts ($0, $1 ...) are "not stated" and never rank above a stated holding (D-B29).
+    for k, o in sorted(now_hf.items(), key=lambda kv: (stated_value(kv[1]) is None, -(stated_value(kv[1]) or 0)))[:12]:
+        val = stated_value(o)
         sig(latest, "EF_ALT_HOLDING",
             f"The TY{latest['tax_year']} return reports {_money(val)} in \"{o['description']}\" at the end of the tax year.",
             "other_investments", [o["description"]], hf=True)

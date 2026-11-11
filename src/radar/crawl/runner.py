@@ -186,6 +186,10 @@ def select_targets(links: list[DocLink], cap: int = 150) -> list[DocLink]:
 
 
 def record_links(links: list[DocLink]) -> None:
+    from radar.wall.scrubber import scrub_text  # D-B33: link titles are scrubbed like page text (a bid title held a street)
+    for d in links:
+        if d.title:
+            d.title = scrub_text(d.title, use_gliner=False)
     with db.connect() as con:
         for d in links:
             for aid in d.allocator_ids:

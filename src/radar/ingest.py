@@ -20,6 +20,9 @@ def store_document(
     listed_on: str | None = None,
 ) -> tuple[str, bool]:
     """Returns (sha256, is_new_document)."""
+    if title:  # D-B33: titles are scrubbed like page text
+        from radar.wall.scrubber import scrub_text
+        title = scrub_text(title, use_gliner=False)
     sha = lake.put(data)
     with db.connect() as con:
         existing = con.execute("SELECT 1 FROM documents WHERE sha256 = ?", [sha]).fetchone()

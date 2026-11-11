@@ -184,8 +184,11 @@ def parse_new_investments(sha: str, quarter_end: date, file_name: str) -> dict:
                 ckey = f"sba-consultant|{consultant.lower()}|{quarter_end}"
                 if not con.execute("SELECT 1 FROM consultant_engagements WHERE dedupe_key = ?", [ckey]).fetchone():
                     cid = new_id()
-                    con.execute("INSERT INTO consultant_engagements VALUES (?, ?, ?, ?, ?)",
-                                [cid, ALLOCATOR, consultant[:160], quarter_end, ckey])
+                    from radar.resolve import not_consultant
+                    role = "per_deal_manager" if not_consultant(consultant) else "consultant"
+                    con.execute("INSERT INTO consultant_engagements (engagement_id, allocator_id, consultant_name_as_disclosed, "
+                                "as_of, dedupe_key, role) VALUES (?, ?, ?, ?, ?, ?)",
+                                [cid, ALLOCATOR, consultant[:160], quarter_end, ckey, role])
                     con.execute("INSERT INTO row_evidence VALUES ('engagement', ?, ?)", [cid, eid])
             stats["signals"] += 1
             stats["hf"] += int(hf)

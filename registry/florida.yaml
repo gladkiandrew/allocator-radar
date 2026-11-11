@@ -2,7 +2,7 @@
 # Edits are allowed before approval; any edit changes the version hash and needs re-approval.
 region: florida
 phase: A
-generated_at: '2026-11-11T03:44:52+00:00'
+generated_at: '2026-11-11T17:30:41+00:00'
 generated_by: discovery agent (radar discover)
 seed: registry/seed_florida.yaml
 allocators:
@@ -820,6 +820,16 @@ allocators:
   site_title: Home - PBPFRS
   robots: allowed
   document_pages:
+  - url: https://www.pbpfrs.org/rfp-for-legal-services/
+    label: RFP's
+    documents: 0
+    by_type: {}
+    suggested: true
+  - url: https://www.pbpfrs.org/upcoming-agenda/
+    label: Upcoming Agenda
+    documents: 0
+    by_type: {}
+    suggested: true
   - url: https://www.pbpfrs.org/
     label: plan page
     documents: 0
@@ -972,9 +982,9 @@ allocators:
     suggested: true
   - url: https://coralsprings.granicus.com/ViewPublisher.php?view_id=3
     label: Public Notices, Agendas, and Minutes for Public Meetings
-    documents: 597
+    documents: 596
     by_type:
-      AGENDA: 597
+      AGENDA: 596
     suggested: true
   - url: https://www.coralsprings.gov/Government/Departments/Human-Resources/Pension-Plans/General-Employees-Pension-Plan
     label: General Employees Pension Plan
@@ -7836,15 +7846,46 @@ allocators:
   template: T-CITY
   source_id: PB-www-msvfl-gov
   access: AUTO
-  access_reason: no document links found on the plan page or its listing pages
+  access_reason: null
   site_title: Miami Shores Florida - General Employee Pension Board
   robots: allowed
   document_pages:
   - url: https://www.msvfl.gov/GeneralEmployeePensionBoard
     label: plan page
-    documents: 0
-    by_type: {}
-    suggested: false
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: true
+  - url: https://www.msvfl.gov/agendasandlivemeetings
+    label: Agendas & Live Meetings
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: true
+  - url: https://www.msvfl.gov/AgendasandLiveMeetings
+    label: View Notices
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: true
+  - url: https://www.msvfl.gov/departments/boards-committees/GeneralEmployeePensionBoard
+    label: General Employee Pension Board
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: true
+  - url: https://www.msvfl.gov/LibraryBoardofTrustees
+    label: Library Board of Trustees
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: true
+  - url: https://www.msvfl.gov/departments/boards-committees/PoliceRetirementPensionPlanBoard
+    label: Police Retirement Pension Plan Board
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: true
 - allocator_id: fl-miami-shores-police
   display_name: Miami Shores Village Police Retirement Pension Plan
   allocator_type: POLICE_FIRE
@@ -7854,15 +7895,34 @@ allocators:
   template: T-CITY
   source_id: PB-www-msvfl-gov
   access: AUTO
-  access_reason: no document links found on the plan page or its listing pages
+  access_reason: null
   site_title: Miami Shores Florida - Police Retirement Pension Plan Board
   robots: allowed
   document_pages:
   - url: https://www.msvfl.gov/departments/boards-committees/PoliceRetirementPensionPlanBoard
     label: plan page
-    documents: 0
-    by_type: {}
-    suggested: false
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: true
+  - url: https://www.msvfl.gov/agendasandlivemeetings
+    label: Agendas & Live Meetings
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: true
+  - url: https://www.msvfl.gov/departments/boards-committees/GeneralEmployeePensionBoard
+    label: General Employee Pension Board
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: true
+  - url: https://www.msvfl.gov/LibraryBoardofTrustees
+    label: Library Board of Trustees
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: true
 - allocator_id: fl-south-miami-plan
   display_name: City of South Miami Pension Plan
   allocator_type: PUBLIC_PENSION_LOCAL

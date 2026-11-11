@@ -210,6 +210,7 @@ verdicts:
   - {id: EF-UWF, name: "UWF Foundation meeting documents", hosts: [uwf.edu], verdict: CRAWL, reason: "Phase C; foundation board / executive committee agendas and minutes"}
   - {id: EF-UCF, name: "UCF Foundation board and investment committee minutes", hosts: [ucffoundation.org, advance.ucf.edu], verdict: CRAWL, reason: "Phase C; board page now 404 after the move to advance.ucf.edu; not read (manual_downloads.md)"}
   - {id: EF-FAU, name: "FAU Foundation board meetings", hosts: [fauf.fau.edu], verdict: CRAWL, reason: "Phase C"}
+  - {id: EF-UCF2, name: "UCF Foundation board page (current host)", hosts: [theucffoundation.org], verdict: CRAWL, reason: "Phase C; board meeting list and documents page (D-B34)"}
 
   # ---- Phase B: statewide plan list ----
   - {id: F9, name: "Census Annual Survey of Public Pensions (unit file)", hosts: [www2.census.gov], verdict: BULK, crawl_delay: 15, reason: "AGENDA F9: public domain; robots Crawl-delay 15. Statewide FL plan list (names, assets) for the Phase B coverage map"}

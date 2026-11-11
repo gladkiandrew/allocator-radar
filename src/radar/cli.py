@@ -23,6 +23,8 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("ef-universe", help="Phase C: choose the Florida E&F universe from the IRS BMF -> data/ef_universe.csv")
     sub.add_parser("ef-load", help="Phase C: universe -> ProPublica summaries -> IRS 990 XML -> 990 signals (data/ef.duckdb)")
     sub.add_parser("ef-signals", help="Phase C: rebuild the 990 signals from stored filings")
+    rp = sub.add_parser("ef-reparse", help="re-read stored 990s from the IRS batches for new fields (officers, endowment), then rebuild")
+    rp.add_argument("--eins", nargs="*", help="only these organizations (default: every organization in ef_orgs)")
     sub.add_parser("ef-committee", help="Phase C: read the foundations' own committee/board documents for dated signals")
     cp = sub.add_parser("crawl", help="crawl approved allocators' listing pages and fetch documents")
     cp.add_argument("--only", nargs="*", help="allocator ids")
@@ -57,8 +59,19 @@ def main(argv: list[str] | None = None) -> int:
     pp.add_argument("--deep", action="store_true", help="deep discovery (render + second link level)")
     fp = sub.add_parser("reextract", help="force re-extraction of one document, all pages")
     fp.add_argument("sha_prefix"); fp.add_argument("--max-pages", type=int, default=64)
+    fp.add_argument("--pages", help="only these pages, e.g. 1,9,150-160")
+    fp.add_argument("--search", action="store_true", help="use the search-scan focus and version tag")
+    fp.add_argument("--allocator", help="plan id when the document is listed for several plans")
     ip = sub.add_parser("import-seed", help="import a research-pass YAML into the seed list and allowlist")
     ip.add_argument("path"); ip.add_argument("--batch", required=True)
+    ap = sub.add_parser("add-page", help="register a listing page for a plan (registry/florida.yaml + live store)")
+    ap.add_argument("allocator_id"); ap.add_argument("url"); ap.add_argument("label")
+    cg = sub.add_parser("add-signal", help="curated extraction: a signal read off a cited page, held to the extractor's validators")
+    cg.add_argument("allocator_id"); cg.add_argument("sha_prefix"); cg.add_argument("page", type=int)
+    cg.add_argument("--quote", required=True); cg.add_argument("--type", required=True); cg.add_argument("--qualifier")
+    cg.add_argument("--date", required=True); cg.add_argument("--summary", required=True); cg.add_argument("--bucket")
+    ig = sub.add_parser("ingest-staging", help="ingest browser-agent downloads from data/staging/<group>/manifest.yaml")
+    ig.add_argument("group"); ig.add_argument("--ef", action="store_true", help="E&F group (ids are EINs)")
     sub.add_parser("gaps", help="coverage gaps grouped by primary cause, with the next action for each")
     cs = sub.add_parser("consultant-scan", help="targeted extraction of service providers for gap plans missing a consultant")
     cs.add_argument("--workers", type=int, default=3)
@@ -257,6 +270,19 @@ def main(argv: list[str] | None = None) -> int:
         from radar import autoapprove, db
         db.init_db()
         print(json.dumps(autoapprove.run_pass(), indent=1))
+    elif args.cmd == "ingest-staging":
+        import json
+        from radar import db, staging
+        db.init_db()
+        print(json.dumps(staging.ingest_ef(args.group) if args.ef else staging.ingest_pensions(args.group), default=str))
+    elif args.cmd == "add-signal":
+        from datetime import date as _d
+        from radar.extract.curated import add_signal
+        print(add_signal(args.sha_prefix, args.allocator_id, args.page, args.quote, args.type, args.qualifier,
+                         _d.fromisoformat(args.date), args.summary, args.bucket))
+    elif args.cmd == "add-page":
+        from radar.registry.pages import add_page
+        print(add_page(args.allocator_id, args.url, args.label))
     elif args.cmd == "reextract":
         import json
         from radar import db
@@ -265,7 +291,15 @@ def main(argv: list[str] | None = None) -> int:
         with db.connect() as con:
             sha, aid = con.execute("SELECT sha256, any_value(allocator_id) FROM document_urls WHERE sha256 LIKE ? GROUP BY 1",
                                    [args.sha_prefix + "%"]).fetchone()
-        print(json.dumps(extractor.extract_document(sha, aid, all_pages=True, max_pages=args.max_pages, force=True)))
+        aid = args.allocator or aid
+        pl = None
+        if args.pages:
+            pl = []
+            for part in args.pages.split(","):
+                a, _, b = part.partition("-")
+                pl += list(range(int(a), int(b or a) + 1))
+        print(json.dumps(extractor.extract_document(sha, aid, all_pages=not pl, max_pages=args.max_pages,
+                                                    force=not pl, page_list=pl, search_scan=args.search)))
     elif args.cmd == "scan-searches":
         import json
         from concurrent.futures import ThreadPoolExecutor
@@ -440,7 +474,7 @@ def main(argv: list[str] | None = None) -> int:
         db.init_db()
         for r in committee.run():
             print(json.dumps(r, default=str), flush=True)
-    elif args.cmd in ("ef-universe", "ef-load", "ef-signals"):
+    elif args.cmd in ("ef-universe", "ef-load", "ef-signals", "ef-reparse"):
         import json
         from radar import db
         from radar.net.client import PoliteClient
@@ -450,6 +484,13 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{len(pipeline.build_universe(PoliteClient(purpose='ef-bmf')))} organizations -> data/ef_universe.csv")
         elif args.cmd == "ef-load":
             print(json.dumps(pipeline.run()))
+        elif args.cmd == "ef-reparse":
+            from radar.sources.endowments import store
+            store.init()
+            with store.connect() as con:
+                eins = args.eins or [r[0] for r in con.execute("SELECT ein FROM ef_orgs ORDER BY ein").fetchall()]
+            print(json.dumps(pipeline.load_irs(PoliteClient(purpose="ef-990"), eins, reparse=True)))
+            print(f"{pipeline.derive_signals()} signals from 990s")
         else:
             print(f"{pipeline.derive_signals()} signals from 990s")
     elif args.cmd == "wall-static":
