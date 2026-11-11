@@ -352,3 +352,23 @@ are the irreversible ones, which went to the repo owner.
   line and are capped at WATCHING; DEPLOYING or PREPARING needs a dated committee or board document the organization
   publishes (UWF, UCF and FAU Foundation pages, allowlisted), read by the model with the quote-on-page check. E&F lives in
   its own store, `data/ef.duckdb`, swept by the Wall nightly.
+
+## Name removal dropped; data rules (owner's instructions, 2026-11-11)
+
+- **D-B21 Name removal is dropped. Names and titles as printed in public documents are kept everywhere.**
+  The 2026-11-10 run of `radar redact-names` (branch `names-roles`, commits bb6d01e and 1528920) rewrote the live store,
+  replacing person names in quotes, summaries and officer rows with `[name]`. It was reversed on 2026-11-11 by
+  `data/unredact-2026-11-11.py`, working from the pre-redaction snapshot and the scrubbed page text, plus one hand fix
+  (an officer title that had been redacted to `[name]`). After the restore, the store has no `[name]` in evidence quotes,
+  signal summaries or officer rows, and has 2,003 officer rows. The pre-restore store is kept as
+  `data/radar.pre-unredact-2026-11-11.duckdb`. Names and titles stay exactly as the source document prints them: board and
+  committee members, staff, consultants, and the officers, directors and trustees listed on IRS Form 990s. The
+  `names-roles` branch is deleted; its commits are kept locally under the tag `archive/names-roles-2026-11-10`.
+- **D-B22 Contact details and pay are never stored or published.** Emails, phone numbers, street addresses and individual
+  compensation (990 Part VII amounts, salaries in board packets) are never written to any store, file or public page.
+  When a source line carries them, only the name, title and organization are kept.
+- **D-B23 No database-wide rewrite runs without a dated backup and a dry-run count.** Before any operation that updates or
+  deletes rows across a whole table or store: copy the file to `data/backups/<name>.<YYYY-MM-DD>.duckdb`, run the operation
+  as a dry run that prints the count of rows it would change per table, and record both in HANDOFF.md. Only then run it
+  for real. A backup was taken under this rule on 2026-11-11: `data/backups/radar.2026-11-11.duckdb` and
+  `data/backups/ef.2026-11-11.duckdb`.
