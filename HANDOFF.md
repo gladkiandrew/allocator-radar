@@ -191,3 +191,13 @@ the session report.
   - The checker suggests possible missing signals in the Dunedin minutes (Harrison Street commitment, Barings
     redemption).
   - The Pompano symposium minutes date events by the document start date (May 6) rather than the event day (May 8).
+
+### 2026-11-11 15:00 PRODUCT DONE
+Merged `data` (5e9fcee), then `product`, into main. One trivial conflict in tests/test_ef.py (same insert; kept DATA's
+version). main = 818a520, pushed. Deployed to allocator.amagna.co, Cloudflare version 8f311199-ed5b-4ea9-8b8e-427b235d74dd.
+199 pages built from DB copies taken 14:07; 155 tests pass; wall-static ok.
+Live check: / /ef /ef-hf /how return 200; /tasks /review /export.csv /registry return 404; hedge fund strip = 3 SBA hedge
+fund commitments + FIU "HEDGE FUNDS" line, with 0 law firms, banks or custodians; "Hedge fund buyers" renders; no "[name]";
+the footer reads "No emails, phone numbers or addresses are stored."
+Wall change (PRODUCT): static check treats table cells and list items as separate text. A pay amount followed by
+"Park Place International LLC" had read as a street address. Text within one cell is still checked whole.
