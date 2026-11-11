@@ -203,7 +203,8 @@ def _seed_store():
                     "VALUES ('202401319349300001', '590000001', '990', 2023, DATE '2024-06-30', 3e9, 2e9)")
         con.execute("INSERT INTO ef_contractors VALUES ('202401319349300001', '590000001', 2023, 'CAMBRIDGE ASSOCIATES LLC', "
                     "'INVESTMENT CONSULTING', 3e6, true)")
-        con.execute("INSERT INTO ef_other_investments VALUES ('202401319349300001', '590000001', 2023, 'HEDGE FUNDS', 4e8, NULL)")
+        con.execute("INSERT INTO ef_other_investments (object_id, ein, tax_year, description, book_value, fmv) "
+                    "VALUES ('202401319349300001', '590000001', 2023, 'HEDGE FUNDS', 4e8, NULL)")
     from radar.sources.endowments import pipeline
     return pipeline.derive_signals()
 
@@ -344,7 +345,7 @@ def _seed_hf_store():
         con.execute(f, ["202401000000000022", "590000022", "990PF", 2024, date(2024, 12, 31), 6e8, None, 5e8])
         con.execute(f, ["202401000000000033", "590000033", "990", 2023, date(2024, 6, 30), 3e9, 1e9, 1e9])
         con.execute(f, ["202401000000000044", "590000044", "990", 2024, date(2025, 6, 30), 1e8, None, None])
-        oi = "INSERT INTO ef_other_investments VALUES (?, ?, ?, ?, ?, ?)"
+        oi = "INSERT INTO ef_other_investments (object_id, ein, tax_year, description, book_value, fmv) VALUES (?, ?, ?, ?, ?, ?)"
         con.execute(oi, ["202401000000000011", "590000011", 2023, "HEDGE FUNDS", 4e7, None])
         con.execute(oi, ["202401000000000011", "590000011", 2023, "PRIVATE EQUITY", 2.6e8, None])
         con.execute(oi, ["202301000000000011", "590000011", 2022, "ABSOLUTE RETURN FUNDS", 9e9, None])  # older return

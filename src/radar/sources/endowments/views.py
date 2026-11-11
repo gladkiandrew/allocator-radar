@@ -193,7 +193,13 @@ def hf_buyers() -> list[dict]:
             ls = lines.get(f["object_id"], [])
             row["n_lines"] = len(ls)
             named = []
+            row["hf_unstated"] = []
             for x in ls:
+                # DATA marks placeholder amounts (0 or $1 entered where no value is stated) as value_status 'not_stated'
+                if x.get("value_status") == "not_stated":
+                    if HF_NAMED.search(x["description"] or ""):
+                        row["hf_unstated"].append(x["description"])
+                    continue
                 val, basis = (x["fmv"], "FMV") if x["fmv"] is not None else (x["book_value"], "book value")
                 if val is None:
                     continue

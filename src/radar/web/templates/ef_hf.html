@@ -62,6 +62,8 @@
         {% if r.hf.amount < 1000 %}<div class="faint small">A nominal amount as filed. The line's FMV column is not in the store.</div>{% endif %}
         <ul class="ef-hf-lines small">{% for l in r.hf.lines %}<li>"{{ l.description }}" <span class="mono">{{ money(l.value) }}</span></li>{% endfor %}</ul>
         {{ cite(f, r.hf.cite) }}
+      {% elif r.hf_unstated %}<span class="muted">named, amount not stated</span>
+        <div class="faint small">{% for d in r.hf_unstated %}"{{ d }}"{{ ', ' if not loop.last }}{% endfor %}: listed on the TY{{ f.tax_year }} return with a placeholder value, not an amount.</div>
       {% else %}<span class="muted">not disclosed</span>
         {% if f %}<div class="faint small">{% if r.n_lines %}None of the {{ r.n_lines }} other-investment line{{ 's' if r.n_lines != 1 }} on the TY{{ f.tax_year }} return names a hedge fund strategy.{% else %}No itemized other-investment lines on file for the TY{{ f.tax_year }} return.{% endif %}</div>{% endif %}
       {% endif %}</td>
