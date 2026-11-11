@@ -61,7 +61,11 @@ def when(a: dict, signals: list[dict], today: date | None = None, cfg: dict | No
         {"date": a.get("upcoming_doc_date"), "basis": "agenda posted"} if a.get("upcoming_doc_date") else None)
 
     # last deployment: newest award, funding or commitment on file
-    deps = sorted((s for s in live if s["signal_type"] in DEPLOYMENT_TYPES), key=lambda s: s["event_date"], reverse=True)
+    from radar.web.present import strategy_label
+
+    deps = sorted((s for s in live if s["signal_type"] in DEPLOYMENT_TYPES
+                   and strategy_label(s)["text"] not in ("service provider", "total plan")),  # capital, not an auditor
+                  key=lambda s: s["event_date"], reverse=True)
     last = deps[0] if deps else None
 
     # next step: DATA's stated next step, else a scheduled search date ahead, else the next published meeting
@@ -77,8 +81,6 @@ def when(a: dict, signals: list[dict], today: date | None = None, cfg: dict | No
     # stage tracker for the lead search: stages reached by signals in the tier window with the same strategy
     tracker = []
     if lead is not None and r.tier == "DEPLOYING":
-        from radar.web.present import strategy_label
-
         lab = strategy_label(lead)["text"]
         since = today - timedelta(days=365)
         same = [s for s in live if s["event_date"] >= since and stage_of(s) and strategy_label(s)["text"] == lab]

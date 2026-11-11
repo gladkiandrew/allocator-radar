@@ -23,10 +23,21 @@
   <div class="kpi"><div class="v">{% if card.reviewed_pct is not none %}{{ card.reviewed_pct }}%{% else %}—{% endif %}</div>
     <div class="l">Signals reviewed by a person</div>
     <div class="faint small">{{ card.reviewed }} of {{ card.public_signals }} public signals. The rest passed the four automatic checks and are labeled as such.</div></div>
+  <div class="kpi"><div class="v">{% if card.verified_pct is not none %}{{ card.verified_pct }}%{% else %}—{% endif %}</div>
+    <div class="l">Signals verified against source</div>
+    <div class="faint small">{{ card.verified }} of {{ card.public_signals }}: the quote matches the cited page, or the row was read from a table or filing field. Only these are shown.</div></div>
   <div class="kpi"><div class="v">{% if card.spot %}{{ card.spot.pct }}%{% else %}—{% endif %}</div>
     <div class="l">Latest spot-check accuracy</div>
     <div class="faint small">{% if card.spot %}{{ card.spot.correct }} of {{ card.spot.checked }} signals correct against their source pages, checked {{ card.spot.date }}.{% else %}No spot check recorded yet.{% endif %}</div></div>
 </section>
+
+<h2 id="phase-c">Phase C status <span class="mono count">Florida endowments, foundations, hospitals</span></h2>
+<div class="table-card"><div class="scroll"><table class="stack">
+  <thead><tr><th scope="col">Done when</th><th scope="col">Measured</th><th scope="col">Status</th></tr></thead>
+  <tbody>{% for c in card.phase_c %}
+  <tr><td>{{ c.criterion }}</td><td>{{ c.value }}</td><td>{% if c.met %}<span class="tag ok">met</span>{% else %}<span class="tag warn">not yet</span>{% endif %}</td></tr>
+  {% endfor %}</tbody></table></div></div>
+<p class="faint small">Phase C closes when all four are met. Criteria from ROADMAP.md.</p>
 
 <div class="flow" aria-label="Pipeline">
   <div class="step"><div class="k">01 · Discover</div><h3>Find the plans</h3><p>A registry of public plans and the pages where each one posts agendas, minutes and reports. A person approves it before any crawling.</p></div>
