@@ -81,3 +81,13 @@ def test_wall_static_catches_contact_admin_links_and_data_files(tmp_path):
     for needle in ("shows phone", "shows email", "/review.html", "/export.csv", "non-public scheme", "mailto",
                    "form that posts", "radar.duckdb"):
         assert needle in v, needle
+
+
+def test_wall_reads_table_cells_separately_but_still_catches_a_street_in_one_cell():
+    from radar.wall.static_site import visible_text
+    from radar.wall.scrubber import detect
+
+    across = "<table><tr><td>$450,282</td></tr>\n    <tr><td>Park Place International LLC</td></tr></table>"
+    assert not detect(visible_text(across))
+    inside = "<table><tr><td>Office at 282 Park Place, Suite 4</td></tr></table>"
+    assert detect(visible_text(inside))

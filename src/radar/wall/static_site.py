@@ -29,8 +29,14 @@ DROP = re.compile(r"<(script|style)\b.*?</\1>", re.I | re.S)
 TAG = re.compile(r"<[^>]+>")
 
 
+# Table cells, rows and list items are separate pieces of text: a number ending one cell and a firm name starting the
+# next ("$450,282" | "Park Place International LLC") must not read as a street address. Text inside one cell is still
+# checked whole, so nothing is loosened.
+CELL = re.compile(r"</?(?:td|th|tr|li)\b[^>]*>", re.I)
+
+
 def visible_text(page: str) -> str:
-    return html.unescape(TAG.sub(" ", DROP.sub(" ", page)))
+    return html.unescape(TAG.sub(" ", CELL.sub(" | ", DROP.sub(" ", page))))
 
 
 def _resolve(page_rel: str, url: str) -> str | None:
