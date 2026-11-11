@@ -193,3 +193,16 @@ def test_consultant_display_drops_rows_naming_the_deals_own_manager():
         {"quote": "Active Credit | abrdn Inc. | Turtle Bay Partners EMD Fund | $231,250,000 | Mercer | Emerging Markets Debt"}]}
     plain = {"consultant_name_as_disclosed": "AndCo Consulting", "evidence": [{"quote": "AndCo presented the report."}]}
     assert shown_engagements([inv, mer, plain]) == [mer, plain]
+
+
+def test_owner_ef_spot_check_line_closes_criterion_4():
+    from radar.scorecard import _spot_row, owner_ef_spot_check
+
+    text = """SPOT-CHECK 2026-11-11: 40 signals checked, 39 correct, accuracy 97%, method DATA session
+SPOT-CHECK 2026-11-12: 25 signals checked, 24 correct, accuracy 96%, method owner review of data/ef_spotcheck_25.md in /review/ef"""
+    o = owner_ef_spot_check(text)
+    assert o == {"date": "2026-11-12", "checked": 25, "correct": 24, "pct": 96.0}
+    row = _spot_row(o, [], [], None)
+    assert row["met"] and "24 of 25" in row["value"] and "2026-11-12" in row["value"]
+    assert not _spot_row({"date": "2026-11-12", "checked": 25, "correct": 23, "pct": 92.0}, [], [], None)["met"]
+    assert owner_ef_spot_check("SPOT-CHECK 2026-11-11: 40 signals checked, 39 correct, method DATA") is None
