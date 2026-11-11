@@ -41,7 +41,7 @@
       <span class="t-date">{{ s.event_date }}</span>
       <span class="t-type">{{ ef_signal_label(s) or s.signal_type|replace('EF_', '')|replace('_', ' ')|lower }}</span>
       <span class="tag">{{ s.source_label }}</span>
-      {% if s.hf_relevant %}<span class="tag hf">HF</span>{% endif %}
+      {% if s.hf_relevant %} <span class="tag hf">hedge fund</span>{% endif %}
       {% set ap = approval(s) %}<span class="tag {{ ap.cls }}" title="{{ ap.title }}">{{ ap.label }}</span>
     </div>
     <div class="t-sum">{{ s.summary }} {{ cite(s.source_url, s.doc_title or 'source', s.cite) }}</div>
