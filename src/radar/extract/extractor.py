@@ -522,6 +522,9 @@ def pending_documents(con, allocator_ids: list[str] | None = None) -> list[tuple
             continue
         if _pages_to_extract(con, r["sha256"]):
             out.append((r["sha256"], r["allocator_id"]))
+        else:  # D-B17: nothing on this document qualifies; record that, or coverage counts it as unprocessed forever
+            con.execute("INSERT INTO extraction_runs VALUES (?, 0, ?, now(), 'none') ON CONFLICT DO NOTHING",
+                        [r["sha256"], EXTRACTOR_VERSION])
     return out
 
 

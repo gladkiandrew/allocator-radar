@@ -309,3 +309,11 @@ are the irreversible ones, which went to the repo owner.
   the recall test requires all positives to pass and no noise to. `radar rescore` recomputes stored page terms
   and re-extracts only the documents that gained hit pages: 42 pages in 35 documents (+3.5% LLM input), 22 new
   signals, 20 auto-approved under auto-approve-v2 (terminations stay for review).
+- **D-B17 No permanent PROCESSING.** Root cause: `pending_documents` dropped documents with no candidate page
+  before `extract_document` could record a run, so 585 in-scope documents stayed "unextracted" forever and 31
+  plans showed PROCESSING. It now writes a `none` run for them. Also: 15 documents were never parsed and 48
+  low-text documents predated OCR; all 67 were re-parsed, with the OCR trigger raised from 50 to 150 characters
+  per page (scans often carry only a stamp; OCR text replaces the text layer only when longer). PROCESSING now
+  means only "candidate pages waiting for `radar extract`". New gap causes with a per-plan reason:
+  NEEDS_HUMAN_DOWNLOAD (listing hosts not fetchable automatically), NO_DOCS (crawled, nothing readable listed),
+  UNREADABLE (documents are image scans with no text after OCR).

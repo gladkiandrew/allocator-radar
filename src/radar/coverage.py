@@ -109,8 +109,14 @@ def bar(con, allocator: dict, today: date | None = None) -> list[str]:
 GAP_CATEGORIES = [
     ("MANUAL_SOURCE", "Blocked to automated clients (bot wall, robots.txt, or documents only on a do-not-crawl host)",
      "Drop downloaded files into inbox/manual/<plan id>/ or track a Chapter 119 records request."),
-    ("PROCESSING", "Crawl or extraction for this plan has not finished yet",
-     "Nothing to do: the running pipeline will fill it in."),
+    ("NEEDS_HUMAN_DOWNLOAD", "The plan's listing pages answered, but its documents could not be fetched automatically",
+     "Download the files in a browser (see data/manual_downloads.md) and drop them into inbox/manual/<plan id>/."),
+    ("NO_DOCS", "The plan's approved listing pages were crawled but list no documents the crawler can read",
+     "Find the plan's real board-document page (agenda portal, minutes archive) and approve it on Registry."),
+    ("UNREADABLE", "Documents were fetched but are scanned images with no readable text, even after OCR",
+     "Look for text versions on the plan's site, or request recent minutes as searchable PDFs (Chapter 119)."),
+    ("PROCESSING", "Documents with candidate pages are waiting for extraction (transient; `radar extract` clears it)",
+     "Run `radar extract --only <plan id>`."),
     ("NO_LISTING_PAGES", "Discovery found no document listing pages on the plan's site",
      "Deeper discovery (JS render, sitemap) or a better starting URL for the plan."),
     ("THIN", "Fewer than 3 documents fetched after crawling",
@@ -135,19 +141,37 @@ def gap_category(con, a: dict) -> tuple[str, str, str]:
     else:
         pages = con.execute("SELECT count(*) FROM allocator_pages WHERE allocator_id = ?", [aid]).fetchone()[0]
         crawled = con.execute("SELECT count(*) FROM document_links WHERE allocator_id = ?", [aid]).fetchone()[0]
-        unextracted = con.execute(
+        unextracted = con.execute(  # parsed documents that have a candidate page and no run for this version
             """SELECT count(DISTINCT du.sha256) FROM document_urls du JOIN documents d USING (sha256)
-               WHERE du.allocator_id = ? AND NOT EXISTS (SELECT 1 FROM extraction_runs r
+               WHERE du.allocator_id = ? AND d.parsed_at IS NOT NULL
+                 AND EXISTS (SELECT 1 FROM pages p WHERE p.sha256 = du.sha256 AND p.prefilter_terms IS NOT NULL)
+                 AND NOT EXISTS (SELECT 1 FROM extraction_runs r
                      WHERE r.sha256 = du.sha256 AND r.extractor_version = ?)""", [aid, EXTRACTOR_VERSION]).fetchone()[0]
         page_hosts = [r[0] for r in con.execute(
             "SELECT DISTINCT regexp_extract(url, '^https?://([^/]+)', 1) FROM allocator_pages WHERE allocator_id = ?",
             [aid]).fetchall()]
         attempted = any(con.execute("SELECT 1 FROM audit_log WHERE action = 'crawl_host' AND subject = ? LIMIT 1",
                                     [h]).fetchone() for h in page_hosts)
+        unreadable, readable = _readability(con, aid)
+        last = _last_crawls(con, page_hosts)
         if pages == 0:
             cat = "NO_LISTING_PAGES"
-        elif (not attempted and n_docs == 0) or unextracted:
+        elif n_docs == 0 and (not attempted or any(d.get("errors") for d in last)):
+            cat = "NEEDS_HUMAN_DOWNLOAD"
+            detail = "; ".join(f"{d['host']}: {d.get('errors', 0)} of {d.get('targets', 0)} fetches failed" for d in last) \
+                or "listing hosts not crawled automatically"
+            _, desc, action = _CAT[cat]
+            return cat, f"{desc} ({detail})", action
+        elif n_docs == 0:
+            cat = "NO_DOCS"
+            listed = sum(d.get("listed", 0) for d in last)
+            _, desc, action = _CAT[cat]
+            return cat, f"{desc} ({len(page_hosts)} host(s) crawled, {listed} document links listed)", action
+        elif unextracted:
             cat = "PROCESSING"
+        elif unreadable and readable < 3:
+            _, desc, action = _CAT["UNREADABLE"]
+            return "UNREADABLE", f"{desc} ({unreadable} of {unreadable + readable} documents have no readable text)", action
         elif "documents fetched" in reasons:
             cat = "THIN"
         elif "no document dated" in reasons:
@@ -156,3 +180,28 @@ def gap_category(con, a: dict) -> tuple[str, str, str]:
             cat = "CONSULTANT_UNIDENTIFIED"
     _, desc, action = _CAT[cat]
     return cat, desc, action
+
+
+def _readability(con, aid: str) -> tuple[int, int]:
+    """(unreadable, readable) document counts: unreadable = parsed, but under 200 characters of text per page."""
+    r = con.execute(
+        """SELECT count(*) FILTER (WHERE chars < 200 * greatest(n, 1)), count(*) FILTER (WHERE chars >= 200 * greatest(n, 1))
+           FROM (SELECT du.sha256, count(p.page_no) AS n, coalesce(sum(length(p.text_scrubbed)), 0) AS chars
+                 FROM (SELECT DISTINCT sha256 FROM document_urls WHERE allocator_id = ?) du
+                 JOIN documents d USING (sha256) LEFT JOIN pages p USING (sha256)
+                 WHERE d.parsed_at IS NOT NULL GROUP BY du.sha256)""", [aid]).fetchone()
+    return int(r[0] or 0), int(r[1] or 0)
+
+
+def _last_crawls(con, hosts: list[str]) -> list[dict]:
+    """The latest crawl_host audit detail for each host (empty for hosts never crawled)."""
+    import json
+
+    out = []
+    for h in hosts:
+        row = con.execute("""SELECT detail FROM audit_log WHERE action = 'crawl_host' AND subject = ?
+                             ORDER BY ts DESC LIMIT 1""", [h]).fetchone()
+        if row and row[0]:
+            d = row[0] if isinstance(row[0], dict) else json.loads(row[0])
+            out.append({"host": h, **d})
+    return out

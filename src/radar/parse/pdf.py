@@ -34,7 +34,7 @@ def _html_text(data: bytes) -> list[str]:
     return [re.sub(r"\n\s*\n+", "\n\n", text).strip()]
 
 
-OCR_MIN_CHARS = 50  # pages with less text than this are treated as scanned images
+OCR_MIN_CHARS = 150  # pages with less text are OCR'd; scans often carry only a stamp or header (D-B17). OCR text wins only if longer
 
 
 def _ocr_engine():
