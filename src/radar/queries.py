@@ -55,26 +55,33 @@ def allocator_table(con, scoped: bool = True) -> list[dict]:
         for r in db.rows(
             con,
             """SELECT allocator_id, count(DISTINCT sha256) AS n_docs, max(first_seen) AS last_new_document,
-                      max(last_fetched) AS last_fetched, max(doc_date) AS newest_doc_date
+                      max(last_fetched) AS last_fetched,
+                      -- a document dated after today (an agenda for an upcoming meeting) is never the newest document
+                      max(doc_date) FILTER (WHERE doc_date <= current_date) AS newest_doc_date,
+                      min(doc_date) FILTER (WHERE doc_date > current_date) AS upcoming_doc_date
                FROM document_urls GROUP BY allocator_id""",
         )
     }
-    consultants = {
-        r["allocator_id"]: r
-        for r in db.rows(
-            con,
-            """SELECT c.allocator_id, string_agg(DISTINCT c.consultant_name_as_disclosed, ' | ') AS consultant, m.as_of
-               FROM consultant_engagements c
-               JOIN (SELECT allocator_id, max(as_of) AS as_of FROM consultant_engagements GROUP BY 1) m
-                 ON m.allocator_id = c.allocator_id AND m.as_of = c.as_of
-               GROUP BY c.allocator_id, m.as_of""",
-        )
-    }
+    # Latest-dated consultant engagements per plan, minus rows that name a manager rather than a consultant
+    # (see shown_engagements). Several consultants on the same date (e.g. per asset class) are all shown.
     from radar.resolve import canonical_map
 
     cmap = canonical_map(con, "consultant")
-    for c in consultants.values():  # several consultants on the same date (e.g. per asset class) are all shown
-        c["consultant"] = ", ".join(sorted({cmap.get(x.strip(), x.strip()) for x in c["consultant"].split(" | ")}))
+    eng_rows = db.rows(con, """SELECT c.* FROM consultant_engagements c
+                               JOIN (SELECT allocator_id, max(as_of) AS as_of FROM consultant_engagements GROUP BY 1) m
+                                 ON m.allocator_id = c.allocator_id AND m.as_of = c.as_of""")
+    eng_ev = _evidence_for(con, "engagement", [e["engagement_id"] for e in eng_rows])
+    by_plan: dict[str, list[dict]] = defaultdict(list)
+    for e in eng_rows:
+        e["evidence"] = eng_ev.get(e["engagement_id"], [])
+        by_plan[e["allocator_id"]].append(e)
+    consultants = {}
+    for aid, es in by_plan.items():
+        names = sorted({cmap.get(x.strip(), x.strip()) for e in shown_engagements(es)
+                        for x in e["consultant_name_as_disclosed"].split(" | ")})
+        if names:
+            consultants[aid] = {"allocator_id": aid, "consultant": ", ".join(names), "as_of": es[0]["as_of"],
+                                "n": len(names)}
     sigs_by: dict[str, list[dict]] = defaultdict(list)
     for s in signals_for(con):
         sigs_by[s["allocator_id"]].append(s)
@@ -96,6 +103,7 @@ def allocator_table(con, scoped: bool = True) -> list[dict]:
             n_docs=d.get("n_docs", 0),
             last_fetched=d.get("last_fetched"),
             newest_doc_date=d.get("newest_doc_date"),
+            upcoming_doc_date=d.get("upcoming_doc_date"),
             consultant=consultants.get(a["allocator_id"]),
             pending=[s for s in sigs if s["review_status"] == "new"],
         )
@@ -104,6 +112,40 @@ def allocator_table(con, scoped: bool = True) -> list[dict]:
                             -(a["readiness"].reasons[0]["event_date"].toordinal() if a["readiness"].reasons else 0),
                             a["display_name"]))
     return out
+
+
+def _not_consultants() -> set[str]:
+    """Firms DATA has marked as not consultants: `not_consultant:` list in data/consultant_aliases.yaml (optional)."""
+    import yaml
+
+    from radar.settings import get_settings
+
+    p = get_settings().data_dir / "consultant_aliases.yaml"
+    try:
+        data = yaml.safe_load(p.read_text()) or {}
+    except (OSError, yaml.YAMLError):
+        return set()
+    return {_norm_label(x) for x in (data.get("not_consultant") or []) if isinstance(x, str)}
+
+
+def _names_own_manager(e: dict) -> bool:
+    """A per-deal table row (Asset class | Manager | Account | Commitment | Consultant | ...) whose consultant cell
+    names the row's own manager, e.g. "Real Estate | Invesco Advisers Inc | ... | Invesco | Joint Venture"."""
+    name = _norm_label(e.get("consultant_name_as_disclosed"))
+    first = name.split()[0] if name else ""
+    for ev in e.get("evidence") or []:
+        cells = [c.strip() for c in (ev.get("quote") or "").split("|")]
+        if len(cells) >= 5 and first and first in _norm_label(cells[1]).split():
+            return True
+    return False
+
+
+def shown_engagements(engagements: list[dict]) -> list[dict]:
+    """Consultant engagements fit to display as consultants: drop rows that name the deal's own manager, and firms
+    listed under not_consultant. Stored rows are untouched."""
+    nc = _not_consultants()
+    return [e for e in engagements
+            if not _names_own_manager(e) and _norm_label(e.get("consultant_name_as_disclosed")) not in nc]
 
 
 def pending_count(con) -> int:
@@ -146,6 +188,8 @@ def allocator_brief(con, allocator_id: str) -> dict | None:
         for i in items:
             i["evidence"] = ev.get(i[key], [])
         a[table] = items
+    a["consultants_shown"] = shown_engagements([e for e in a["consultant_engagements"]
+                                                if a["consultant_engagements"] and e["as_of"] == a["consultant_engagements"][0]["as_of"]])
     from radar import coverage
 
     a["facts"] = plan_facts(con, allocator_id)

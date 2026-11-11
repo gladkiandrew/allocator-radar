@@ -28,7 +28,9 @@
 <section class="facts" aria-label="At a glance">
   {% call fact('Total assets', f.total_assets, True) %}{{ money(f.total_assets.value_num) }}{% endcall %}
   <div class="fact"><div class="l">Investment consultant</div>
-    {% if a.consultant_engagements %}{% set c = a.consultant_engagements[0] %}<div class="v">{{ c.consultant_name_as_disclosed|consultant }}</div><span class="as">as of {{ c.as_of }}</span><div style="margin-top:6px">{{ cites(c.evidence[:1]) }}</div>
+    {% set cs = a.consultants_shown %}
+    {% if cs|length > 1 %}{% set names = cs|map(attribute='consultant_name_as_disclosed')|map('consultant')|unique|sort|list %}<div class="l" style="margin-top:2px">Consultants on recent deals</div><div class="v">{{ names|join(', ') }}</div><span class="as">as of {{ cs[0].as_of }}, as printed in the deal table's consultant column</span><div style="margin-top:6px">{{ cites(cs[0].evidence[:1]) }}</div>
+    {% elif cs %}{% set c = cs[0] %}<div class="v">{{ c.consultant_name_as_disclosed|consultant }}</div><span class="as">as of {{ c.as_of }}</span><div style="margin-top:6px">{{ cites(c.evidence[:1]) }}</div>
     {% elif f.providers.INVESTMENT_CONSULTANT %}{% set c = f.providers.INVESTMENT_CONSULTANT %}<div class="v">{{ c.label|consultant }}</div><span class="as">as of {{ c.as_of }}</span><div style="margin-top:6px">{{ cites(c.evidence[:1]) }}</div>
     {% else %}<div class="none">Not found in fetched documents</div>{% endif %}</div>
   {% call fact('Assumed return', f.assumed_return, True) %}{{ '%g'|format(f.assumed_return.value_num) }}%{% endcall %}
@@ -54,7 +56,7 @@
       <span class="t-date">{{ s.event_date }}</span>
       <span class="t-type">{{ s.signal_type }}{% if s.qualifier %} · {{ s.qualifier }}{% endif %}</span>
       {% if s.hf_relevant %}<span class="tag hf">HF</span>{% endif %}
-      {% if s.review_status == 'approved' %}<span class="tag ok">approved by a person</span>{% elif s.review_status == 'auto_approved' %}<span class="tag" title="{{ s.review_note|clean_quote }}">auto-approved</span>{% elif s.review_status == 'new' %}<span class="pending">pending review</span>{% else %}<span class="tag bad">rejected</span>{% endif %}
+      {% set ap = approval(s) %}<span class="tag {{ ap.cls }}" title="{{ ap.title }}">{{ ap.label }}</span>
       {% if s.origin == 'MANUAL' %}<span class="tag">manual entry</span>{% endif %}
     </div>
     <div class="t-sum">{{ s.summary }} {{ cites(s.evidence) }}</div>
@@ -86,7 +88,7 @@
   {% for it in a.coverage['items'] %}
   <tr><td>{{ it.label }}{% if it.detail %}<div class="faint mono" style="font-size:11px">{{ it.detail }}</div>{% endif %}</td>
     <td>{% if it.status == 'ok' %}<span class="tag ok">✓ held</span>{% elif it.status == 'partial' %}<span class="tag warn">partial</span>{% elif it.status == 'missing' %}<span class="tag bad">missing</span>{% else %}<span class="faint small">not published</span>{% endif %}</td>
-    <td class="hide-sm">{% if it.newest %}{% if public and not public_href(it.newest.url) %}<span title="{{ no_url_title }}">{{ it.newest.title|truncate(34) }}</span>{% else %}<a href="{{ it.newest.url if public else '/doc/' ~ it.newest.sha256 }}" target="_blank" rel="noopener">{{ it.newest.title|truncate(34) }}</a>{% endif %} <span class="faint mono" style="font-size:11px">{{ it.newest.dated or '' }}</span>{% else %}<span class="faint">—</span>{% endif %}</td></tr>
+    <td class="hide-sm">{% if it.newest %}{% if public and not public_href(it.newest.url) %}<span title="{{ no_url_title }}">{{ it.newest.title|truncate(34) }}</span>{% else %}<a href="{{ it.newest.url if public else '/doc/' ~ it.newest.sha256 }}" target="_blank" rel="noopener">{{ it.newest.title|truncate(34) }}</a>{% endif %} <span class="faint mono" style="font-size:11px">{{ it.newest.dated|doc_when }}</span>{% else %}<span class="faint">—</span>{% endif %}</td></tr>
   {% endfor %}</tbody></table></div></div>
 <p class="faint small">"Not published" means not found on the plan's approved listing pages. "Missing" means listed there but not fetched yet.</p>
 </section>
@@ -125,7 +127,7 @@
   <tr><td>{% if public and not public_href(d.url) %}<span title="{{ no_url_title }}">{{ d.title|truncate(70) }}</span>{% else %}<a href="{{ d.url if public else '/doc/' ~ d.sha256 }}" target="_blank" rel="noopener">{{ d.title|truncate(70) }}</a>{% endif %}
       {% if not public or d.provenance != 'CRAWL' %}<div class="faint small">{% if not public %}<a class="faint" href="{{ d.url }}" target="_blank" rel="noopener noreferrer">original ↗</a>{% endif %}{% if d.provenance != 'CRAWL' %}{{ ' · ' if not public }}{{ d.provenance|lower }}{% endif %}</div>{% endif %}</td>
     <td><span class="tag">{{ d.doc_type }}</span></td>
-    <td class="mono">{{ d.doc_date or '—' }}</td>
+    <td class="mono">{{ d.doc_date|doc_when or '—' }}</td>
     <td class="mono hide-sm">{{ d.last_fetched.strftime('%Y-%m-%d') }}</td>
     <td class="mono hide-sm">{{ d.page_count or 0 }}{% if d.hit_pages %} <span class="faint">({{ d.hit_pages }} w/ terms)</span>{% endif %}{% if d.parse_error %} <span class="tag bad">parse error</span>{% endif %}</td></tr>
   {% endfor %}</tbody></table></div></div>{% endif %}

@@ -37,6 +37,15 @@ GROUP BY du.allocator_id, du.sha256
 """
 
 
+def _newest(docs: list[dict], today: date) -> dict | None:
+    """The newest held document dated today or earlier (undated count as oldest); if every one is dated in the
+    future, the soonest upcoming one, so the template can label it "upcoming meeting <date>"."""
+    past = [h for h in docs if not h["dated"] or h["dated"] <= today]
+    if past:
+        return max(past, key=lambda h: h["dated"] or date.min)
+    return min(docs, key=lambda h: h["dated"]) if docs else None
+
+
 def held_documents(con, allocator_id: str) -> list[dict]:
     return db.rows(con, EFFECTIVE_DOCS, [allocator_id])
 
@@ -65,10 +74,11 @@ def checklist(con, allocator_id: str, today: date | None = None) -> dict:
             detail = f"{n_have} of {n_listed}" if n_listed else ""
             frac = (n_have / n_listed) if n_listed else 0
         else:
-            newest = max(mine, key=lambda h: h["dated"] or date.min) if mine else None
+            newest = _newest(mine, today)
             if newest:
                 status, frac = "ok", 1.0
-                detail = f"dated {newest['dated']}" if newest["dated"] else "undated"
+                d = newest["dated"]
+                detail = ("undated" if not d else f"upcoming meeting {d}" if d > today else f"dated {d}")
             elif unfetched or listed:
                 status, frac, detail = "missing", 0.0, f"{len(listed)} listed"
             else:
@@ -77,7 +87,7 @@ def checklist(con, allocator_id: str, today: date | None = None) -> dict:
             applicable += 1
             score += frac
         items.append({"key": key, "label": label, "status": status, "detail": detail,
-                      "newest": max(mine, key=lambda h: h["dated"] or date.min) if mine else None})
+                      "newest": _newest(mine, today)})
     pct = round(100 * score / applicable) if applicable else 0
     return {"items": items, "pct": pct, "applicable": applicable}
 
@@ -93,8 +103,9 @@ def bar(con, allocator: dict, today: date | None = None) -> list[str]:
     if len(held) < cfg["min_documents"]:
         reasons.append(f"{len(held)} documents fetched (minimum {cfg['min_documents']})")
     recent = today - timedelta(days=cfg["recent_document_days"])
-    if not any(h["dated"] and h["dated"] >= recent for h in held):
-        newest = max((h["dated"] for h in held if h["dated"]), default=None)
+    # A document dated after today (an agenda for an upcoming meeting) never makes coverage recent by itself.
+    if not any(h["dated"] and recent <= h["dated"] <= today for h in held):
+        newest = max((h["dated"] for h in held if h["dated"] and h["dated"] <= today), default=None)
         reasons.append(f"no document dated in the last 6 months (newest: {newest or 'none dated'})")
     if cfg.get("require_consultant"):
         has = con.execute("SELECT 1 FROM consultant_engagements WHERE allocator_id = ? LIMIT 1", [allocator["allocator_id"]]).fetchone() \

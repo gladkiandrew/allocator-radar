@@ -34,7 +34,8 @@ def test_export_writes_public_pages_with_relative_links(tmp_path):
 
     brief = (out / "a" / "canary.html").read_text()
     assert 'href="../index.html"' in brief and 'href="../static/style.css"' in brief
-    assert "auto-approved" in brief and "Public-record data. Updated " in brief
+    assert "awaiting review" in brief and "Public-record data. Updated " in brief  # auto-approved, crawled: no person yet
+    assert ">auto-approved<" not in brief  # never an unqualified "auto-approved" label
     assert "https://canary.invalid/a.pdf#page=1" in brief  # citations go to the public source, not the lake
     assert "/doc/" not in brief and "hx-get" not in brief
     for f in out.rglob("*.html"):
@@ -63,6 +64,8 @@ def test_unknown_internal_link_fails_the_export():
         static_export.out_path("/doc/" + "0" * 64)
     assert static_export.out_path("/", "tier=DEPLOYING&strategy=hf") == "view-hf-deploying.html"
     assert static_export.out_path("/", "strategy=all") == "index.html"
+    assert static_export.out_path("/ef/hedge-fund-buyers") == "ef-hf.html"
+    assert static_export.out_path("/ef") == "ef.html" and static_export.out_path("/ef/590000001") == "ef/590000001.html"
 
 
 def test_wall_static_catches_contact_admin_links_and_data_files(tmp_path):

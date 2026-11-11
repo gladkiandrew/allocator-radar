@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Focus review · Allocator Radar{% endblock %}
+{% block body %}
+<p class="eyebrow">Signal review · focus mode</p>
+<h1>One signal at a time</h1>
+<p class="sub"><strong>{{ remaining }} remaining</strong>{% if n_skipped %} · {{ n_skipped }} skipped (<a href="/review/next">start over with skipped</a>){% endif %}
+  · keys: <kbd>a</kbd> approve, <kbd>r</kbd> reject, <kbd>s</kbd> skip · <a href="/review">back to the full list</a></p>
+{% if done %}<div class="notice" role="status">{{ 'Approved' if done == 'approved' else 'Rejected' if done == 'rejected' else 'Done' }}. Next one below.</div>{% endif %}
+{% if err %}<div class="error" role="alert">{{ err }}</div>{% endif %}
+{% if not s %}
+<div class="card empty">{% if total %}Only skipped signals are left ({{ total }}). <a href="/review/next">Go through them again</a> or open the <a href="/review">full list</a>.{% else %}Nothing pending. The queue is clear.{% endif %}</div>
+{% else %}
+<article class="card review-card" id="focus" data-signal="{{ s.signal_id }}">
+  <div class="rc-head">
+    <div><a class="rc-title" href="/a/{{ s.allocator_id }}">{{ s.display_name }}</a>
+      <div class="faint mono" style="font-size:11.5px;margin-top:2px">{{ s.origin|lower }} · observed {{ s.observed_at.strftime('%Y-%m-%d') }}</div></div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      {% if s.hf %}<span class="tag hf">HF</span>{% endif %}
+      {% if s.tier_effect %}<span class="tier {{ s.tier_effect }}">→ {{ s.tier_effect }} if approved</span>{% endif %}
+    </div>
+  </div>
+  <p class="rc-sum"><span class="mono" style="background:var(--sunken);padding:2px 6px;border-radius:5px;font-size:12px">{{ s.event_date }}</span>
+    <span class="mono faint" style="font-size:11.5px;margin:0 6px">{{ s.signal_type }}{% if s.qualifier %} · {{ s.qualifier }}{% endif %}</span><br>{{ s.summary }}</p>
+  {% for e in s.evidence %}
+    <blockquote>{{ e.quote|clean_quote }}</blockquote>
+    <p class="src">{% set h = cite_href(e) %}{% if h %}<a class="cite" href="{{ h }}" target="_blank" rel="noopener">{{ e.doc_title or 'source' }}{% if e.page %} · page {{ e.page }}{% endif %}</a>{% else %}{{ e.doc_title or 'source' }}{% if e.page %} · page {{ e.page }}{% endif %}{% endif %}
+      {% if e.doc_date %}<span>dated {{ e.doc_date }}</span>{% endif %}
+      <span>confidence {{ '%.2f'|format(e.confidence) }}</span></p>
+  {% else %}<p class="muted">No evidence quote on file.</p>
+  {% endfor %}
+  <form method="post" action="/review/next/{{ s.signal_id }}">
+    <input type="hidden" name="skip" value="{{ skip }}">
+    <div class="actions">
+      <button class="primary" id="k-a" name="decision" value="approved"><kbd>a</kbd> Approve</button>
+      <button class="danger" id="k-r" name="decision" value="rejected"><kbd>r</kbd> Reject</button>
+      <button id="k-s" name="decision" value="skip"><kbd>s</kbd> Skip</button>
+    </div>
+  </form>
+  <p class="faint small">To correct the type, date or summary before deciding, use the <a href="/review#sig-{{ s.signal_id }}">full list</a>.</p>
+</article>
+<script>
+var sent = false;
+document.addEventListener("keydown", function (ev) {
+  if (sent || ev.ctrlKey || ev.metaKey || ev.altKey || ev.repeat) return;
+  var t = ev.target, tag = (t && t.tagName || "").toLowerCase();
+  if (tag === "input" || tag === "textarea" || tag === "select" || (t && t.isContentEditable)) return;
+  var b = document.getElementById("k-" + (ev.key || "").toLowerCase());
+  if (b) { ev.preventDefault(); sent = true; b.click(); }
+});
+</script>
+{% endif %}
+{% endblock %}

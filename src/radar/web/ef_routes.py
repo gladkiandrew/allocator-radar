@@ -43,7 +43,18 @@ def register(app: FastAPI, render, public: bool) -> None:
         counts = {k: sum(1 for r in rows if r["kind"] == k) for k in KIND_LABEL}
         tiers = {t: sum(1 for r in rows if r["readiness"].tier == t) for t in ("DEPLOYING", "PREPARING", "WATCHING", "STALE")}
         n_signals = sum(len(r["signals"]) for r in rows)
-        return render(request, "ef.html", rows=rows, kinds=KIND_LABEL, counts=counts, tiers=tiers, n_signals=n_signals)
+        return render(request, "ef.html", rows=rows, kinds=KIND_LABEL, counts=counts, tiers=tiers, n_signals=n_signals,
+                      ef_view="assets")
+
+    @app.get("/ef/hedge-fund-buyers", response_class=HTMLResponse)  # registered before /ef/{ein}
+    def ef_hf(request: Request):
+        from radar.sources.endowments import views
+
+        rows = views.hf_buyers()
+        n_hf = sum(1 for r in rows if r["hf"])
+        n_alt_only = sum(1 for r in rows if not r["hf"] and r["alt"])
+        return render(request, "ef_hf.html", rows=rows, n_hf=n_hf, n_alt_only=n_alt_only,
+                      n_neither=len(rows) - n_hf - n_alt_only, ef_view="hf")
 
     @app.get("/ef/{ein}", response_class=HTMLResponse)
     def ef_org(request: Request, ein: str):

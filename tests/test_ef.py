@@ -323,3 +323,100 @@ def test_garbled_firm_name_is_not_a_change():
     out = S.derive(org, [f1, f0], {"B": [c("SOUTHERN SUN ASSET MANAGEMENT")], "A": [c("SOUTHERN SUN ASSET MANAGESOUTHERN SUN ASMENT")]},
                    {}, irs.filing_url, lambda f, w: "cite")
     assert not [s for s in out if s["signal_type"] in ("EF_MANAGER_ADDED", "EF_MANAGER_DROPPED")]
+
+
+# ---------------- Hedge fund buyers view ----------------
+def _seed_hf_store():
+    store.init()
+    with store.connect() as con:
+        orgs = [("590000011", "ALPHA UNIVERSITY FOUNDATION INC", "UNIVERSITY_FOUNDATION"),
+                ("590000022", "BETA FAMILY FOUNDATION", "PRIVATE_FOUNDATION"),
+                ("590000033", "GAMMA COMMUNITY FOUNDATION INC", "COMMUNITY_FOUNDATION"),
+                ("590000044", "DELTA COLLEGE FOUNDATION INC", "UNIVERSITY_FOUNDATION"),
+                ("590000055", "EPSILON FOUNDATION", "PRIVATE_FOUNDATION")]
+        for ein, name, kind in orgs:
+            con.execute("INSERT INTO ef_orgs (ein, name, kind, city, bmf_assets, rank_in_kind) VALUES (?, ?, ?, 'Miami', 1e8, 1)",
+                        [ein, name, kind])
+        f = ("INSERT INTO ef_filings (object_id, ein, return_type, tax_year, tax_period_end, total_assets, investments_public, "
+             "investments_other) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+        con.execute(f, ["202401000000000011", "590000011", "990", 2023, date(2024, 6, 30), 5e8, 1e8, 3e8])
+        con.execute(f, ["202301000000000011", "590000011", "990", 2022, date(2023, 6, 30), 5e8, 1e8, 3e8])  # older: ignored
+        con.execute(f, ["202401000000000022", "590000022", "990PF", 2024, date(2024, 12, 31), 6e8, None, 5e8])
+        con.execute(f, ["202401000000000033", "590000033", "990", 2023, date(2024, 6, 30), 3e9, 1e9, 1e9])
+        con.execute(f, ["202401000000000044", "590000044", "990", 2024, date(2025, 6, 30), 1e8, None, None])
+        oi = "INSERT INTO ef_other_investments (object_id, ein, tax_year, description, book_value, fmv) VALUES (?, ?, ?, ?, ?, ?)"
+        con.execute(oi, ["202401000000000011", "590000011", 2023, "HEDGE FUNDS", 4e7, None])
+        con.execute(oi, ["202401000000000011", "590000011", 2023, "PRIVATE EQUITY", 2.6e8, None])
+        con.execute(oi, ["202301000000000011", "590000011", 2022, "ABSOLUTE RETURN FUNDS", 9e9, None])  # older return
+        con.execute(oi, ["202401000000000022", "590000022", 2024, "XYZ GLOBAL MACRO FUND LTD", 1e8, 1.2e8])
+        con.execute(oi, ["202401000000000033", "590000033", 2023, "ALTERNATIVE INVESTMENTS", 9e8, None])
+
+
+def test_hf_buyers_ranking_percent_and_not_disclosed():
+    from radar.sources.endowments import views
+
+    _seed_hf_store()
+    rows = views.hf_buyers()
+    by = {r["ein"]: r for r in rows}
+    # ranked by the named hedge fund figure first, then the broader figure, then neither
+    assert [r["ein"] for r in rows] == ["590000022", "590000011", "590000033", "590000044", "590000055"]
+    assert [r["rank"] for r in rows] == [1, 2, 3, 4, 5]
+    a, b, c, d, e = (by[k] for k in ("590000011", "590000022", "590000033", "590000044", "590000055"))
+    # 990: Schedule D line, book value; denominator Part X lines 11 + 12; only the latest return counts
+    assert a["hf"]["amount"] == 4e7 and a["hf"]["basis"] == "book value" and a["hf_pct"] == pytest.approx(10.0)
+    assert a["alt"]["amount"] == 3e8 and a["alt_pct"] == pytest.approx(75.0) and a["denom"]["amount"] == 4e8
+    assert a["hf"]["cite"] == "Form 990 TY2023 Schedule D Part VII (investments, other securities)"
+    assert a["alt"]["cite"].startswith("Form 990 TY2023 Part X line 12")
+    assert "Part X line 11" in a["denom"]["cite"] and "Part X line 12" in a["denom"]["cite"]
+    assert a["latest"]["url"].endswith("/590000011/202401000000000011/full")
+    # 990-PF: FMV used when the line has one; a blank public-securities line counts as zero and is reported as blank
+    assert b["hf"]["amount"] == 1.2e8 and b["hf"]["basis"] == "FMV" and b["hf_pct"] == pytest.approx(24.0)
+    assert b["denom"]["blank"] == ["public securities"] and b["alt"]["basis"] == "FMV"
+    assert b["hf"]["cite"] == "Form 990-PF TY2024 Part II line 13 statement (investments, other)"
+    # "ALTERNATIVE INVESTMENTS" is not a hedge fund line: no hedge fund figure, noted under the broader figure
+    assert c["hf"] is None and c["hf_pct"] is None and c["alt_pct"] == pytest.approx(50.0)
+    assert [x["description"] for x in c["alt_named"]] == ["ALTERNATIVE INVESTMENTS"]
+    # nothing disclosed: None, never 0, and no percent
+    assert d["hf"] is None and d["alt"] is None and d["denom"] is None and d["alt_pct"] is None
+    assert e["latest"] is None and e["hf"] is None and e["alt"] is None
+
+
+def test_hf_named_lines_are_tighter_than_the_hf_flag():
+    from radar.sources.endowments.views import HF_NAMED
+
+    for s in ("HEDGE FUNDS", "ABSOLUTE RETURN AND HEDGE FUNDS", "ROKOS GLOBAL MACRO FUND LTD", "99NETA4T7 LIGHTHOUSE MULTI-STR",
+              "INFINITY PREMIER (QP) CAYMAN LP - HEDGE FUND", "Multi-strategy fund"):
+        assert HF_NAMED.search(s), s
+    for s in ("ALTERNATIVE INVESTMENTS", "ALTERNATIVES & PRIVATE EQUITIES", "PRIVATE EQUITY", "OSSO MULTIFAMILY I LP",
+              "GOLDEN TREE MULTI SECTOR", "DIVERSIFIED EQUITY FUND", "GREEN THUMB INDUSTRIES WARRANTS 35,270.000 QUANTITY"):
+        assert not HF_NAMED.search(s), s
+
+
+def test_hf_buyers_page_and_static_export(tmp_path):
+    from fastapi.testclient import TestClient
+
+    from radar import static_export
+    from radar.wall import static_site
+    from radar.web.app import create_app
+
+    _seed_hf_store()
+    c = TestClient(create_app())
+    assert 'href="/ef/hedge-fund-buyers"' in c.get("/ef").text  # the toggle on the by-assets view
+    page = c.get("/ef/hedge-fund-buyers")
+    t = page.text
+    assert page.status_code == 200 and 'href="/ef"' in t and "Hedge fund buyers" in t
+    assert t.index("Beta Family Foundation") < t.index("Alpha University Foundation Inc") < t.index("Gamma Community Foundation Inc") \
+        < t.index("Delta College Foundation Inc") < t.index("Epsilon Foundation")
+    assert "$120,000,000" in t and "24.0% of investments" in t and "10.0% of investments" in t
+    assert "Form 990 TY2023 Schedule D Part VII (investments, other securities)" in t
+    assert "Form 990-PF TY2024 Part II line 13 statement (investments, other)" in t
+    assert "https://projects.propublica.org/nonprofits/organizations/590000011/202401000000000011/full" in t
+    assert t.count("not disclosed") >= 5 and "% not computable" in t and "public securities + other investments" in t
+    assert "$0" not in t
+    out = tmp_path / "dist"
+    static_export.export(out)
+    hf = (out / "ef-hf.html").read_text()
+    assert 'href="ef.html"' in hf and 'href="ef/590000022.html"' in hf
+    assert 'href="ef-hf.html"' in (out / "ef.html").read_text()
+    assert 'href="../ef.html"' in (out / "ef" / "590000022.html").read_text()
+    assert static_site.check(out) == []

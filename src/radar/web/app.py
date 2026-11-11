@@ -57,9 +57,12 @@ from radar.web import present  # noqa: E402
 templates.env.filters["clean_quote"] = present.clean_quote
 templates.env.filters["consultant"] = present.consultant_name
 templates.env.globals["coverage_note"] = present.coverage_note
+templates.env.filters["doc_when"] = present.doc_when
+templates.env.globals["approval"] = present.approval
+templates.env.globals["strategy_label"] = present.strategy_label
 
 
-PUBLIC_HIDDEN = ("/review", "/manual", "/records", "/registry", "/inbox", "/export")
+PUBLIC_HIDDEN = ("/review", "/manual", "/records", "/registry", "/inbox", "/export", "/tasks")
 
 
 def _scope_stats(con, ids: list[str]) -> dict:
@@ -162,7 +165,9 @@ def create_app() -> FastAPI:
 
     @app.get("/how", response_class=HTMLResponse)
     def how(request: Request):
-        return render(request, "how.html", rules=readiness_config())
+        from radar import scorecard
+
+        return render(request, "how.html", rules=readiness_config(), card=scorecard.compute())
 
     @app.get("/about", response_class=HTMLResponse)
     def about(request: Request):

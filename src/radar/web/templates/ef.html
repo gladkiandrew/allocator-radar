@@ -4,6 +4,7 @@
 {% block body %}
 <p class="eyebrow">Florida · Phase C</p>
 <h1>Endowments &amp; Foundations</h1>
+{% block ef_views %}{% include "_ef_views.html" %}{% endblock %}
 <p class="sub">The {{ rows|length }} largest Florida university foundations, private universities, community foundations and
   private foundations, chosen by assets from the IRS exempt-organization master file. Each row is built from the
   organization's IRS Form 990 or 990-PF filings, and every figure cites its tax year, part and line.</p>
@@ -39,7 +40,7 @@
         <span class="date">{{ s.event_date }}</span>{{ s.summary }}
         <a class="cite" href="{{ s.source_url }}" target="_blank" rel="noopener" title="{{ s.cite }}">{{ s.doc_title or s.cite|truncate(26) }}</a>
         <div class="meta"><span class="tag">{{ s.source_label }}</span>{% if s.hf_relevant %}<span class="tag hf">HF</span>{% endif %}
-          <span>{{ 'auto-approved' if s.review_status == 'auto_approved' else ('approved by a person' if s.review_status == 'approved' else 'pending review') }}</span>
+          {% set ap = approval(s) %}<span class="tag {{ ap.cls }}" title="{{ ap.title }}">{{ ap.label }}</span>
           {% if o.signals|length > 1 %}<a href="/ef/{{ o.ein }}#signals">+{{ o.signals|length - 1 }} more</a>{% endif %}</div>
       {% elif f %}<span class="muted">No change signal in the filings on file. {{ o.filings|length }} return{{ 's' if o.filings|length != 1 }} read.</span>
       {% else %}<span class="muted">No e-filed return in the IRS indexes we read.</span>{% endif %}
@@ -52,6 +53,6 @@
 </table></div></div>
 <p class="muted small">Universe: IRS Exempt Organizations Business Master File (eo_fl.csv), ranked by assets within each kind.
   Filings: IRS e-file XML (TEOS), read directly; summaries from the ProPublica Nonprofit Explorer API. Only firm names are
-  kept from the contractor lists; individuals are never stored.</p>
+  kept from the contractor lists. No emails, phone numbers or addresses are stored.</p>
 {% endif %}
 {% endblock %}
