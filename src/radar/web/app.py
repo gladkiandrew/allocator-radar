@@ -61,9 +61,11 @@ templates.env.filters["doc_when"] = present.doc_when
 templates.env.globals["approval"] = present.approval
 templates.env.globals["strategy_label"] = present.strategy_label
 templates.env.globals["ef_signal_label"] = present.ef_signal_label
+# Audience defaults (the access gate contract; every render overrides them via gate.audience_context).
+templates.env.globals.update(audience="public", can_see_contacts=False, can_admin=False, gate_on=False)
 
 
-PUBLIC_HIDDEN = ("/review", "/manual", "/records", "/registry", "/inbox", "/export", "/tasks")
+from radar.web.gate import ADMIN_PATHS as PUBLIC_HIDDEN  # noqa: E402  (one list: hidden publicly, admin-only behind the gate)
 
 
 def _scope_stats(con, ids: list[str]) -> dict:
@@ -99,12 +101,20 @@ def create_app() -> FastAPI:
                 return PlainTextResponse("Not available on the public site.", status_code=404)
             return await call_next(request)
 
+    if get_settings().gate_on:  # after read_only, so the gate runs first (outermost)
+        from radar.web import gate
+
+        gate.install(app, templates)
+
     def render(request: Request, name: str, **ctx) -> HTMLResponse:
         from radar import scope
 
         with db.connect() as con:
             ctx.setdefault("nav", {"pending": 0 if public else queries.pending_count(con)})
         ctx.setdefault("scope", scope.config())
+        from radar.web.gate import audience_context
+
+        ctx.update(audience_context(request))
         return templates.TemplateResponse(request, name, ctx)
 
     @app.get("/", response_class=HTMLResponse)

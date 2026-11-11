@@ -58,11 +58,27 @@ class Settings(BaseSettings):
     # Web / auth (step 8). "none" is for localhost only.
     auth_mode: Literal["none", "basic"] = "none"
     auth_user: str = "owner"
-    auth_password_hash: str | None = None  # sha256 hex of the password
+    auth_password_hash: str | None = None  # `radar hash-password` output (pbkdf2), or legacy sha256 hex
     reviewer: str = "owner"  # reviewer = repo owner (AGENDA §10 Q11)
     # Public read-only site (D-B14): GET only; review queue, tools and export hidden; pending signals
     # hidden; /doc/<sha> redirects to the original public URL instead of serving the encrypted lake.
     public_mode: bool = False
+    # Which audience a public_mode render is for: "public" (default; no contacts, no export) or "member"
+    # (the gated static build, `radar export-static --audience member`). Never "admin": public_mode is read-only.
+    public_audience: Literal["public", "member"] = "public"
+
+    # Access gate (README "Access gate"). OFF by default: local dev and the public build are unchanged.
+    # On: every page needs a signed session cookie from /login; the cookie records the role (member or admin).
+    # Password hashes come from `radar hash-password` (pbkdf2_sha256$<iterations>$<salt hex>$<hash hex>).
+    gate: Literal["on", "off"] = "off"
+    member_password_hash: str | None = None
+    admin_password_hash: str | None = None
+    session_secret: str | None = None  # HMAC key for the session cookie; required when the gate is on
+    session_ttl_hours: int = 12
+
+    @property
+    def gate_on(self) -> bool:
+        return self.gate == "on"
 
     @property
     def duckdb_path(self) -> Path:

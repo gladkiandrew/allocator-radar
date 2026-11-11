@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Allocator Radar · Sign in</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+{# Standalone on purpose: no nav, no data, nothing but the form. #}
+<main id="main" style="max-width:380px;margin:12vh auto;padding:0 16px">
+  <h1>Allocator Radar</h1>
+  <p class="muted">This site is for members. Enter the password to continue.</p>
+  {% if error %}<div class="card" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="/login" class="card">
+    <input type="hidden" name="next" value="{{ next }}">
+    <label for="pw">Password</label>
+    <input id="pw" name="password" type="password" autocomplete="current-password" required autofocus style="width:100%">
+    <button type="submit" style="margin-top:12px">Sign in</button>
+  </form>
+</main>
+</body>
+</html>

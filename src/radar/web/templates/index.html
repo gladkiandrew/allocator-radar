@@ -124,7 +124,7 @@
   {% if strategy == 'hf' %}<p class="muted small" style="margin:-4px 0 10px">Hedge fund preset: hedge fund, diversifying, managed futures, multi-strategy, quant and absolute return signals.</p>{% endif %}
 
   {% if not rows %}
-  <div class="card empty">{% if n_gaps %}No plan matches this view. Try <a href="/">all strategies</a>, or see <a href="/gaps">Coverage gaps</a>.{% elif public %}No allocators yet.{% else %}No allocators yet. The registry has not been loaded and approved. Go to <a href="/registry">Registry</a>.{% endif %}</div>
+  <div class="card empty">{% if n_gaps %}No plan matches this view. Try <a href="/">all strategies</a>, or see <a href="/gaps">Coverage gaps</a>.{% elif not can_admin %}No allocators yet.{% else %}No allocators yet. The registry has not been loaded and approved. Go to <a href="/registry">Registry</a>.{% endif %}</div>
   {% else %}
   <div class="table-card"><div class="scroll">
   <table class="stack">

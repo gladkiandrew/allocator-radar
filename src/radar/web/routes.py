@@ -12,6 +12,9 @@ from radar.web.auth import require_user
 
 def templates_partial(request, name, **ctx):
     from radar.web.app import templates
+    from radar.web.gate import audience_context
+
+    ctx.update(audience_context(request))
     return templates.TemplateResponse(request, name, ctx)
 
 
