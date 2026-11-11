@@ -325,3 +325,10 @@ are the irreversible ones, which went to the repo owner.
   59 printed consultant names -> 27. Ambiguous names (Segal alone, Cambridge) and likely extractor mislabels
   (managers, an insurer, an actuary named as consultant) are listed under `unsure:` and left unmapped. Fixed a
   resolver bug that aliased two spellings to each other (MetLife/Metlife); a cleanup removes such cycles.
+- **D-B19 Freshness pass and discovery resilience.** A plain re-crawl of the 44 stale South Florida plans read 27
+  hosts and 1,341 links and found 0 new documents: the known listing pages show nothing newer. Deep discovery
+  (browser render + second link level, same allowlist, robots and delays) found new listing pages for 11 plans
+  and 37 new documents (Wilton Manors 22, Lantana 8, Miami GESE 4, Hallandale Beach 3). Fix: one candidate page
+  that fails to load (a link that is a file download, a timeout) no longer aborts discovery and marks the plan
+  MANUAL; this had flipped Coral Gables to MANUAL and dropped its Legistar feed, now restored. Coral Gables'
+  2026 agenda PDFs stay unfetched (robots.txt on legistar1.com) and are listed in data/manual_downloads.md.

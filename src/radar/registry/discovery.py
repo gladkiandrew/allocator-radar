@@ -169,6 +169,11 @@ def discover_plan(client: PoliteClient, seed: dict, deep: bool = False) -> dict:
             except (RefusedRequest, HostThrottled) as e:
                 pages.append({"url": l.url, "label": l.text[:80], "documents": 0, "by_type": {}, "note": str(e)[:120]})
                 continue
+            except BotWall:
+                raise
+            except Exception as e:  # D-B19: one candidate that is a file download or times out never fails the plan
+                log.info("candidate %s skipped: %s", l.url, str(e)[:120])
+                continue
             if rr.status != 200 or "html" not in rr.content_type:
                 continue
             _, sub = parse_links(rr.text, rr.url)

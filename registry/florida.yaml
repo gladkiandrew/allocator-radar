@@ -2,7 +2,7 @@
 # Edits are allowed before approval; any edit changes the version hash and needs re-approval.
 region: florida
 phase: A
-generated_at: '2026-11-09T19:08:13+00:00'
+generated_at: '2026-11-11T03:44:52+00:00'
 generated_by: discovery agent (radar discover)
 seed: registry/seed_florida.yaml
 allocators:
@@ -38,8 +38,9 @@ allocators:
     label: Meeting Schedule
     documents: 133
     by_type:
-      MINUTES: 132
-      OTHER: 1
+      AGENDA: 67
+      MINUTES: 64
+      OTHER: 2
     suggested: true
   - url: https://www.miamifipo.org/about/board-of-trustees/
     label: Board of Trustees
@@ -67,15 +68,15 @@ allocators:
     suggested: false
   - url: https://gese.org/publications/trust-investment-performance/
     label: Trust Investment Performance Trust Investment Performance
-    documents: 2
+    documents: 1
     by_type:
-      OTHER: 2
+      OTHER: 1
     suggested: true
   - url: https://gese.org/publications/summary-of-investment-returns/
     label: Summary of Investment Returns Summary of Investment Returns
-    documents: 2
+    documents: 1
     by_type:
-      OTHER: 2
+      OTHER: 1
     suggested: true
   - url: https://gese.org/board-meetings/2026/
     label: 2026 Board Meeting Dates 2026 Board Meetings
@@ -156,6 +157,66 @@ allocators:
     documents: 6
     by_type:
       AGENDA: 6
+    suggested: true
+  - url: https://gese.org/publications/senate-bills/
+    label: Florida Senate Bills Florida Senate Bills
+    documents: 2
+    by_type:
+      ACTUARIAL: 2
+    suggested: true
+  - url: https://gese.org/publications/annual-reports/2025/
+    label: '2025'
+    documents: 1
+    by_type:
+      FINANCIAL: 1
+    suggested: true
+  - url: https://gese.org/publications/annual-reports/2024/
+    label: '2024'
+    documents: 1
+    by_type:
+      FINANCIAL: 1
+    suggested: true
+  - url: https://gese.org/publications/annual-reports/2023/
+    label: '2023'
+    documents: 1
+    by_type:
+      FINANCIAL: 1
+    suggested: true
+  - url: https://gese.org/publications/annual-reports/2022/
+    label: '2022'
+    documents: 1
+    by_type:
+      FINANCIAL: 1
+    suggested: true
+  - url: https://gese.org/publications/annual-reports/2021/
+    label: '2021'
+    documents: 1
+    by_type:
+      FINANCIAL: 1
+    suggested: true
+  - url: https://gese.org/publications/annual-reports/2020/
+    label: '2020'
+    documents: 1
+    by_type:
+      FINANCIAL: 1
+    suggested: true
+  - url: https://gese.org/publications/annual-reports/2019/
+    label: '2019'
+    documents: 1
+    by_type:
+      FINANCIAL: 1
+    suggested: true
+  - url: https://gese.org/publications/annual-reports/2018/
+    label: '2018'
+    documents: 1
+    by_type:
+      FINANCIAL: 1
+    suggested: true
+  - url: https://gese.org/publications/annual-reports/2017/
+    label: '2017'
+    documents: 1
+    by_type:
+      FINANCIAL: 1
     suggested: true
 - allocator_id: fl-miamibeach-fp
   display_name: Miami Beach Fire and Police Pension
@@ -299,7 +360,7 @@ allocators:
       OTHER: 10
     suggested: true
   - url: https://www.miamibeachfl.gov/city-hall/mberp/fl-chapter-112-664/
-    label: FL Chapter 112.664 FL Chapter 112.664
+    label: FL Chapter 112.664
     documents: 5
     by_type:
       ACTUARIAL: 2
@@ -308,6 +369,96 @@ allocators:
     suggested: true
   - url: https://www.miamibeachfl.gov/city-hall/mberp/retiree-benefit-links/
     label: RETIREE BENEFIT LINKS
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/city-clerk/special-magistrate/
+    label: Special Magistrate Agendas & Information
+    documents: 7
+    by_type:
+      OTHER: 7
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/city-clerk/meetings-and-agendas/archived-agendas-after-actions-schedules/
+    label: Land Use Boards After Action Reports and Meeting Minutes Prior to March 2016
+    documents: 2
+    by_type:
+      MINUTES: 2
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/additional-information/
+    label: Additional Contact Information
+    documents: 1
+    by_type:
+      OTHER: 1
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/actuarial-information/
+    label: Actuarial Information
+    documents: 30
+    by_type:
+      ACTUARIAL: 17
+      DISCLOSURE_112664: 13
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/announcements-2/
+    label: Announcements
+    documents: 3
+    by_type:
+      OTHER: 3
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/financial-statements/
+    label: Financial Statements
+    documents: 17
+    by_type:
+      FINANCIAL: 15
+      OTHER: 2
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/investment-information/
+    label: Investment Information
+    documents: 43
+    by_type:
+      IPS: 1
+      OTHER: 31
+      PERFORMANCE: 11
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/retiree-information/
+    label: Retiree Information
+    documents: 56
+    by_type:
+      OTHER: 56
+    suggested: false
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/summary-plan-description/
+    label: Summary Plan Description
+    documents: 3
+    by_type:
+      OTHER: 3
+    suggested: false
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/board-meeting-dates/
+    label: Board Meeting Dates
+    documents: 1
+    by_type:
+      AGENDA: 1
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/board-meeting-minutes/
+    label: Board Meeting Minutes
+    documents: 34
+    by_type:
+      MINUTES: 28
+      OTHER: 6
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/forms/
+    label: Forms
+    documents: 10
+    by_type:
+      OTHER: 10
+    suggested: false
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/firepolice-agendas/
+    label: Board Meeting Agendas
+    documents: 42
+    by_type:
+      AGENDA: 34
+      OTHER: 8
+    suggested: true
+  - url: https://www.miamibeachfl.gov/city-hall/fire-police-pension/professional-service-providers/
+    label: Professional Service Providers
     documents: 1
     by_type:
       OTHER: 1
@@ -819,6 +970,12 @@ allocators:
     by_type:
       RFP: 1
     suggested: true
+  - url: https://coralsprings.granicus.com/ViewPublisher.php?view_id=3
+    label: Public Notices, Agendas, and Minutes for Public Meetings
+    documents: 597
+    by_type:
+      AGENDA: 597
+    suggested: true
   - url: https://www.coralsprings.gov/Government/Departments/Human-Resources/Pension-Plans/General-Employees-Pension-Plan
     label: General Employees Pension Plan
     documents: 4
@@ -1122,8 +1279,15 @@ allocators:
       OTHER: 39
       PERFORMANCE: 12
     suggested: true
+  - url: https://palmbeachfl.portal.civicclerk.com/
+    label: Public Meetings
+    documents: 2
+    by_type:
+      MINUTES: 1
+      OTHER: 1
+    suggested: true
   - url: https://www.townofpalmbeach.com/263/Benefits
-    label: Benefits - Employee and Retiree - Employment opens in new window Benefits - Empl
+    label: Benefits - Employee and Retiree Opens in new window Benefits - Employee and Reti
     documents: 6
     by_type:
       OTHER: 6
@@ -1240,7 +1404,7 @@ allocators:
   source_id: SF-RIV
   access: AUTO
   access_reason: null
-  site_title: Home - Riviera Beach, Florida
+  site_title: Home - Riviera Beach, Florida searchsearch
   robots: allowed
   document_pages:
   - url: https://www.rivierabch.com/
@@ -1465,6 +1629,12 @@ allocators:
       FINANCIAL: 1
       IPS: 3
       OTHER: 5
+    suggested: true
+  - url: https://www.hallandalebeachfl.gov/609/Union-Contracts-Pension-Information
+    label: Union Contracts & Pension Information
+    documents: 6
+    by_type:
+      OTHER: 6
     suggested: true
 - allocator_id: fl-hallandale-general
   display_name: Hallandale Beach General/Not-Represented Employees Pension Plan
@@ -3499,17 +3669,18 @@ allocators:
     label: plan page
     documents: 337
     by_type:
-      AGENDA: 296
+      AGENDA: 302
       MINUTES: 26
       OTHER: 3
-      RFP: 12
+      RFP: 6
     suggested: false
   - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_06112026-1885
     label: June 11, 2026, RFP Evaluation Committee Meeting for Disaster Debris Monitoring S
     documents: 9
     by_type:
+      AGENDA: 3
       OTHER: 3
-      RFP: 6
+      RFP: 3
     suggested: true
   - url: https://wiltonmanors.gov/
     label: Minutes & Agendas - 2022 - Footer Quick Links Minutes & Agendas
@@ -3600,6 +3771,123 @@ allocators:
     by_type:
       AGENDA: 4
       OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_08212019-935
+    label: August 21, 2019, Economic Development Task Force Committee Meeting Agenda. Previ
+    documents: 9
+    by_type:
+      AGENDA: 6
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_08042026-1910
+    label: August 04, 2026, Public Art Advisory Board Meeting Agenda. Previous Version Prev
+    documents: 7
+    by_type:
+      AGENDA: 4
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_02032026-1826
+    label: February 03, 2026, Public Art Advisory Board Meeting Agenda. Previous Version Pr
+    documents: 8
+    by_type:
+      AGENDA: 4
+      MINUTES: 1
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_06242026-1892
+    label: June 24, 2026, Parks and Recreation Advisory Board Meeting Agenda. Previous Vers
+    documents: 7
+    by_type:
+      AGENDA: 4
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_04152026-1856
+    label: April 15, 2026, Parks and Recreation Advisory Board Meeting Agenda. Previous Ver
+    documents: 9
+    by_type:
+      AGENDA: 6
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_04082026-1851
+    label: April 08, 2026, Special Magistrate Hearing Meeting Agenda. Previous Version Prev
+    documents: 8
+    by_type:
+      AGENDA: 4
+      MINUTES: 1
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_03042026-1836
+    label: March 04, 2026, Special Magistrate Hearing Meeting Agenda. Previous Version Prev
+    documents: 8
+    by_type:
+      AGENDA: 4
+      MINUTES: 1
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_07082026-1897
+    label: 'July 08, 2026, Wilton Drive Improvement District Board Meeting Agenda. Previous '
+    documents: 8
+    by_type:
+      AGENDA: 4
+      MINUTES: 1
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_02112026-1829
+    label: February 11, 2026, Wilton Drive Improvement District Board Meeting Agenda. Previ
+    documents: 8
+    by_type:
+      AGENDA: 4
+      MINUTES: 1
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_06232026-1891
+    label: June 23, 2026, Regular City Commission Meeting, June 23, 2026, 7:00 p.m.. Previo
+    documents: 7
+    by_type:
+      AGENDA: 3
+      OTHER: 4
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_06092026-1882
+    label: 'June 09, 2026, Regular City Commission Meeting, June 9, 2026. 7:00 pm. Previous '
+    documents: 7
+    by_type:
+      AGENDA: 3
+      OTHER: 4
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_06092026-1883
+    label: June 09, 2026, Budget Workshop 1 Agenda, June 9, 2026, 6:30 pm. Previous Version
+    documents: 9
+    by_type:
+      AGENDA: 5
+      OTHER: 4
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_03242026-1846
+    label: March 24, 2026, Budget Workshop Agenda, March 24, 2026. Previous Version Previou
+    documents: 7
+    by_type:
+      AGENDA: 3
+      OTHER: 4
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_02152022-1298
+    label: February 15, 2022, Organizational Civil Service Board Meeting Notice. Previous V
+    documents: 7
+    by_type:
+      AGENDA: 4
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_10062026-1939
+    label: October 06, 2026, Development Review Committee Meeting. Previous Version Previou
+    documents: 7
+    by_type:
+      AGENDA: 3
+      OTHER: 4
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_04012026-1848
+    label: April 01, 2026, Development Review Committee Meeting - DRC. Previous Version Pre
+    documents: 7
+    by_type:
+      AGENDA: 3
+      OTHER: 4
     suggested: true
 - allocator_id: fl-wilton-manors-general
   display_name: City of Wilton Manors Pension Board of Trustees (General Employees)
@@ -3618,17 +3906,18 @@ allocators:
     label: plan page
     documents: 337
     by_type:
-      AGENDA: 296
+      AGENDA: 302
       MINUTES: 26
       OTHER: 3
-      RFP: 12
+      RFP: 6
     suggested: false
   - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_06112026-1885
     label: June 11, 2026, RFP Evaluation Committee Meeting for Disaster Debris Monitoring S
     documents: 9
     by_type:
+      AGENDA: 3
       OTHER: 3
-      RFP: 6
+      RFP: 3
     suggested: true
   - url: https://wiltonmanors.gov/
     label: Minutes & Agendas - 2022 - Footer Quick Links Minutes & Agendas
@@ -3719,6 +4008,123 @@ allocators:
     by_type:
       AGENDA: 4
       OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_08212019-935
+    label: August 21, 2019, Economic Development Task Force Committee Meeting Agenda. Previ
+    documents: 9
+    by_type:
+      AGENDA: 6
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_08042026-1910
+    label: August 04, 2026, Public Art Advisory Board Meeting Agenda. Previous Version Prev
+    documents: 7
+    by_type:
+      AGENDA: 4
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_02032026-1826
+    label: February 03, 2026, Public Art Advisory Board Meeting Agenda. Previous Version Pr
+    documents: 8
+    by_type:
+      AGENDA: 4
+      MINUTES: 1
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_06242026-1892
+    label: June 24, 2026, Parks and Recreation Advisory Board Meeting Agenda. Previous Vers
+    documents: 7
+    by_type:
+      AGENDA: 4
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_04152026-1856
+    label: April 15, 2026, Parks and Recreation Advisory Board Meeting Agenda. Previous Ver
+    documents: 9
+    by_type:
+      AGENDA: 6
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_04082026-1851
+    label: April 08, 2026, Special Magistrate Hearing Meeting Agenda. Previous Version Prev
+    documents: 8
+    by_type:
+      AGENDA: 4
+      MINUTES: 1
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_03042026-1836
+    label: March 04, 2026, Special Magistrate Hearing Meeting Agenda. Previous Version Prev
+    documents: 8
+    by_type:
+      AGENDA: 4
+      MINUTES: 1
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_07082026-1897
+    label: 'July 08, 2026, Wilton Drive Improvement District Board Meeting Agenda. Previous '
+    documents: 8
+    by_type:
+      AGENDA: 4
+      MINUTES: 1
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_02112026-1829
+    label: February 11, 2026, Wilton Drive Improvement District Board Meeting Agenda. Previ
+    documents: 8
+    by_type:
+      AGENDA: 4
+      MINUTES: 1
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_06232026-1891
+    label: June 23, 2026, Regular City Commission Meeting, June 23, 2026, 7:00 p.m.. Previo
+    documents: 7
+    by_type:
+      AGENDA: 3
+      OTHER: 4
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_06092026-1882
+    label: 'June 09, 2026, Regular City Commission Meeting, June 9, 2026. 7:00 pm. Previous '
+    documents: 7
+    by_type:
+      AGENDA: 3
+      OTHER: 4
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_06092026-1883
+    label: June 09, 2026, Budget Workshop 1 Agenda, June 9, 2026, 6:30 pm. Previous Version
+    documents: 9
+    by_type:
+      AGENDA: 5
+      OTHER: 4
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_03242026-1846
+    label: March 24, 2026, Budget Workshop Agenda, March 24, 2026. Previous Version Previou
+    documents: 7
+    by_type:
+      AGENDA: 3
+      OTHER: 4
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_02152022-1298
+    label: February 15, 2022, Organizational Civil Service Board Meeting Notice. Previous V
+    documents: 7
+    by_type:
+      AGENDA: 4
+      OTHER: 3
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_10062026-1939
+    label: October 06, 2026, Development Review Committee Meeting. Previous Version Previou
+    documents: 7
+    by_type:
+      AGENDA: 3
+      OTHER: 4
+    suggested: true
+  - url: https://wiltonmanors.gov/AgendaCenter/PreviousVersions/_04012026-1848
+    label: April 01, 2026, Development Review Committee Meeting - DRC. Previous Version Pre
+    documents: 7
+    by_type:
+      AGENDA: 3
+      OTHER: 4
     suggested: true
 - allocator_id: fl-fort-pierce-plan
   display_name: City of Fort Pierce Retirement and Benefit System
@@ -7530,6 +7936,12 @@ allocators:
     documents: 1
     by_type:
       OTHER: 1
+    suggested: true
+  - url: https://www.lantana.org/Archive.aspx?AMID=38
+    label: Town Manager reports. Opens in new window Town Manager reports.
+    documents: 22
+    by_type:
+      OTHER: 22
     suggested: true
 - allocator_id: fl-lake-mary-fire
   display_name: Lake Mary Firefighters' Pension Board
