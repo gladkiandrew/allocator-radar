@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import Depends, FastAPI, Form, Request
+from fastapi import Depends, FastAPI, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from radar import db
@@ -59,6 +59,66 @@ def register(app: FastAPI, render) -> None:
             s["hf"] = bool(s.get("hf_relevant"))
             s["tier_effect"] = trial.tier if trial.tier in ("DEPLOYING", "PREPARING") else None
         return sigs
+
+    def _pending_sorted(con) -> list[dict]:
+        """Pending signals in scope, in the order the queue shows them: what could move a tier first, newest first."""
+        from radar import scope
+
+        ids = scope.ids(con)
+        sigs = _enrich(con, [s for s in queries.signals_for(con, statuses=("new",))
+                             if ids is None or s["allocator_id"] in ids])
+        sigs.sort(key=lambda s: (s["tier_effect"] is None, s["tier_effect"] != "DEPLOYING", -s["event_date"].toordinal()))
+        return sigs
+
+    # ---- focus mode: one pending signal per screen, keys a / r / s ----
+    import re as _re
+    from urllib.parse import quote as _quote
+
+    _SIG_ID = _re.compile(r"[A-Za-z0-9_-]{1,80}")
+
+    def _skips(raw: str | None) -> list[str]:
+        out: list[str] = []
+        for x in (raw or "").split(","):
+            x = x.strip()
+            if _SIG_ID.fullmatch(x) and x not in out:
+                out.append(x)
+        return out[-500:]
+
+    def _next_url(skip: list[str], err: str | None = None, done: str | None = None) -> str:
+        q = []
+        if skip:
+            q.append("skip=" + ",".join(skip))
+        if err:
+            q.append("err=" + _quote(err))
+        if done:
+            q.append("done=" + _quote(done))
+        return "/review/next" + ("?" + "&".join(q) if q else "")
+
+    @app.get("/review/next", response_class=HTMLResponse)
+    def review_next(request: Request, skip: str | None = None, err: str | None = None, done: str | None = None):
+        skipped = _skips(skip)
+        with db.connect() as con:
+            pending = _pending_sorted(con)
+        left = [s for s in pending if s["signal_id"] not in skipped]
+        n_skipped = len(pending) - len(left)
+        return render(request, "review_focus.html", s=left[0] if left else None, remaining=len(left),
+                      total=len(pending), n_skipped=n_skipped, skip=",".join(skipped), err=err, done=done)
+
+    @app.post("/review/next/{signal_id}")
+    def review_next_decide(signal_id: str, decision: str = Form(...), skip: str = Form(default=""),
+                           user: str = Depends(require_user)):
+        skipped = _skips(skip)
+        if decision == "skip":
+            if _SIG_ID.fullmatch(signal_id) and signal_id not in skipped:
+                skipped.append(signal_id)
+            return RedirectResponse(_next_url(skipped), status_code=303)
+        if decision not in ("approved", "rejected"):
+            return RedirectResponse(_next_url(skipped, err="decision must be approve, reject or skip"), status_code=303)
+        try:
+            review.decide(signal_id, decision, user)
+        except (review.ReviewError, ValueError) as e:
+            return RedirectResponse(_next_url(skipped, err=str(e)), status_code=303)
+        return RedirectResponse(_next_url(skipped, done=decision), status_code=303)
 
     @app.get("/review", response_class=HTMLResponse)
     def review_page(request: Request, status: str = "new"):
@@ -180,6 +240,42 @@ def register(app: FastAPI, render) -> None:
         st = manual.ingest_inbox(user)
         n = sum(v["files"] for v in st.values())
         return RedirectResponse(f"/records?msg=Manual inbox: {n} files across {len(st)} plans.", status_code=303)
+
+    # ---------------- manual fetch tasks (data/manual_tasks.yaml) ----------------
+    import yaml
+
+    from radar.web import tasks as mt
+
+    @app.get("/tasks", response_class=HTMLResponse)
+    def tasks_page(request: Request, msg: str | None = None, err: str | None = None):
+        load_err, rows = None, []
+        try:
+            rows = mt.sorted_tasks(mt.load())
+        except mt.TaskError as e:
+            load_err = str(e)
+        except (yaml.YAMLError, UnicodeDecodeError) as e:  # malformed file: say so, never crash the page
+            load_err = f"could not parse manual_tasks.yaml: {e}"
+        for t in rows:
+            t["_status"] = str(t.get("status") or "open")
+            t["_uploadable"] = t["_status"] == "open" and mt.safe_name(t.get("allocator_id")) and mt.safe_name(t.get("file_name"))
+        from radar.settings import get_settings
+
+        return render(request, "tasks.html", tasks=rows, msg=msg, err=err, load_err=load_err,
+                      exists=mt.tasks_path().exists(), inbox=get_settings().manual_inbox,
+                      n_open=sum(1 for t in rows if t["_status"] == "open"))
+
+    @app.post("/tasks/{task_id}/upload")
+    async def tasks_upload(task_id: str, file: UploadFile = File(...), user: str = Depends(require_user)):
+        from urllib.parse import quote
+
+        data = await file.read(mt.MAX_UPLOAD_BYTES + 1)
+        try:
+            dest = mt.receive(task_id, data)
+        except mt.TaskError as e:
+            return RedirectResponse(f"/tasks?err={quote(str(e))}", status_code=303)
+        rel = f"{dest.parent.name}/{dest.name}"
+        return RedirectResponse(f"/tasks?msg={quote(f'Saved {rel} in the manual inbox; task {task_id} marked received.')}",
+                                status_code=303)
 
     @app.get("/export.csv")
     def export_csv(user: str = Depends(require_user)):

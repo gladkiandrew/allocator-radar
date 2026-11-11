@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Manual fetch tasks · Allocator Radar{% endblock %}
+{% block body %}
+<p class="eyebrow">Tools</p>
+<h1>Manual fetch tasks</h1>
+<p class="sub">Documents the crawler cannot fetch on its own. Open the exact URL in a browser, download the file, and upload it here:
+  it is saved as <span class="mono">&lt;allocator_id&gt;/&lt;file name&gt;</span> in the manual inbox
+  (<span class="mono">{{ inbox }}</span>) and the task is marked <em>received</em>. Ingest the inbox from
+  <a href="/records">Records requests</a>. The list comes from <span class="mono">data/manual_tasks.yaml</span>.</p>
+{% if msg %}<div class="notice" role="status">{{ msg }}</div>{% endif %}
+{% if err %}<div class="error" role="alert">{{ err }}</div>{% endif %}
+{% if load_err %}<div class="error" role="alert">{{ load_err }}</div>{% endif %}
+{% if not tasks %}
+  {% if not load_err %}<div class="card empty">{% if exists %}No tasks in <span class="mono">data/manual_tasks.yaml</span> yet.{% else %}No task list yet: <span class="mono">data/manual_tasks.yaml</span> does not exist. Nothing needs fetching by hand right now.{% endif %}</div>{% endif %}
+{% else %}
+<p class="muted">{{ n_open }} open of {{ tasks|length }}.</p>
+<div class="table-card"><div class="scroll"><table class="stack">
+  <thead><tr><th>Priority</th><th>Allocator</th><th>What to fetch</th><th>Exact URL</th><th>File name</th><th>Drop folder</th><th>Why it's manual</th><th>Status</th></tr></thead>
+  <tbody>{% for t in tasks %}
+  <tr id="task-{{ t.id }}">
+    <td class="mono num">{{ t.priority if t.priority is not none else '—' }}</td>
+    <td>{% if t.allocator_id %}<a href="/a/{{ t.allocator_id }}">{{ t.allocator or t.allocator_id }}</a>{% else %}{{ t.allocator or '—' }}{% endif %}</td>
+    <td>{{ t.what or '—' }}</td>
+    <td style="font-size:12.5px;word-break:break-all">{% set u = public_href(t.url) %}{% if u %}<a href="{{ u }}" target="_blank" rel="noopener noreferrer">{{ t.url }}</a>{% else %}<span class="mono">{{ t.url or '—' }}</span>{% endif %}</td>
+    <td class="mono" style="font-size:12px">{{ t.file_name or '—' }}</td>
+    <td class="mono" style="font-size:12px">{{ t.drop_folder or '—' }}</td>
+    <td style="font-size:13px">{{ t.why_manual or '—' }}</td>
+    <td><span class="tag{{ ' ok' if t._status in ('received', 'ingested') }}{{ ' bad' if t._status == 'dropped' }}">{{ t._status }}</span>
+      {% if t._uploadable %}
+      <form method="post" action="/tasks/{{ t.id|urlencode }}/upload" enctype="multipart/form-data" style="margin-top:8px">
+        <label class="small" for="f-{{ loop.index }}">Upload as <span class="mono">{{ t.file_name }}</span></label>
+        <input id="f-{{ loop.index }}" type="file" name="file" required>
+        <button class="primary" type="submit">Upload</button>
+      </form>
+      {% elif t._status == 'open' %}<div class="small error" style="margin-top:6px">allocator_id or file_name is not a plain name; fix the YAML to enable upload</div>{% endif %}
+    </td>
+  </tr>
+  {% endfor %}</tbody></table></div></div>
+{% endif %}
+{% endblock %}

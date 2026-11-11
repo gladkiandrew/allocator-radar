@@ -20,7 +20,7 @@ from urllib.parse import urlsplit
 
 from radar.wall.scrubber import detect
 
-HIDDEN = ("/review", "/export", "/manual", "/records", "/registry", "/inbox", "/doc/")
+HIDDEN = ("/review", "/export", "/manual", "/records", "/registry", "/inbox", "/tasks", "/doc/")
 ALLOWED_SUFFIXES = {".html", ".css", ".js", ".woff2", ".md", ".txt", ".svg", ".png", ".ico"}
 SECRET = re.compile(r"sk-ant-[A-Za-z0-9_\-]{8,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|RADAR_AUTH_PASSWORD_HASH|"
                     r"CLAUDE_CODE_OAUTH_TOKEN|ANTHROPIC_API_KEY")

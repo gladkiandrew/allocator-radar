@@ -61,7 +61,7 @@ templates.env.filters["doc_when"] = present.doc_when
 templates.env.globals["approval"] = present.approval
 
 
-PUBLIC_HIDDEN = ("/review", "/manual", "/records", "/registry", "/inbox", "/export")
+PUBLIC_HIDDEN = ("/review", "/manual", "/records", "/registry", "/inbox", "/export", "/tasks")
 
 
 def _scope_stats(con, ids: list[str]) -> dict:
