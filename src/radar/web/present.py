@@ -256,3 +256,15 @@ def strategy_label(s: dict) -> dict:
     if s.get("signal_type") in TOTAL_PLAN_TYPES or s.get("signal_type") == "TARGET_ALLOCATION_CHANGED":
         return {"text": "total plan", "inferred": False}
     return {"text": "not classified", "inferred": False}
+
+
+# ---------------- E&F signal label ----------------
+_OCIO = re.compile(r"\bOCIO\b|outsourced chief investment officer", re.I)
+
+
+def ef_signal_label(s: dict) -> str | None:
+    """A plain label for E&F signals whose type alone misleads: an OCIO selection is an 'OCIO search'."""
+    if s.get("signal_type") in ("SEARCH_SCHEDULED", "SEARCH_OPENED", "RFP_ISSUED", "FINALISTS_NAMED") and \
+            _OCIO.search(s.get("summary") or ""):
+        return "OCIO search"
+    return None

@@ -70,8 +70,12 @@ def org_table(public: bool = True) -> list[dict]:
                      "managers": sorted(set(inv.get(latest["object_id"], []))) if latest else [],
                      "hf_lines": hf_lines.get(latest["object_id"], 0) if latest else 0,
                      "total_assets": (latest or {}).get("total_assets") or o["bmf_assets"],
+                     # The endowment (Sch. D Part V line 1g) is the investable pool a reader means by "endowment";
+                     # total assets also counts buildings, receivables and hospital operations.
+                     "endowment": (latest or {}).get("endowment_eoy"),
+                     "endowment_cite": irs.citation(_filing_obj(latest), "endowment") if latest else None,
                      "propublica_url": PP_ORG.format(ein=int(o["ein"]))})
-    rows.sort(key=lambda r: (TIER_ORDER.index(r["readiness"].tier), -(r["total_assets"] or 0)))
+    rows.sort(key=lambda r: (TIER_ORDER.index(r["readiness"].tier), -((r["endowment"] or r["total_assets"]) or 0)))
     return rows
 
 
@@ -98,6 +102,7 @@ def org_brief(ein: str, public: bool = True) -> dict | None:
         f["contractors"] = contractors.get(f["object_id"], [])
         f["cite_contractors"] = irs.citation(_filing_obj(f), "contractors")
         f["cite_total"] = irs.citation(_filing_obj(f), "total_assets")
+        f["cite_endow"] = irs.citation(_filing_obj(f), "endowment")
         f["cite_other"] = irs.citation(_filing_obj(f), "investments_other")
         f["cite_public"] = irs.citation(_filing_obj(f), "investments_public")
         f["cite_other_list"] = irs.citation(_filing_obj(f), "other_investments")
