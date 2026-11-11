@@ -113,6 +113,9 @@ def allocator_table(con, scoped: bool = True) -> list[dict]:
             consultant=consultants.get(a["allocator_id"]),
             pending=[s for s in sigs if s["review_status"] == "new"],
         )
+        from radar import timeline
+
+        a["when"] = timeline.when(a, sigs)
         out.append(a)
     out.sort(key=lambda a: (TIER_ORDER.index(a["readiness"].tier),
                             -(a["readiness"].reasons[0]["event_date"].toordinal() if a["readiness"].reasons else 0),
@@ -203,6 +206,13 @@ def allocator_brief(con, allocator_id: str) -> dict | None:
     a["managers_as_of"], a["managers"] = managers_by_class(a["mandates"])
     a["coverage"] = coverage.checklist(con, allocator_id)
     a["bar_reasons"] = coverage.bar(con, a)
+    from datetime import date as _date
+
+    from radar import timeline
+
+    ahead = [d["doc_date"] for d in a["documents"] if d.get("doc_date") and d["doc_date"] > _date.today()]
+    a["when"] = timeline.when({**a, "next_meeting": a["facts"].get("next_meeting"),
+                               "upcoming_doc_date": min(ahead) if ahead else None}, sigs)
     return a
 
 

@@ -1,0 +1,43 @@
+{# "When" for an allocator. w = timeline.when(); cite = a citation macro taking one evidence row. #}
+{% macro money_short(v) %}{% if v is not none %}{% if v >= 1e9 %}${{ '%.2f'|format(v / 1e9) }}B{% elif v >= 1e6 %}${{ '{:,.1f}'.format(v / 1e6)|replace('.0', '') }}M{% else %}${{ '{:,.0f}'.format(v) }}{% endif %}{% endif %}{% endmacro %}
+{% macro np() %}<span class="faint">not published</span>{% endmacro %}
+
+{% macro last_deployment(w, cite) %}{% set d = w.last_deployment %}
+<div class="when-line"><span class="when-k">Last deployment</span>
+  {% if d %}<span class="mono">{{ d.event_date }}</span> · {{ strategy_label(d).text }}{% if strategy_label(d).inferred %} <span class="faint">(inferred)</span>{% endif %}
+    · {{ d.manager_name or 'firm not stated' }} · {{ money_short(d.amount_usd) if d.amount_usd is not none else 'amount not stated' }}
+    {% for e in (d.evidence|uniq_cites)[:1] %}{{ cite(e) }}{% endfor %}
+  {% else %}<span class="faint">none on file</span>{% endif %}</div>{% endmacro %}
+
+{% macro next_meeting(w) %}{% set m = w.next_meeting %}
+<div class="when-line"><span class="when-k">Next meeting</span>
+  {% if m and m.date %}<span class="mono">{{ m.date }}</span> <span class="faint">({{ m.basis }})</span>{% else %}{{ np() }}{% endif %}</div>{% endmacro %}
+
+{% macro next_step(w, cite) %}{% set n = w.next_step %}
+<div class="when-line"><span class="when-k">Next step</span>
+  {% if n %}{{ n.text }} · {% if n.date %}<span class="mono">{{ n.date }}</span>{% else %}{{ np() }}{% endif %}
+    {% if n.signal %}{% for e in (n.signal.evidence|uniq_cites)[:1] %}{{ cite(e) }}{% endfor %}{% elif not n.stated %} <span class="faint">(from the published meeting calendar)</span>{% endif %}
+  {% else %}{{ np() }}{% endif %}</div>{% endmacro %}
+
+{% macro deploying(w, cite) %}{% set s = w.lead %}
+<div class="when-line"><span class="when-k">Hiring</span>{{ strategy_label(s).text }}{% if strategy_label(s).inferred %} <span class="faint">(inferred)</span>{% endif %}
+  · stage <b>{{ w.stage_label or 'not stated' }}</b>{% if w.stage_computed and w.stage_label %} <span class="faint">(computed from the signal type)</span>{% endif %}
+  {% if w.mandate_size is not none %} · size {{ money_short(w.mandate_size) }}{% endif %}</div>
+{{ next_step(w, cite) }}
+{% if w.tier_expiry %}<div class="when-line faint small"><span class="when-k">Tier holds until</span><span class="mono">{{ w.tier_expiry }}</span> (computed: latest qualifying signal + rule window)</div>{% endif %}
+{% endmacro %}
+
+{% macro preparing(w, cite) %}
+<div class="when-line"><span class="when-k">What changed</span>{{ w.lead.summary }} {% for e in (w.lead.evidence|uniq_cites)[:1] %}{{ cite(e) }}{% endfor %}</div>
+{{ next_step(w, cite) }}
+{% if w.tier_expiry %}<div class="when-line faint small"><span class="when-k">Tier holds until</span><span class="mono">{{ w.tier_expiry }}</span> (computed)</div>{% endif %}
+{% endmacro %}
+
+{% macro tracker(w, cite) %}{% if w.tracker %}
+<ol class="stage-tracker" aria-label="Search stages">
+  {% for st in w.tracker %}<li class="{{ 'on' if st.reached }}"><span class="st-label">{{ st.label }}</span>
+    <span class="st-date mono">{% if st.reached %}{{ st.date or 'not published' }}{% else %}—{% endif %}</span>
+    {% if st.signal %}{% for e in (st.signal.evidence|uniq_cites)[:1] %}{{ cite(e) }}{% endfor %}{% endif %}</li>{% endfor %}
+</ol>
+<p class="faint small">Stages are read from the type of each cited signal for this search ({{ strategy_label(w.lead).text }}, last 12 months).</p>
+{% endif %}{% endmacro %}
