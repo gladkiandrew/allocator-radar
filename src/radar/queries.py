@@ -55,7 +55,10 @@ def allocator_table(con, scoped: bool = True) -> list[dict]:
         for r in db.rows(
             con,
             """SELECT allocator_id, count(DISTINCT sha256) AS n_docs, max(first_seen) AS last_new_document,
-                      max(last_fetched) AS last_fetched, max(doc_date) AS newest_doc_date
+                      max(last_fetched) AS last_fetched,
+                      -- a document dated after today (an agenda for an upcoming meeting) is never the newest document
+                      max(doc_date) FILTER (WHERE doc_date <= current_date) AS newest_doc_date,
+                      min(doc_date) FILTER (WHERE doc_date > current_date) AS upcoming_doc_date
                FROM document_urls GROUP BY allocator_id""",
         )
     }
@@ -96,6 +99,7 @@ def allocator_table(con, scoped: bool = True) -> list[dict]:
             n_docs=d.get("n_docs", 0),
             last_fetched=d.get("last_fetched"),
             newest_doc_date=d.get("newest_doc_date"),
+            upcoming_doc_date=d.get("upcoming_doc_date"),
             consultant=consultants.get(a["allocator_id"]),
             pending=[s for s in sigs if s["review_status"] == "new"],
         )

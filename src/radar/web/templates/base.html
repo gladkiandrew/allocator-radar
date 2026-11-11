@@ -4,8 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="description" content="Allocator Radar: which {{ scope.label }} public pension plans are getting ready to deploy capital, each with a dated, cited reason.">
-<title>{% block title %}Allocator Radar · {{ scope.label }}{% endblock %}</title>
+{% set path = request.url.path %}
+{# Pension pages are scoped to the configured region; the E&F pages are statewide; site-wide pages cover both. #}
+{% set pension_page = path == '/' or path.startswith('/a/') or path == '/gaps' %}
+{% set ef_page = path.startswith('/ef') %}
+{% if pension_page %}{% set page_region, page_region_title = scope.label, scope.description %}
+{% elif ef_page %}{% set page_region, page_region_title = 'Florida', 'Statewide: the largest Florida endowments and foundations' %}
+{% else %}{% set page_region, page_region_title = 'Florida', 'Pension plans: ' ~ scope.label ~ '. Endowments and foundations: statewide.' %}{% endif %}
+<meta name="description" content="{% block meta_description %}{% if pension_page %}Allocator Radar: which {{ scope.label }} public pension plans are getting ready to deploy capital, each with a dated, cited reason.{% elif ef_page %}Allocator Radar: the largest Florida endowments and foundations, from their IRS 990 filings and committee documents, each figure cited to its tax year and line.{% else %}Allocator Radar: which Florida institutional allocators ({{ scope.label }} public pension plans and the largest Florida endowments and foundations) are getting ready to deploy capital, each with a cited source.{% endif %}{% endblock %}">
+<title>{% block title %}Allocator Radar · {{ page_region }}{% endblock %}</title>
 <script>try{var t=localStorage.getItem("radar-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="preload" href="/static/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/static/fonts/source-serif-4-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -15,14 +22,13 @@
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
-{% set path = request.url.path %}
 <header class="top" id="top">
   <div class="inner">
     <a class="brand" href="/" aria-label="Allocator Radar home">
       <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#13294b"/><circle cx="16" cy="16" r="9" fill="none" stroke="#f4f1e8" stroke-opacity=".35" stroke-width="1.5"/><circle cx="16" cy="16" r="4.5" fill="none" stroke="#f4f1e8" stroke-opacity=".5" stroke-width="1.5"/><path d="M16 16 L23 9" stroke="#3ccf9d" stroke-width="2" stroke-linecap="round"/><circle cx="21.5" cy="12" r="2" fill="#3ccf9d"/></svg>
       Allocator Radar
     </a>
-    <span class="region" title="{{ scope.description }}">{{ scope.label }}</span>
+    <span class="region" title="{{ page_region_title }}">{{ page_region }}</span>
     <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mainnav"
       onclick="var h=document.getElementById('top');var o=h.classList.toggle('open');this.setAttribute('aria-expanded',o)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
@@ -55,7 +61,7 @@
 </main>
 <footer class="site">
   <div class="inner">
-    <span>{% if static_site %}Public-record data. Updated {{ updated }}. {% else %}Public records only. {% endif %}No contact details are stored. The system reads; people talk.</span>
+    <span>{% if static_site %}Public-record data. Updated {{ updated }}. {% else %}Public records only. {% endif %}No emails, phone numbers or addresses are stored. The system reads; people talk.</span>
     <span>Built by <a href="/about">Andrew Gladki</a> · <a href="/how">How it works</a></span>
   </div>
 </footer>

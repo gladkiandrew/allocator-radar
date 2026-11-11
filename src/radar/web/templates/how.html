@@ -71,8 +71,11 @@
   <ul style="margin:0">
     <li>Only <strong>approved</strong> signals change a tier: approved by a person, or auto-approved under the four checks
       above. A new signal shows as <span class="pending">pending review</span> until it is approved or rejected.</li>
-    {% if public %}<li>This public site shows approved signals only, and labels each one <span class="tag ok">approved by a person</span>
-      or <span class="tag">auto-approved</span>. Pending and rejected signals are never shown here.</li>{% endif %}
+    <li>Every signal shows its real review state. <span class="tag ok">reviewed</span>: a person read the source page and
+      approved it. <span class="tag">auto-approved (manual source)</span>: it passed the four checks, and its source file was
+      downloaded by hand from the publisher. <span class="tag">awaiting review</span>: it passed the four checks and counts
+      toward the tier, but no person has looked at it yet.{% if public %} Pending and rejected signals are never shown
+      here.{% endif %}</li>
     <li>A signal comes from one of two places. Either the extractor reads a fetched public document and quotes the page, or a person enters a fact from a manual-only source, with its URL and date.</li>
     <li>Summaries use factual verbs: reported, approved, voted, issued, awarded, terminated, placed on watch. A lint rejects evaluative words before anything is stored.</li>
     <li>The CSV export contains only signals a person has approved.</li>

@@ -34,7 +34,8 @@ def test_export_writes_public_pages_with_relative_links(tmp_path):
 
     brief = (out / "a" / "canary.html").read_text()
     assert 'href="../index.html"' in brief and 'href="../static/style.css"' in brief
-    assert "auto-approved" in brief and "Public-record data. Updated " in brief
+    assert "awaiting review" in brief and "Public-record data. Updated " in brief  # auto-approved, crawled: no person yet
+    assert ">auto-approved<" not in brief  # never an unqualified "auto-approved" label
     assert "https://canary.invalid/a.pdf#page=1" in brief  # citations go to the public source, not the lake
     assert "/doc/" not in brief and "hx-get" not in brief
     for f in out.rglob("*.html"):

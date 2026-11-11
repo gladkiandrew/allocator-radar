@@ -114,6 +114,52 @@ def coverage_note(newest_doc_date, today: date | None = None) -> str | None:
     return f"last document: {newest_doc_date.strftime('%B %Y')}" if newest_doc_date else "no dated document on file"
 
 
+# ---------------- approval state as a reader sees it ----------------
+APPROVAL_TITLE = {
+    "reviewed": "A person read the source page and approved this signal.",
+    "manual": "Passed the four automatic checks; the source file was downloaded by hand from the publisher. "
+              "No person has reviewed this signal yet.",
+    "awaiting": "Passed the four automatic checks, so it counts toward the tier, but no person has reviewed it yet.",
+    "pending": "Not yet checked; not shown on the public site and never counts toward a tier.",
+    "rejected": "Rejected by a person; never counts toward a tier.",
+}
+
+
+def manual_source(s: dict) -> bool:
+    """Was the signal's source file added by hand (the manual inbox), not fetched by the crawler?"""
+    if (s.get("source_url") or "").startswith("manual://"):
+        return True
+    return any((e.get("source_url") or "").startswith("manual://") or e.get("provenance") == "MANUAL"
+               for e in s.get("evidence") or [])
+
+
+def approval(s: dict) -> dict:
+    """The real review state of a signal: 'reviewed' only when a person approved it. Auto-approved signals are
+    labeled as such, never as reviewed. Returns {key, label, cls, title}."""
+    st = s.get("review_status")
+    if st == "approved":
+        key, label, cls = "reviewed", "reviewed", "ok"
+    elif st == "auto_approved" and manual_source(s):
+        key, label, cls = "manual", "auto-approved (manual source)", ""
+    elif st == "auto_approved":
+        key, label, cls = "awaiting", "awaiting review", ""
+    elif st == "rejected":
+        key, label, cls = "rejected", "rejected", "bad"
+    else:
+        key, label, cls = "pending", "pending review", "warn"
+    return {"key": key, "label": label, "cls": cls, "title": APPROVAL_TITLE[key]}
+
+
+def doc_when(d, today: date | None = None) -> str:
+    """A document's date as a reader should see it: a date after today is an upcoming meeting, not a new document."""
+    if not d:
+        return ""
+    if isinstance(d, datetime):
+        d = d.date()
+    today = today or date.today()
+    return f"upcoming meeting {d.isoformat()}" if d > today else d.isoformat()
+
+
 # ---------------- hedge fund highlights ----------------
 HIGHLIGHT_TYPES = {  # a search, a hire, a termination, or a target allocation change
     "SEARCH_OPENED": "Search", "SEARCH_SCHEDULED": "Search", "RFP_ISSUED": "Search", "FINALISTS_NAMED": "Search",
@@ -122,19 +168,20 @@ HIGHLIGHT_TYPES = {  # a search, a hire, a termination, or a target allocation c
     "TARGET_ALLOCATION_CHANGED": "Allocation change",
 }
 HIGHLIGHT_DAYS = 365
-# In addition to the hedge fund buckets and buckets.HF_TEXT (read here, never edited): risk-mitigation and
-# "diversifying strategies" wording that a board uses for the same sleeve.
-EXTRA_HF = re.compile(r"risk[- ]mitigat|crisis risk offset|diversifying strateg|absolute return|managed futures|\bcta\b|"
-                      r"hedge fund|tail risk|defensive strateg", re.I)
+# What qualifies for the hedge fund strip. A signal qualifies when DATA flagged it (hf_relevant), when its bucket is a
+# hedge fund bucket, or when its own summary names the strategy in specific terms. Evidence quotes are NOT searched:
+# a page that mentions hedge funds in passing does not make a large cap value search a hedge fund signal.
+STRIP_HF = re.compile(r"hedge fund|absolute return|risk[- ]mitigat|crisis risk offset|diversifying strateg|"
+                      r"managed futures|\bcta\b|global macro|tail risk|market neutral|long[/ -]short|"
+                      r"multi[- ]strategy hedge|systematic macro|trend[- ]following", re.I)
 
 
 def is_hf(s: dict) -> bool:
-    from radar.buckets import HF_BUCKETS, HF_TEXT
+    from radar.buckets import HF_BUCKETS
 
     if s.get("hf_relevant") or s.get("bucket") in HF_BUCKETS:
         return True
-    text = " ".join([s.get("summary") or ""] + [e.get("quote") or "" for e in s.get("evidence") or []])
-    return bool(HF_TEXT.search(text) or EXTRA_HF.search(text))
+    return bool(STRIP_HF.search(" ".join(filter(None, [s.get("summary"), s.get("bucket_label")]))))
 
 
 def hf_highlights(con, plans: list[dict], today: date | None = None, per_plan: int = 3) -> list[dict]:

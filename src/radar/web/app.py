@@ -57,6 +57,8 @@ from radar.web import present  # noqa: E402
 templates.env.filters["clean_quote"] = present.clean_quote
 templates.env.filters["consultant"] = present.consultant_name
 templates.env.globals["coverage_note"] = present.coverage_note
+templates.env.filters["doc_when"] = present.doc_when
+templates.env.globals["approval"] = present.approval
 
 
 PUBLIC_HIDDEN = ("/review", "/manual", "/records", "/registry", "/inbox", "/export")

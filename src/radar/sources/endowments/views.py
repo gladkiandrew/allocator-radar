@@ -113,9 +113,19 @@ def eins() -> list[str]:
         return [r[0] for r in con.execute("SELECT ein FROM ef_orgs ORDER BY ein").fetchall()]
 
 
+def strip_qualifies(s: dict) -> bool:
+    """A 990 signal belongs on the hedge fund strip only when the line or service it reports is itself hedge fund,
+    absolute return, risk-mitigation, managed futures or diversifying-strategy. A firm newly listed among the
+    highest-paid contractors (law firms, custodians, banks, brokers, long-only managers) does not qualify unless
+    the service described on the return is hedge-fund-type."""
+    from radar.web.present import STRIP_HF
+
+    return bool(STRIP_HF.search(s.get("summary") or ""))
+
+
 def hf_rows(public: bool = True, limit: int = 6) -> list[dict]:
-    """E&F rows for the main page strip: hedge-fund-type 990 lines that are new this year, and investment firms newly
-    listed among the five highest-paid contractors. Labeled as 990 data (annual, lagging)."""
+    """E&F rows for the main page strip: hedge-fund-type 990 lines that are new this year (and, rarely, a firm newly
+    listed for a hedge-fund-type service). Labeled as 990 data (annual, lagging)."""
     with store.connect(read_only=True) as con:
         names = dict(con.execute("SELECT ein, name FROM ef_orgs").fetchall())
         q = ("SELECT * FROM ef_signals WHERE signal_type IN ('EF_ALT_HOLDING_ADDED', 'EF_MANAGER_ADDED') "
@@ -124,6 +134,8 @@ def hf_rows(public: bool = True, limit: int = 6) -> list[dict]:
         sigs = store.rows(con, q)
     seen, out = defaultdict(int), []
     for s in sigs:
+        if not strip_qualifies(s):
+            continue
         if seen[s["ein"]] >= 2:
             continue
         seen[s["ein"]] += 1

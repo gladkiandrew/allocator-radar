@@ -40,7 +40,7 @@
       <span class="t-type">{{ s.signal_type|replace('EF_', '')|replace('_', ' ')|lower }}</span>
       <span class="tag">{{ s.source_label }}</span>
       {% if s.hf_relevant %}<span class="tag hf">HF</span>{% endif %}
-      {% if s.review_status == 'approved' %}<span class="tag ok">approved by a person</span>{% elif s.review_status == 'auto_approved' %}<span class="tag" title="{{ s.reviewed_by }}">auto-approved</span>{% else %}<span class="pending">pending review</span>{% endif %}
+      {% set ap = approval(s) %}<span class="tag {{ ap.cls }}" title="{{ ap.title }}">{{ ap.label }}</span>
     </div>
     <div class="t-sum">{{ s.summary }} {{ cite(s.source_url, s.doc_title or 'source', s.cite) }}</div>
     <div class="faint small" style="margin-top:4px">{{ s.cite }}{% if s.page %} · page {{ s.page }}{% endif %}</div>
@@ -68,7 +68,7 @@
 {% for c in x.contractors %}<tr><td>{{ c.firm }}{% if c.investment %} <span class="tag hf">investment</span>{% endif %}</td><td>{{ c.service|lower }}</td><td class="mono">{{ money(c.amount) }}</td></tr>{% endfor %}
 </tbody></table></div></div>{% endif %}
 {% endfor %}
-<p class="faint small">{{ o.filings[0].cite_contractors }}. Individuals listed on the return are never stored.</p>{% endif %}
+<p class="faint small">{{ o.filings[0].cite_contractors }}. Only firm names are kept from this list. No emails, phone numbers or addresses are stored.</p>{% endif %}
 
 <h2 id="alternatives">Other investments as reported <span class="count">{{ o.n_other_latest }}</span></h2>
 {% if not o.other_latest %}<div class="card empty">No itemized "other investments" in the latest return read.</div>{% else %}
