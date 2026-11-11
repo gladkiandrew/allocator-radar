@@ -65,3 +65,30 @@ def test_curated_signal_held_to_extractor_validators():
         ex, = con.execute("SELECT e.extractor FROM row_evidence r JOIN evidence e USING (evidence_id) WHERE r.row_id = ?",
                           [sid]).fetchone()
     assert st == "new" and ex == "curated-extraction"
+
+
+def test_staging_ingest_rechecks_files(tmp_path, monkeypatch):
+    import yaml
+    from radar import staging
+    from radar.settings import get_settings
+    monkeypatch.setattr(staging, "_robots_ok", lambda url: "blocked" not in url)
+    with db.connect() as con:
+        con.execute("INSERT INTO allocators (allocator_id, legal_name, display_name, allocator_type, jurisdiction_city, "
+                    "jurisdiction_state, jurisdiction_country, home_url, template, access, source_id, registry_version, updated_at) "
+                    "VALUES ('p1','P','Test Plan','GENERAL','X','FL','US','https://x.test','T','AUTO','S','v',now())")
+    root = get_settings().data_dir / "staging" / "g"
+    (root / "p1").mkdir(parents=True)
+    (root / "p1" / "a.pdf").write_bytes(b"%PDF-1.4 not really")
+    (root / "p1" / "b.pdf").write_bytes(b"<html>error</html>")
+    (root / "p1" / "c.pdf").write_bytes(b"%PDF-1.4 x")
+    (root / "manifest.yaml").write_text(yaml.safe_dump({"files": [
+        {"id": "p1", "file": "p1/a.pdf", "url": "https://x.test/a.pdf", "title": "Agenda", "doc_type": "AGENDA", "doc_date": "2026-10-01"},
+        {"id": "p1", "file": "p1/b.pdf", "url": "https://x.test/b.pdf"},
+        {"id": "p1", "file": "p1/c.pdf", "url": "https://blocked.test/c.pdf"},
+        {"id": "nope", "file": "p1/a.pdf", "url": "https://x.test/a.pdf"}]}))
+    monkeypatch.setattr("radar.parse.pdf.parse_document", lambda sha, **k: 0)
+    st = staging.ingest_pensions("g")
+    assert st["files"] == 1 and len(st["skipped"]) == 3
+    with db.connect() as con:
+        assert con.execute("SELECT retrieved_by, doc_date FROM document_urls WHERE allocator_id='p1'").fetchone() == \
+            ("browser-agent", date(2026, 10, 1))
