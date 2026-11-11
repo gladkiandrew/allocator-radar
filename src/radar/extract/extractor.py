@@ -132,7 +132,10 @@ adopted or accepted, a consultant changed, a CIO changed, a rebalance or redempt
 An agenda line that only lists a general topic for discussion is not a signal, unless it records a decision or announces \
 an open solicitation. EXCEPTION, SEARCH_SCHEDULED: an agenda (or minutes) that schedules a search step is a signal: \
 interviews or finalist presentations by named candidate managers or consultants, an RFP or search-response review, \
-or a "manager search" / "consultant search" item. Use the meeting date for event_date and quote the agenda line.
+or a "manager search" / "consultant search" item, fee or contract negotiations with named candidate managers or \
+consultants (the step between interviews and hiring), or a comparison of named candidate managers presented to the board \
+for one mandate (e.g. a large cap value analysis of the incumbent against named alternatives). Use the meeting date for \
+event_date and quote the agenda line.
 - For SEARCH_OPENED / SEARCH_SCHEDULED / RFP_ISSUED / FINALISTS_NAMED / MANDATE_AWARDED set qualifier to manager (investment \
 manager), consultant (investment consultant), or service_provider (legal, actuary, custodian, auditor, other).
 - Summaries: one sentence, factual verbs only (reported, disclosed, approved, voted, issued, awarded, selected, \
@@ -404,7 +407,7 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
     return stats
 
 
-SEARCH_SCAN_VERSION = "search-scan-2"  # v2 adds SEARCH_SCHEDULED
+SEARCH_SCAN_VERSION = "search-scan-3"  # v2 adds SEARCH_SCHEDULED; v3 adds fee negotiations and manager comparisons (D-B22)
 CONSULTANT_SCAN_VERSION = "consultant-scan-1"
 CONSULTANT_VOCAB = re.compile(
     r"investment consultant|performance consultant|investment monitor|consultant|consulting|"
@@ -422,7 +425,10 @@ SEARCH_VOCAB = re.compile(r"request for (proposals?|qualifications?|information)
                           r"proposals? (were )?received|responses? (were )?received|selected|hire|engage(d|ment)? (of|a|an|the)|"
                           # D-B16: new-manager hires and fund commitments recorded without the word "search"
                           r"new investment managers?|managers? candidates?|candidates? for the|subscription documents?|"
-                          r"subscription agreements?|side letters?|finalist presentations?", re.I)
+                          r"subscription agreements?|side letters?|finalist presentations?|"
+                          # D-B22: the steps either side of interviews
+                          r"fee (?:discussions?|negotiations?) with|contract negotiations?|"
+                          r"(?:cap|equity|income|credit|estate|value|growth|core) (?:manager )?(?:analysis|comparison|review of candidates)", re.I)
 SEARCH_FOCUS = """
 
 This pass is a focused scan for SEARCHES. On these pages, look specifically for investment-manager and investment-consultant
@@ -435,8 +441,10 @@ be left empty in this pass."""
 
 
 def extract_document(sha: str, allocator_id: str, provider=None, all_pages: bool = False, *, max_pages: int | None = None,
-                     force: bool = False, search_scan: bool = False, consultant_scan: bool = False) -> dict:
+                     force: bool = False, search_scan: bool = False, consultant_scan: bool = False,
+                     page_list: list[int] | None = None) -> dict:
     """all_pages: send every page with text (holdings lists the vocabularies do not select).
+    page_list: send exactly these page numbers (a reviewer found the item; the vocabularies missed it).
     force: re-extract even if this extractor version already ran (dedupe keys prevent duplicate rows).
     search_scan: search-focused pass, tracked under its own version tag."""
     version = CONSULTANT_SCAN_VERSION if consultant_scan else SEARCH_SCAN_VERSION if search_scan else EXTRACTOR_VERSION
@@ -453,18 +461,20 @@ def extract_document(sha: str, allocator_id: str, provider=None, all_pages: bool
         cap = max_pages or MAX_PAGES_PER_DOC
         if force:
             con.execute("DELETE FROM extraction_runs WHERE sha256 = ? AND extractor_version = ?", [sha, version])
-        if all_pages or search_scan or consultant_scan:
+        if all_pages or search_scan or consultant_scan or page_list:
             con.execute("DELETE FROM extraction_runs WHERE sha256 = ? AND extractor_version = ? AND status = 'none'",
                         [sha, version])
             done = con.execute("SELECT 1 FROM extraction_runs WHERE sha256 = ? AND extractor_version = ? LIMIT 1",
                                [sha, version]).fetchone()
             pages = db.rows(con, "SELECT page_no, text_scrubbed, prefilter_terms FROM pages WHERE sha256 = ? ORDER BY page_no", [sha])
-            if search_scan:
+            if page_list:
+                pages = [p for p in pages if p["page_no"] in set(page_list)]
+            elif search_scan:
                 pages = [p for p in pages if SEARCH_VOCAB.search(p["text_scrubbed"])]
             if consultant_scan:  # the pages that name providers most often, cover pages first
                 pages = sorted([p for p in pages if CONSULTANT_VOCAB.search(p["text_scrubbed"])],
                                key=lambda p: (-len(CONSULTANT_VOCAB.findall(p["text_scrubbed"])), p["page_no"]))
-            todo = [] if done else [p for p in pages if len(p["text_scrubbed"]) > 200][:cap]
+            todo = [] if done and not page_list else [p for p in pages if len(p["text_scrubbed"]) > 200][:cap]
         else:
             todo = _pages_to_extract(con, sha)
     system = SYSTEM + (SEARCH_FOCUS if search_scan else "") + (CONSULTANT_FOCUS if consultant_scan else "")

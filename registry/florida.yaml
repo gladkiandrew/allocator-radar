@@ -820,6 +820,16 @@ allocators:
   site_title: Home - PBPFRS
   robots: allowed
   document_pages:
+  - url: https://www.pbpfrs.org/rfp-for-legal-services/
+    label: 'RFP''s'
+    documents: 0
+    by_type: {}
+    suggested: true
+  - url: https://www.pbpfrs.org/upcoming-agenda/
+    label: 'Upcoming Agenda'
+    documents: 0
+    by_type: {}
+    suggested: true
   - url: https://www.pbpfrs.org/
     label: plan page
     documents: 0
