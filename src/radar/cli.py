@@ -72,6 +72,7 @@ def main(argv: list[str] | None = None) -> int:
     cg.add_argument("--date", required=True); cg.add_argument("--summary", required=True); cg.add_argument("--bucket")
     ig = sub.add_parser("ingest-staging", help="ingest browser-agent downloads from data/staging/<group>/manifest.yaml")
     ig.add_argument("group"); ig.add_argument("--ef", action="store_true", help="E&F group (ids are EINs)")
+    sub.add_parser("timeline", help="rebuild timeline_searches and timeline_allocators from published signals (D-B37)")
     sub.add_parser("gaps", help="coverage gaps grouped by primary cause, with the next action for each")
     cs = sub.add_parser("consultant-scan", help="targeted extraction of service providers for gap plans missing a consultant")
     cs.add_argument("--workers", type=int, default=3)
@@ -270,6 +271,11 @@ def main(argv: list[str] | None = None) -> int:
         from radar import autoapprove, db
         db.init_db()
         print(json.dumps(autoapprove.run_pass(), indent=1))
+    elif args.cmd == "timeline":
+        import json
+        from radar import db, timeline
+        db.init_db()
+        print(json.dumps(timeline.build(), default=str))
     elif args.cmd == "ingest-staging":
         import json
         from radar import db, staging
