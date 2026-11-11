@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}E&amp;F spot-check · Allocator Radar{% endblock %}
+{% block body %}
+<p class="eyebrow">Endowments &amp; foundations · spot-check</p>
+<h1>Check each signal against its source</h1>
+{% if load_err %}
+<div class="error" role="alert">{{ load_err }}</div>
+{% elif not exists %}
+<div class="card empty">No sample yet: <span class="mono">data/ef_spotcheck_25.md</span> does not exist. The DATA session writes it,
+  one line per signal: <span class="mono">- [ ] &lt;ef_signal_id&gt; | &lt;org&gt; | &lt;summary&gt;</span>.</div>
+{% elif not st.total %}
+<div class="card empty"><span class="mono">data/ef_spotcheck_25.md</span> lists no signal id found in the E&amp;F store.</div>
+{% else %}
+<p class="sub"><strong>{{ st.total - st.decided }} remaining</strong> of {{ st.total }} · <strong>{{ st.decided }} decided</strong>
+  {% if n_skipped %} · {{ n_skipped }} skipped (<a href="/review/ef">start over with skipped</a>){% endif %}
+  · keys: <kbd>a</kbd> approve (correct), <kbd>r</kbd> reject (wrong), <kbd>s</kbd> skip · <a href="/review">back to the review queue</a></p>
+<p class="faint small">Decisions go to <span class="mono">data/ef_spotcheck_25.decisions.jsonl</span>; the database is not changed. Deciding again replaces the earlier decision.</p>
+{% if done %}<div class="notice" role="status">{{ 'Approved' if done == 'approved' else 'Rejected' if done == 'rejected' else 'Done' }}. Next one below.</div>{% endif %}
+{% if err %}<div class="error" role="alert">{{ err }}</div>{% endif %}
+{% if not st.undecided %}
+<article class="card" id="ef-done">
+  <h2>All {{ st.total }} decided</h2>
+  <p><strong>{{ st.approved }}</strong> approved · <strong>{{ st.rejected }}</strong> rejected ·
+    accuracy <strong>{{ st.accuracy }}%</strong> (approved ÷ decided)</p>
+  <p>HANDOFF line to paste:</p>
+  <pre class="mono" id="handoff" style="white-space:pre-wrap;background:var(--sunken);padding:8px 10px;border-radius:6px">{{ st.handoff }}</pre>
+</article>
+{% elif not s %}
+<div class="card empty">Only skipped signals are left ({{ n_skipped }}). <a href="/review/ef">Go through them again</a>.</div>
+{% else %}
+<article class="card review-card" id="focus" data-signal="{{ s.signal_id }}">
+  <div class="rc-head">
+    <div><a class="rc-title" href="/ef/{{ s.ein }}">{{ s.org_pretty }}</a>
+      <div class="faint mono" style="font-size:11.5px;margin-top:2px">{{ s.kind_label }} · EIN {{ s.ein }} · {{ s.signal_id }}</div></div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      {% if s.hf_relevant %}<span class="tag hf">HF</span>{% endif %}
+      <span class="faint small">store status: {{ s.review_status }}</span>
+    </div>
+  </div>
+  <p class="rc-sum"><span class="mono" style="background:var(--sunken);padding:2px 6px;border-radius:5px;font-size:12px">{{ s.event_date }}</span>
+    <span class="mono faint" style="font-size:11.5px;margin:0 6px">{{ s.signal_type }}{% if s.qualifier %} · {{ s.qualifier }}{% endif %}</span><br>{{ s.summary }}</p>
+  <p class="src"><span class="cite-text">{{ s.cite }}</span>{% if s.page and not s.page_in_cite %} · page {{ s.page }}{% endif %}</p>
+  {% if s.quote %}<blockquote>{{ s.quote|clean_quote }}</blockquote>{% endif %}
+  <p class="src">{% if s.href %}<a class="cite" href="{{ s.href }}" target="_blank" rel="noopener">{{ s.doc_title or 'Open the source' }}{% if s.page %} · page {{ s.page }}{% endif %}</a>
+    {% else %}No public source link on file{% endif %}</p>
+  <form method="post" action="/review/ef/{{ s.signal_id }}">
+    <input type="hidden" name="skip" value="{{ skip }}">
+    <label class="small">Note (optional) <textarea name="note" rows="2" maxlength="1000" style="width:100%"></textarea></label>
+    <div class="actions">
+      <button class="primary" id="k-a" name="decision" value="approved"><kbd>a</kbd> Approve</button>
+      <button class="danger" id="k-r" name="decision" value="rejected"><kbd>r</kbd> Reject</button>
+      <button id="k-s" name="decision" value="skip"><kbd>s</kbd> Skip</button>
+    </div>
+  </form>
+</article>
+<script>
+var sent = false;
+document.addEventListener("keydown", function (ev) {
+  if (sent || ev.ctrlKey || ev.metaKey || ev.altKey || ev.repeat) return;
+  var t = ev.target, tag = (t && t.tagName || "").toLowerCase();
+  if (tag === "input" || tag === "textarea" || tag === "select" || (t && t.isContentEditable)) return;
+  var b = document.getElementById("k-" + (ev.key || "").toLowerCase());
+  if (b) { ev.preventDefault(); sent = true; b.click(); }
+});
+</script>
+{% endif %}
+{% endif %}
+{% endblock %}
