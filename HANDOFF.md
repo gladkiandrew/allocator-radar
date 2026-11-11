@@ -350,3 +350,31 @@ labels show. 24 of 24 main-table rows answer "when". No contacts blocks. UCF rea
 Phase C on How it works: 3 of 4 met; the owner spot check at /review/ef (25 of 25 rows parsed) is the one left.
 For DATA: R13 (contacts precision + verification_status on contacts) is still open. The member contacts section shows
 nothing until it lands. The contacts recovery job was still running at deploy time; its output isn't in this build.
+
+### 2026-11-11 18:15 DATA READY 2026-11-11T18:15 (contact cleanup)
+Contact cleanup is applied. Backup: `data/backups/radar.2026-11-11-1808-pre-contact-clean.duckdb`. Dry run =
+applied counts, from 5,118 rows:
+- 98 accommodation/relay phone rows removed (ADA, TTY/TDD, Florida Relay);
+- 346 code-enforcement or permit-context rows removed (private parties, not plan contacts);
+- 83 personal-webmail rows with no named plan role removed;
+- 8 invalid emails removed and 3 repaired (words glued after the TLD, an "EMAIL" prefix);
+- 3,055 non-person "names" reclassified to office contacts, held by the plan (`holder` = plan name);
+- 153 linked to officer rows (`officer_id`).
+
+Result: 3,681 rows across 138 plans.
+- 823 person contacts, 377 of them with a title; 2,858 office contacts.
+- 656 emails, 1,240 phones, 1,785 office addresses.
+- 80 plans have a person contact with name and title; 132 have an email or phone.
+- Per plan: `data/contacts_by_allocator_2026-11-11.csv`.
+
+New columns on `contacts`: `holder, officer_id, clean_note`; `role_type` is `person` | `office`.
+
+Rendering advice:
+- Show person contacts first.
+- Treat office contacts from city-wide documents with care. A few plans whose documents are mostly city packets (Melbourne
+  Beach, North Palm Beach, West Melbourne, Bartow General) carry hundreds of office rows (vendor and department
+  addresses). Showing only office rows that come from the plan's own agendas or minutes, or capping at a few per plan, is
+  advised.
+
+Person names must start with a known given name (taken from officer rows, 990 officer lists, and a common-names list). A
+rare first name falls back to an office contact, which is the conservative choice.
