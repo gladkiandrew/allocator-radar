@@ -122,13 +122,13 @@
 {% if (can_see_contacts if can_see_contacts is defined else not public) and a.contacts %}
 <section class="contacts" data-audience="member" aria-labelledby="contacts-title">
 <h2 id="contacts-title">Contacts <span class="count">as printed, members only</span></h2>
-<div class="table-card"><div class="scroll"><table class="stack"><thead><tr><th scope="col">Name</th><th scope="col">Title</th><th scope="col">Email</th><th scope="col">Phone</th><th scope="col">As of</th><th scope="col">Source</th></tr></thead><tbody>
-{% for c in a.contacts %}<tr><td>{{ c.name_as_printed }}</td><td>{{ c.title_as_printed or '' }}</td>
+<div class="table-card"><div class="scroll"><table class="stack"><thead><tr><th scope="col">Name</th><th scope="col">Title</th><th scope="col">Email</th><th scope="col">Phone</th><th scope="col">Document date</th><th scope="col">Source</th></tr></thead><tbody>
+{% for c in a.contacts[:60] %}<tr><td>{{ c.cname or '' }}</td><td>{{ c.ctitle or '' }}{% if c.office_address %}<div class="faint small">{{ c.office_address }}</div>{% endif %}</td>
   <td>{% if c.email %}<span class="mono">{{ c.email }}</span>{% else %}<span class="faint">not published</span>{% endif %}</td>
   <td>{% if c.phone %}<span class="mono">{{ c.phone }}</span>{% else %}<span class="faint">not published</span>{% endif %}</td>
-  <td class="mono">{{ c.as_of }}</td><td>{{ cites(c.evidence) }}</td></tr>{% endfor %}
+  <td class="mono">{{ c.as_of or 'not published' }}</td><td>{{ cites(c.evidence) }}</td></tr>{% endfor %}
 </tbody></table></div></div>
-<p class="faint small">Business contact details exactly as printed in the cited public document. Shown to signed-in members only.</p>
+<p class="faint small">Business contact details exactly as printed in the cited public document{% if a.contacts|length > 60 %}; showing 60 of {{ a.contacts|length }}, newest documents first{% endif %}. Shown to signed-in members only.</p>
 </section>{% endif %}
 
 {% if not static_site %}<h2 id="search">Search this plan's documents</h2>

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 
 from radar import db
@@ -234,20 +235,63 @@ def timeline_rows(con) -> tuple[dict, dict]:
     return alloc, searches
 
 
+_CJUNK = re.compile(r"(?i)\b(address|card|act|trail|street|avenue|road|blvd|property|program|pharmacy|suite|floor|"
+                    r"drive|highway|phone|fax|email|contact person)\b")
+
+
+def _contact_paired(r: dict) -> bool:
+    """Display precision for contacts (until DATA's extraction pairs reliably): a person row shows only when the email's
+    local part contains one of the person's name words; an office row shows only with a printed title."""
+    name = (r.get("cname") or "").strip()
+    if not name or _CJUNK.search(name):
+        return False
+    if r.get("role_type") == "office":
+        return bool((r.get("ctitle") or "").strip())
+    email = (r.get("email") or "").lower()
+    local = re.sub(r"[^a-z]", "", email.split("@")[0]) if "@" in email else ""
+    toks = [t for t in re.findall(r"[a-z]{3,}", name.lower())]
+    return bool(local and toks and any(t in local for t in toks))
+
+
 def contacts_for(con, allocator_id: str) -> list[dict]:
-    """Business contacts as printed in public documents (DATA's `contacts` table, R9), each with its evidence.
-    [] when the table does not exist. Rendering is gated to member/admin audiences by the template."""
+    """Business contacts as printed in public documents (DATA's `contacts` table, D-B35), each cited to its document
+    and page. [] when the table does not exist. Rendering is gated to member/admin audiences by the template."""
     if not con.execute("SELECT 1 FROM information_schema.tables WHERE table_name = 'contacts'").fetchone():
         return []
-    rows = db.rows(con, "SELECT * FROM contacts WHERE allocator_id = ? ORDER BY as_of DESC", [allocator_id])
-    key = "contact_id" if rows and "contact_id" in rows[0] else None
-    ev = _evidence_for(con, "contact", [r[key] for r in rows]) if key else {}
+    cols = {r[0] for r in con.execute("DESCRIBE contacts").fetchall()}
+    # Precision gate: render only contacts DATA has verified as this plan's own contacts (R13). The raw extraction
+    # pairs names with other people's details and picks up unrelated agenda contacts, so without the flag none show.
+    flag = next((c for c in ("verification_status", "plan_contact", "display_ok") if c in cols), None)
+    if flag is None:
+        return []
+    where_flag = (f"AND c.{flag} IN ('verified', 'verified_after_fix')" if flag == "verification_status"
+                  else f"AND c.{flag}")
+    name = "name" if "name" in cols else "name_as_printed"
+    title = "title" if "title" in cols else "title_as_printed"
+    sha = "c.document_sha256" if "document_sha256" in cols else "NULL"
+    rows = db.rows(con, f"""SELECT c.*, c.{name} AS cname, c.{title} AS ctitle, {sha} AS csha,
+                                   du.title AS doc_title, du.doc_date
+                            FROM contacts c
+                            LEFT JOIN (SELECT sha256, any_value(title) AS title, max(doc_date) AS doc_date
+                                       FROM document_urls GROUP BY sha256) du ON du.sha256 = {sha}
+                            WHERE c.allocator_id = ? {where_flag} ORDER BY du.doc_date DESC NULLS LAST""", [allocator_id])
+    out, seen = [], set()
     for r in rows:
-        r["evidence"] = ev.get(r[key], []) if key else []
-        if not r["evidence"] and r.get("source_url"):  # cited inline on the row
-            r["evidence"] = [{"source_url": r["source_url"], "page": r.get("page"), "doc_title": "source",
-                              "document_sha256": None, "quote": ""}]
-    return [r for r in rows if r["evidence"]]  # uncited contacts never render
+        if not (r.get("source_url") or r.get("csha")):
+            continue  # uncited contacts never render
+        if not (r.get("email") or r.get("phone")):
+            continue  # a name with no contact detail is an officer row, not a contact
+        if not _contact_paired(r):
+            continue  # the name and the detail may belong to different people: don't show a guess
+        k = (r.get("cname"), r.get("email"), r.get("phone"))
+        if k in seen:
+            continue
+        seen.add(k)
+        r["evidence"] = [{"source_url": r.get("source_url") or "", "document_sha256": r.get("csha"), "page": r.get("page"),
+                          "doc_title": r.get("doc_title") or "source", "quote": r.get("context") or ""}]
+        r["as_of"] = r.get("doc_date") or r.get("as_of")
+        out.append(r)
+    return out
 
 
 def _norm_label(s: str | None) -> str:

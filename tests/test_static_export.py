@@ -113,13 +113,15 @@ def test_contacts_render_locally_but_never_in_the_ungated_public_build(tmp_path)
 
     _store_with_signals()
     with db.connect() as con:
-        con.execute("""CREATE TABLE contacts (contact_id VARCHAR, allocator_id VARCHAR, name_as_printed VARCHAR,
-                       title_as_printed VARCHAR, email VARCHAR, phone VARCHAR, as_of DATE, source_url VARCHAR, page INTEGER)""")
+        con.execute("""CREATE TABLE contacts (contact_id VARCHAR, allocator_id VARCHAR, name VARCHAR,
+                       title VARCHAR, email VARCHAR, phone VARCHAR, as_of DATE, source_url VARCHAR, page INTEGER,
+                       verification_status VARCHAR, role_type VARCHAR)""")
         con.execute("""INSERT INTO contacts VALUES ('c1', 'canary', 'Pat Example', 'Plan Administrator',
-                       'admin@canary.invalid', '555-0100', DATE '2026-10-01', 'https://canary.invalid/a.pdf', 1)""")
+                       'pexample@canary.invalid', '555-0100', DATE '2026-10-01', 'https://canary.invalid/a.pdf', 1,
+                       'verified', 'person')""")
     local = TestClient(create_app()).get("/a/canary").text
     assert "Pat Example" in local and 'data-audience="member"' in local
     out = tmp_path / "dist"
     static_export.export(out)
     pub = (out / "a" / "canary.html").read_text()
-    assert "admin@canary.invalid" not in pub and 'data-audience="member"' not in pub
+    assert "pexample@canary.invalid" not in pub and 'data-audience="member"' not in pub
