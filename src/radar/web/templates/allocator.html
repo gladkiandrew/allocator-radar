@@ -117,7 +117,7 @@
 <div class="table-card"><div class="scroll"><table class="stack"><thead><tr><th scope="col">Name</th><th scope="col">Title</th><th scope="col">As of</th><th scope="col">Source</th></tr></thead><tbody>
 {% for o in a.officers %}<tr><td>{{ o.name_as_printed }}</td><td>{{ o.title_as_printed }}</td><td class="mono">{{ o.as_of }}</td><td>{{ cites(o.evidence) }}</td></tr>{% endfor %}
 </tbody></table></div></div>
-<p class="faint small">Names and titles only, exactly as the documents print them. No contact details are stored.</p>{% endif %}
+<p class="faint small">Names and titles exactly as the documents print them. Contact details are shown only to signed-in members, never on the public site.</p>{% endif %}
 
 {% if (can_see_contacts if can_see_contacts is defined else not public) and a.contacts %}
 <section class="contacts" data-audience="member" aria-labelledby="contacts-title">

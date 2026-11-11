@@ -62,7 +62,7 @@
 </main>
 <footer class="site">
   <div class="inner">
-    <span>{% if static_site %}Public-record data. Updated {{ updated }}. {% else %}Public records only. {% endif %}No emails, phone numbers or addresses are stored. The system reads; people talk.</span>
+    <span>{% if static_site %}Public-record data. Updated {{ updated }}. {% else %}Public records only. {% endif %}{% if (can_see_contacts if can_see_contacts is defined else not public) %}Contacts are as printed in the cited public documents.{% else %}No contact details are published on this site.{% endif %} The system reads; people talk.</span>
     <span>Built by <a href="/about">Andrew Gladki</a> · <a href="/how">How it works</a></span>
   </div>
 </footer>

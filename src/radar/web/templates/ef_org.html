@@ -70,7 +70,7 @@
 {% for c in x.contractors %}<tr><td>{{ c.firm }}{% if c.investment %} <span class="tag hf">investment</span>{% endif %}</td><td>{{ c.service|lower }}</td><td class="mono">{{ money(c.amount) }}</td></tr>{% endfor %}
 </tbody></table></div></div>{% endif %}
 {% endfor %}
-<p class="faint small">{{ o.filings[0].cite_contractors }}. Only firm names are kept from this list. No emails, phone numbers or addresses are stored.</p>{% endif %}
+<p class="faint small">{{ o.filings[0].cite_contractors }}. Only firm names are kept from this list. Individual pay is never stored.</p>{% endif %}
 
 <h2 id="alternatives">Other investments as reported <span class="count">{{ o.n_other_latest }}</span></h2>
 {% if not o.other_latest %}<div class="card empty">No itemized "other investments" in the latest return read.</div>{% else %}

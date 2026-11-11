@@ -264,6 +264,8 @@ _OCIO = re.compile(r"\bOCIO\b|outsourced chief investment officer", re.I)
 
 def ef_signal_label(s: dict) -> str | None:
     """A plain label for E&F signals whose type alone misleads: an OCIO selection is an 'OCIO search'."""
+    if s.get("signal_type") == "OCIO_SEARCH":
+        return "OCIO search"
     if s.get("signal_type") in ("SEARCH_SCHEDULED", "SEARCH_OPENED", "RFP_ISSUED", "FINALISTS_NAMED") and \
             _OCIO.search(s.get("summary") or ""):
         return "OCIO search"
