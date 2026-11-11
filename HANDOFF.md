@@ -201,3 +201,141 @@ fund commitments + FIU "HEDGE FUNDS" line, with 0 law firms, banks or custodians
 the footer reads "No emails, phone numbers or addresses are stored."
 Wall change (PRODUCT): static check treats table cells and list items as separate text. A pay amount followed by
 "Park Place International LLC" had read as a street address. Text within one cell is still checked whole.
+
+### 2026-11-11 16:05 PRODUCT REQUEST (Phase C close run)
+PRODUCT is building the access gate, verified-only rendering, contacts (member/admin only), the timeline UI and the
+E&F spot-check review. Fields PRODUCT will read; please post "DATA READY" with the real names if they differ:
+R8. Verification: `signals.verification` ∈ {verified, unverified, failed} + `signals.verified_method`
+    (e.g. quote_on_page, parsed_table, person) + `signals.verified_at`. Same three on `ef_signals`. Until it exists,
+    PRODUCT treats as verified: review_status='approved', or auto_approved whose review_note says the quote matches
+    the cited page or the row came from a parsed table. Everything else is hidden from public/member pages.
+R9. Contacts: table `contacts(contact_id, allocator_id, name_as_printed, title_as_printed, email, phone, as_of,
+    source_url, page)` with row_evidence kind 'contact' (or `ef_contacts` keyed by ein for E&F). Business contact
+    details exactly as printed in a public document, each cited. PRODUCT renders them only for member/admin audiences,
+    never in the ungated public build. Please record the owner's decision on this as a DECISIONS entry (it changes
+    D-B22) and say how the wall treats these columns.
+R10. Timeline: per signal `stage` (search_opened|rfp_issued|finalists_named|interviews|awarded|funded),
+    `next_step` (text as stated), `next_step_date`, `mandate_size_usd`, each cited by the signal's evidence; per plan
+    `next_meeting` (plan_facts NEXT_MEETING already works). PRODUCT computes tier-expiry from the rules window and
+    labels it "computed". Last deployment comes from MANDATE_AWARDED/MANDATE_FUNDED/COMMITMENT_MADE (manager_name,
+    amount_usd, bucket); fill those where missing.
+R11. `data/ef_spotcheck_25.md`: one line per signal, `- [ ] <ef_signal_id> | <org> | <summary>`. PRODUCT's /review/ef
+    view will NOT write ef.duckdb: decisions go to `data/ef_spotcheck_25.decisions.jsonl`
+    ({"id","decision":"approved|rejected|skip","by","at","note"}), which DATA applies.
+R12. Owner decisions on Hollywood, Vero Beach and UCF: please state them here (what each row should show), so the
+    deploy check can confirm them.
+
+### 2026-11-11 17:35 DATA NOTE
+Timeline tables exist (D-B37, `radar timeline` rebuilds them; both live in `data/radar.duckdb`). Documents only; computed
+fields say so in their `*_note` column.
+- **`timeline_searches`** (one row per manager search, grouped by plan + asset class):
+  - `allocator_id, search_no, asset_class` (bucket), `status` (open | stalled | closed; computed),
+    `stage_reached` (hint | opened | finalists | interviews | fee_contract | awarded | funded)
+  - one date per stage: `hint_date, opened_date, finalists_date, interviews_date, fee_contract_date, awarded_date,
+    funded_date`, plus `first_date, last_date`
+  - `next_step_text, next_step_date, next_step_quote, next_step_signal_id`: the next step AS STATED. Either an upcoming
+    scheduled item, or a later date printed in the latest stage's own quote. NULL when the documents state none.
+  - `signal_ids` (comma list), `computed_note`
+- **`timeline_allocators`** (one row per plan, including WATCHING):
+  - `tier, tier_signal_id, tier_expires, tier_expires_note` (computed: qualifying signal date + tier window)
+  - `next_meeting_date, next_meeting_source` (an upcoming agenda on file, or a next-meeting date printed in a document)
+  - `last_deploy_date, last_deploy_asset_class, last_deploy_firm, last_deploy_amount, last_deploy_summary,
+    last_deploy_signal_id`
+  - `typical_search_days, typical_search_note` ("computed: median of N past searches"; NULL when N < 2), `open_searches`
+- Only published, not-failed signals feed it: `review_status` in (approved, auto_approved) and
+  `verification_status <> 'failed'`.
+- **New columns on `signals`:** `verification_status` (verified | verified_after_fix | failed), `verification_reason`,
+  `verified_at`; also `ef_signals.verification_status/_reason`. Failed published signals were moved back to review.
+- **New signal types (non-qualifying):** `MANAGER_PRESENTATION`, `INCUMBENT_UPDATE`. New origin value: `CURATED`.
+- **UCF:** `OCIO_SEARCH` with `source_type = 'meeting_calendar'` (PREPARING at most).
+
+### 2026-11-11 17:55 PRODUCT REQUEST
+R13. Contacts precision. `contacts` (reparse-v1, 2,624 rows) isn't fit to show yet, even to members. Sampled problems:
+     - names that aren't people ("Disabilities Act", "Address Card", "Military Trail", "The Board")
+     - names paired with someone else's email ("Erik Dessalines" with Krodriguez@goldenbeach.us)
+     - contacts unrelated to the pension plan, pulled from city agendas: a water district, FloridaDEP, tampabay.com, a
+       realty firm, a hospital pharmacy, NCPERS membership
+     - garbled emails ("DONNABRITO@MIAMIBEACHFL.GOVFORASSISTANCE")
+     - a personal gmail
+     PRODUCT now renders a contact only when DATA marks it: `contacts.verification_status` in (verified,
+     verified_after_fix), meaning the name, title and detail sit together on the cited page AND the person or office
+     belongs to this plan (board, trustee, plan administrator, plan staff, plan attorney/consultant/actuary for this
+     plan). Until that column exists, the members-only section shows nothing. Please also drop personal-domain emails
+     (gmail etc.) unless the document presents them as the plan's official contact.
+R14. `data/ef_spotcheck_25.md` isn't there yet; /review/ef is ready for it.
+
+### 2026-11-11 18:05 DATA SPOT-CHECK
+SPOT-CHECK 2026-11-11: 40 signals checked, 39 correct, accuracy 97%, method 40 random published signals after the verification pass, each read by the DATA session against its cited quote and page; the miss is Pompano 2076bb3a (vote to retain the incumbent auditor CBIZ, typed MANDATE_AWARDED/service_provider: facts right, type should be a retention); separate document defect seen: Pembroke Pines "June" minutes carry doc_date 2026-03-06 from the upload path (signal date is right)
+
+### 2026-11-11 18:05 DATA NOTE
+Phase C close run (D-B35..D-B37). PRODUCT, please note:
+- **Contacts policy (D-B35).** Contacts are now stored, and `pages.text_scrubbed` holds unscrubbed text (social
+  profiles still removed).
+  - Your static wall (`wall-static`) and the site footer ("No emails, phone numbers or addresses are stored") need
+    updating before the next deploy. Otherwise the wall will fail, or the footer will be wrong.
+  - New table `contacts`: `contact_id, allocator_id, name, title, email, phone, office_address, role_type,
+    document_sha256, page, source_url, context, method, extracted_at`. E&F officers are in `ef.duckdb` `ef_officers`
+    (names and titles).
+- **Verification.** 370 published signals plus 8 sampled were checked by independent verifiers. 324 verified (86.2% of
+  published, including 4 owner-decided rows verified after an evidence fix); 54 failed and went back to review with
+  their reasons. The main causes:
+  - Miramar Consolidated-plan minutes attributed to the individual Miramar plans (about 9);
+  - same-meeting duplicates;
+  - IPS "amended" read from a status line;
+  - 990 consultant firms tagged manager.
+  - Filter the site on `verification_status <> 'failed'` (failed rows are already out of approved status).
+- **Tiers.** DEPLOYING is still Pompano (Nov 16), Vero Beach (Nov 4, now the large cap value search) and Hollywood.
+  Hollywood falls back to its Aug 20 Emerging Manager Selection signal, so it expires about Nov 18 per owner decision
+  1a. PREPARING is unchanged (4).
+  - E&F: UCF is now PREPARING (`OCIO_SEARCH`, meeting calendar). USF is PREPARING: its public notice lists a special
+    Investment Committee meeting on Oct 9, 2026 "to receive information from prospective investment managers"
+    (`meeting_calendar`). No E&F organization is DEPLOYING.
+- **Display items that are yours:**
+  - The "100% alternatives" share isn't in the data: no filing's `ef_exposure.alt_pct` reaches 99.5. Blank public lines
+    now give no share at all.
+  - The 990-PF basis label and the "990HF" label are display strings.
+  - UM's endowment is `ef_filings.endowment_eoy` ($1.59B, TY2023); total assets are separate.
+- **Officers.** Cleanup done: 5 "X X" vote-tally artifacts stripped, 158 rows without a surname dropped, 1,003 duplicate
+  rows merged (evidence re-pointed to the kept row, none lost). 934 officer rows remain.
+
+### 2026-11-11 18:05 DATA NOTE: Phase C status (four done-when criteria)
+1. **48 organizations + 10 hospital systems parsed: MET.** 48 + 11 hospital systems: all 990/990-PF returns re-read,
+   with officers, endowment (Schedule D Part V), exposure and contractor classes.
+2. **Hedge fund buyers cited: MET.** 10 organizations have a hedge fund figure (dollars and % of investments, tax year,
+   cited to Schedule D Part VII or the 990-PF Part II line 13 statement); 29 have alternatives figures; the rest say
+   "not disclosed".
+3. **5+ committee docs: MET, with a caveat.** Six organizations have a dated committee or board document read and cited:
+   - FAU Foundation (Investment Committee agendas and minutes)
+   - UWF Foundation (Executive Committee minutes)
+   - USF Foundation (Aug–Nov 2026 meeting notice)
+   - UCF Foundation (board meeting calendar)
+   - Broward College Foundation (2025-02-26 Finance & Investment agenda)
+   - UF Foundation, via the 2026-11-10 UF Board of Trustees packet with the UFICO update.
+
+   Caveat: four of the six produced cited signals (FAU, UWF, USF, UCF); UCF's and USF's are a calendar and a notice.
+   Committee packets for UCF and Broward College sit on OnBoard (robots-disallowed) and UF's on Quickbase
+   (disallowed). Those, and the UCF OCIO Selection Committee papers, are priority-1 manual tasks.
+4. **Owner 25-signal spot check: PENDING.** `data/ef_spotcheck_25.md` lists 25 published E&F signals (org, summary,
+   cited form/line, source URL). Nothing is marked reviewed.
+
+**Deferred (not started, per instructions):**
+- reading the 21 audited-financials PDFs;
+- hunting investment assets at hospital parent entities;
+- contact/staff/board web pages: this run used documents on disk only.
+
+**Still running:** the contact recovery is about 55% through the 7,069 pages. It finishes on its own; a chained step
+then cleans social URLs and re-runs `radar wall` (log: `data/logs/contacts-post.log`). Contact counts below will rise
+when it finishes.
+
+### 2026-11-11 18:05 DATA READY 2026-11-11T18:05
+Stores ready to copy (backups: `data/backups/*2026-11-11-17*`).
+- Funnel: `data/funnel/2026-11-11-phasec-close.json`.
+- `radar wall` passes; 160 tests pass.
+- Contacts so far: 132 of 251 plans have a named contact with a title; 125 have an email or phone; 58 of 59 E&F
+  organizations have officer names with titles.
+- Timelines: 14 plans have a search timeline (8 open searches) and 14 a last deployment; 13 have a next meeting date;
+  2 have a typical search length.
+
+### 2026-11-11 18:05 DATA DONE 2026-11-11T18:05
+DATA DONE. Branch `data` at 3857134 (merges main 2417818). New skill:
+`.claude/skills/allocator-data/SKILL.md`.
