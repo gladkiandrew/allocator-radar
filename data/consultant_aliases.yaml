@@ -1,0 +1,69 @@
+# Investment consultant names: printed variant -> one canonical name (D-B18).
+# Loaded into entity_aliases (kind consultant, method curated) by `radar resolve`. Non-destructive: every row keeps
+# the name as printed; only display and grouping use the canonical name. Firm names only (no people).
+# Built from the 60 distinct consultant names in the corpus on 2026-11-10.
+
+canonical:
+  Mariner Institutional:
+    # The Bogdahn Group renamed itself AndCo Consulting (2016); AndCo became part of Mariner (Mariner Institutional).
+    - AndCo
+    - AndCo Consulting
+    - AndCo Consulting, Inc.
+    - Andco Consulting, LLC
+    - Mariner
+    - MARINER
+    - Mariner (AndCo)
+    - Mariner (AndCo) Consulting
+    - Mariner (formerly AndCo)
+    - Mariner Consulting
+    - MARINER CONSULTING
+    - Mariner Institutional (formerly AndCo Consulting)
+    - Mariner Institutional, LLC
+    - MARINER ASSET CONSULTING
+    - The Bogdahn Group
+    - THE BOGDAHN GROUP.
+  Segal Marco Advisors:
+    - Segal Marco
+    - Segal Advisors, Inc.
+  Burgess Chambers & Associates:
+    - BCA
+    - Burgess Chambers & Associates, Inc.
+    - Burgess Chambers and Associates
+    - Burgess Chambers and Associates, Inc.
+  Dahab Associates:
+    - DAHAB ASSOCIATES, INC.
+    - Dahab & Associates
+    - Dahab Associates, Inc.
+  Southeastern Advisory Services:
+    - Southeastern Advisory
+    - Southeastern Advisory Services, Inc.
+    - SE Advisory
+  Meketa Investment Group:
+    - Meketa
+    - MEKETA
+    - MEKETA INVESTMENT CONSULTANTS
+    - MEKETA.COM
+  CAPTRUST:
+    - CapTrust
+  NEPC:
+    - NEPC Financial Advisors
+  Asset Consulting Group:
+    - Asset Consulting Group (ACG)
+  Graystone Consulting: []   # Morgan Stanley's consulting unit; one spelling in the corpus so far
+
+# Judgment calls and open questions. Listed for the owner; none of these are mapped.
+unsure:
+  - name: Segal
+    note: Could be Segal Marco Advisors (investment consulting) or The Segal Group (actuarial). Left unmapped.
+  - name: MARINER ASSET CONSULTING
+    note: Mapped to Mariner Institutional. No other firm by that name in the corpus, but confirm on the source page.
+  - name: Cambridge
+    note: Probably Cambridge Associates. Too short to map with confidence.
+  - name: Milliman / Milliman, Inc.
+    note: Usually the plan actuary, not the investment consultant. The extractor may have mislabelled it.
+  - name: Heitman, Invesco, Stockbridge, Sterling
+    note: Investment managers, not consultants. Likely extractor mislabels; candidates for correction on review.
+  - name: MetLife / Metlife, SitusAMC
+    note: An insurer and a valuation firm, not investment consultants. Likely mislabels.
+  - name: Townsend, Aksia, Albourne
+    note: Real consultants (real estate, hedge fund, alternatives specialists). Kept as their own names.

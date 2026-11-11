@@ -60,10 +60,33 @@ def _names(con, kind: str) -> list[str]:
     return sorted({r[0].strip() for r in con.execute(q).fetchall() if r[0] and r[0].strip()})
 
 
+CURATED_FILE = "consultant_aliases.yaml"
+
+
+def load_curated(con) -> int:
+    """Curated consultant aliases (data/consultant_aliases.yaml, D-B18). They override auto aliases."""
+    import yaml
+
+    from radar.settings import REPO_ROOT
+
+    path = REPO_ROOT / "data" / CURATED_FILE
+    if not path.exists():
+        return 0
+    cfg = yaml.safe_load(path.read_text()) or {}
+    n = 0
+    for canon, aliases in (cfg.get("canonical") or {}).items():
+        for alias in aliases or []:
+            con.execute("INSERT OR REPLACE INTO entity_aliases VALUES ('consultant', ?, ?, 'curated', 1.0, 'owner-file', now())",
+                        [alias.strip(), canon])
+            n += 1
+    return n
+
+
 def run() -> dict:
     stats = {"auto": 0}
     with db.connect() as con:
         con.execute(DDL)
+        stats["curated"] = load_curated(con)
         for kind in ("consultant", "manager"):
             names = _names(con, kind)
             known = dict(con.execute("SELECT alias, canonical FROM entity_aliases WHERE kind = ?", [kind]).fetchall())
@@ -78,10 +101,16 @@ def run() -> dict:
                     s = score(n, c)
                     if s > best_s:
                         best, best_s = c, s
-                if best and best_s >= 0.95:
+                target = known.get(best, best) if best else None
+                if best and best_s >= 0.95 and target != n:  # never alias two names to each other (D-B18)
                     con.execute("INSERT INTO entity_aliases VALUES (?, ?, ?, 'auto', ?, 'resolver', now()) ON CONFLICT DO NOTHING",
-                                [kind, n, known.get(best, best), best_s])
+                                [kind, n, target, best_s])
+                    known[n] = target
                     stats["auto"] += 1
+        # clean up cycles left by earlier runs: drop an auto alias whose canonical is itself aliased back to it
+        con.execute("""DELETE FROM entity_aliases a WHERE a.method = 'auto' AND EXISTS (
+                           SELECT 1 FROM entity_aliases b WHERE b.kind = a.kind AND b.alias = a.canonical
+                             AND b.canonical = a.alias AND b.alias < a.alias)""")
     return stats
 
 

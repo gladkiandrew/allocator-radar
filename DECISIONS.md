@@ -317,3 +317,11 @@ are the irreversible ones, which went to the repo owner.
   means only "candidate pages waiting for `radar extract`". New gap causes with a per-plan reason:
   NEEDS_HUMAN_DOWNLOAD (listing hosts not fetchable automatically), NO_DOCS (crawled, nothing readable listed),
   UNREADABLE (documents are image scans with no text after OCR).
+- **D-B18 Consultant canonicalization.** `data/consultant_aliases.yaml` (tracked; the rest of `data/` stays
+  ignored) maps printed consultant names to one canonical name: Mariner Institutional (AndCo, AndCo Consulting,
+  Mariner variants, The Bogdahn Group, its predecessor), Segal Marco Advisors, Burgess Chambers & Associates,
+  Dahab Associates, Southeastern Advisory Services, Meketa Investment Group, CAPTRUST, NEPC, Asset Consulting
+  Group. `radar resolve` loads them as `curated` aliases that override auto aliases; rows keep the printed name.
+  59 printed consultant names -> 27. Ambiguous names (Segal alone, Cambridge) and likely extractor mislabels
+  (managers, an insurer, an actuary named as consultant) are listed under `unsure:` and left unmapped. Fixed a
+  resolver bug that aliased two spellings to each other (MetLife/Metlife); a cleanup removes such cycles.
