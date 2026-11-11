@@ -1,5 +1,6 @@
 # THE WALL — machine-checked rules. Changing this file requires the repo owner's review.
-banned_column_pattern: "(email|phone|mobile|fax|address|street|zip|linkedin|twitter|handle|dob|ssn)"
+# D-B35 (owner 2026-11-11): contact columns (email, phone, office address) are allowed; pay and identity numbers are not.
+banned_column_pattern: "(linkedin|twitter|handle|dob|ssn|salary|compensation|pay_amount)"
 
 # Only these HTTP methods ever leave the crawler.
 crawler_methods: [GET, HEAD]

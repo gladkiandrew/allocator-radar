@@ -140,6 +140,16 @@ def read_document(client, provider, ein: str, url: str, label: str) -> dict:
     r = client.get(url)
     if r.status != 200 or not r.content.startswith(b"%PDF"):
         return {"url": url, "error": f"status {r.status}, not a PDF"}
+    return read_bytes(provider, ein, url, label, r.content)
+
+
+def read_bytes(provider, ein: str, url: str, label: str, content: bytes, org_name: str | None = None) -> dict:
+    """Read a committee/board PDF already in hand (fetched now, or stored in the lake from a staged download, D-B34)."""
+    from radar.settings import load_yaml
+
+    class _R:  # keep the body below unchanged
+        pass
+    r = _R(); r.content = content
     pages = _pages(r.content)
     keep = [i for i, t in enumerate(pages) if PREFILTER.search(t)][:MAX_PAGES]
     res = CResult()
@@ -149,7 +159,7 @@ def read_document(client, provider, ein: str, url: str, label: str) -> dict:
                                    purpose="ef-committee")
     excluded = set((load_yaml("auto_approval.yaml") or {}).get("excluded_signal_types", []))
     sha = hashlib.sha256(r.content).hexdigest()
-    cite_label = citation_label(SOURCES.get(ein, {}).get("name", ""), label, url, res.document_date, res.document_kind)
+    cite_label = citation_label(org_name or SOURCES.get(ein, {}).get("name", ""), label, url, res.document_date, res.document_kind)
     kept = dropped = 0
     with store.connect() as con:
         con.execute("INSERT OR REPLACE INTO ef_documents (sha256, ein, url, title, doc_date, doc_type, page_count) "

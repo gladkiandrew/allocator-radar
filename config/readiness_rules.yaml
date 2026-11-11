@@ -44,12 +44,15 @@ tiers:
       - IPS_AMENDED
       - ASSET_LIABILITY_STUDY
       - PACING_PLAN_ADOPTED
-      - CONSULTANT_CHANGED
+      # CONSULTANT_CHANGED removed (owner 2026-11-11): service providers never drive a manager tier (D-B36)
+      - OCIO_SEARCH                 # owner 2026-11-11: an OCIO search seen only on a meeting calendar is PREPARING at most
       - MANAGER_ON_WATCH
       - MANAGER_TERMINATED
     qualifiers:
       MANDATE_AWARDED: [manager]
       TARGET_ALLOCATION_CHANGED: [increase]
+    future_days:
+      OCIO_SEARCH: 90               # the calendar lists an upcoming selection-committee meeting
 
 coverage:
   stale_after_days: 120

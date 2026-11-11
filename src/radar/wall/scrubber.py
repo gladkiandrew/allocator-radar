@@ -51,7 +51,8 @@ PATTERNS: dict[str, re.Pattern[str]] = {
     "po_box": re.compile(r"\bP\.?\s?O\.?\s?Box\s+\d+\b", re.I),
     "state_zip": re.compile(r"\b(?:FL|Florida|NY|New York)\.?,?\s+\d{5}(?:-\d{4})?\b"),
     "social_url": re.compile(
-        r"(?:https?://)?(?:www\.)?(?:linkedin\.com/in/|x\.com/|twitter\.com/|instagram\.com/|facebook\.com/)[^\s)>\]]*",
+        # left boundary: "webex.com/" and "fedex.com/" are not x.com (D-B35 fix)
+        r"(?<![\w.-])(?:https?://)?(?:www\.)?(?:linkedin\.com/in/|x\.com/|twitter\.com/|instagram\.com/|facebook\.com/)[^\s)>\]]*",
         re.I,
     ),
     "contact_block": re.compile(r"(?im)^[ \t]*(?:contact|contact person|contact info(?:rmation)?)\s*:.*$"),
@@ -158,9 +159,20 @@ class ScrubResult:
     redactions: int
 
 
+CONTACT_KINDS = {"email", "mailto", "phone", "phone_label", "fax", "street", "state_zip", "po_box", "contact_block", "gliner"}
+
+
+def contacts_allowed() -> bool:
+    from radar.settings import get_settings
+    return not get_settings().scrub_contacts
+
+
 def scrub(text: str, *, use_gliner: bool | None = None) -> ScrubResult:
     if not text:
         return ScrubResult(text or "", 0)
+    if contacts_allowed():  # D-B35: contacts are kept; only person social-profile URLs are still removed
+        hits = [(h.start, h.end) for h in detect(text) if h.kind not in CONTACT_KINDS]
+        return ScrubResult(_apply(text, _merge(hits)), len(hits)) if hits else ScrubResult(text, 0)
     if use_gliner is None:
         from radar.settings import get_settings
 

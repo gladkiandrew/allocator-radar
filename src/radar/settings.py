@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     flag_presidio: bool = False  # TODO: Presidio recognizers in addition to regex + GLiNER
     flag_two_family_adjudication: bool = False  # TODO: second model family for TERMINATED/ON_WATCH
     flag_gliner: bool = True  # GLiNER PII pass in the scrubber (regex always runs)
+    # D-B35 (owner 2026-11-11): the product is behind a login; contacts (emails, phones, office addresses) shown in lawfully
+    # reached sources are STORED. True restores the old Wall (scrub contacts everywhere). Individual pay is never stored.
+    scrub_contacts: bool = False
     flag_docling_tables: bool = False  # Docling table structure on hit pages
     flag_ocr: bool = True  # local OCR (Apple Vision / Tesseract) for scanned pages; output is scrubbed like any text
 

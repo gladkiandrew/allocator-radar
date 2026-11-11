@@ -61,6 +61,9 @@ def check_sweep(con, extra_tokens: list[str] | None = None) -> list[str]:
                                    ("evidence", "source_url"), ("allocators", "home_url"), ("allocator_pages", "url")}
         for (val,) in con.execute(f'SELECT "{col}" FROM "{table}" WHERE "{col}" IS NOT NULL').fetchall():
             hits = detect(val)
+            from radar.wall.scrubber import CONTACT_KINDS, contacts_allowed
+            if contacts_allowed():  # D-B35: contacts are stored on purpose; social profiles and canaries still fail
+                hits = [h for h in hits if h.kind not in CONTACT_KINDS]
             if url_col:  # public document URLs: digit runs in filenames are not phone numbers
                 hits = [h for h in hits if h.kind in ("email", "mailto", "social_url")]
             if hits:
@@ -127,6 +130,10 @@ def check_dependencies() -> list[str]:
 def run_canary() -> list[str]:
     """Push the canary packet through the real ingest + parse path in a temp store."""
     import os
+
+    from radar.wall.scrubber import contacts_allowed
+    if contacts_allowed():  # D-B35: contacts are stored on purpose, so the contact canary no longer applies
+        return []
 
     from radar import settings as S
 
