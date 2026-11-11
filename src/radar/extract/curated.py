@@ -1,4 +1,4 @@
-"""Curated extraction (D-B22): a signal read off a page by the data session when the extraction pass missed it.
+"""Curated extraction (D-B24): a signal read off a page by the data session when the extraction pass missed it.
 
 It is held to the extractor's own validators: the quote must be on the cited page, the quote must share the
 summary's specific names or numbers (supports()), the summary must pass the lint and the contact detector, and the date must fall in

@@ -47,7 +47,7 @@ BucketLit = Literal[
     "STRUCTURED_CREDIT", "CONVERTIBLE_ARB", "FIXED_INCOME_RV", "GLOBAL_MACRO", "MANAGED_FUTURES_CTA",
     "MULTI_STRATEGY", "FUND_OF_HEDGE_FUNDS", "QUANT_SYSTEMATIC", "VOLATILITY", "INSURANCE_LINKED", "COMMODITIES",
     "DIGITAL_ASSETS", "PRIVATE_CREDIT", "PRIVATE_EQUITY", "VENTURE", "REAL_ESTATE", "INFRASTRUCTURE",
-    "NATURAL_RESOURCES", "LONG_ONLY_EQUITY", "LONG_ONLY_FIXED_INCOME", "CASH_OVERLAY", "OTHER",
+    "NATURAL_RESOURCES", "LONG_ONLY_EQUITY", "LONG_ONLY_FIXED_INCOME", "LONG_ONLY_CONVERTIBLES", "CASH_OVERLAY", "OTHER",
 ]
 
 
@@ -206,7 +206,7 @@ def _num_in(v: float, quote: str) -> bool:
 
 
 def _as_of(s: str, today: date) -> date | None:
-    """Holdings, officers, consultants and facts read off an agenda for an upcoming meeting (D-B23): a date up to
+    """Holdings, officers, consultants and facts read off an agenda for an upcoming meeting (D-B25): a date up to
     90 days ahead is the meeting date, and the row is true as of the day the agenda was read, so it is dated today."""
     d = _date(s, today + timedelta(days=90))
     return min(d, today) if d else None
@@ -310,11 +310,13 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
             link("signal", existing[0], eid)
             continue
         sid = new_id()
-        from radar.buckets import hf_relevant
+        from radar.buckets import hf_relevant, signal_bucket
+        bucket, blabel = signal_bucket(s.signal_type, q, summary, s.quote)
         con.execute(
             "INSERT INTO signals (signal_id, allocator_id, signal_type, qualifier, event_date, observed_at, summary, "
-            "review_status, origin, dedupe_key, hf_relevant) VALUES (?, ?, ?, ?, ?, now(), ?, 'new', 'MACHINE', ?, ?)",
-            [sid, aid, s.signal_type, q, d, summary, key, hf_relevant(None, summary)])
+            "review_status, origin, dedupe_key, hf_relevant, bucket, bucket_label) "
+            "VALUES (?, ?, ?, ?, ?, now(), ?, 'new', 'MACHINE', ?, ?, ?, ?)",
+            [sid, aid, s.signal_type, q, d, summary, key, hf_relevant(bucket, summary, blabel), bucket, blabel])
         link("signal", sid, eid)
         if auto_actor:
             con.execute("UPDATE signals SET review_status = 'approved', reviewed_by = ?, reviewed_at = now(), "
@@ -393,7 +395,7 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
             ckey = _dedupe_key(aid, label, d)
             if not con.execute("SELECT 1 FROM consultant_engagements WHERE dedupe_key = ?", [ckey]).fetchone():
                 cid = new_id()
-                con.execute("INSERT INTO consultant_engagements VALUES (?, ?, ?, ?, ?)", [cid, aid, label[:160], d, ckey])
+                con.execute("INSERT INTO consultant_engagements (engagement_id, allocator_id, consultant_name_as_disclosed, as_of, dedupe_key) VALUES (?, ?, ?, ?, ?)", [cid, aid, label[:160], d, ckey])
                 link("engagement", cid, eid)
 
     for c in res.consultants:
@@ -408,13 +410,13 @@ def _store(con, meta: dict, pages: dict[int, str], res: XResult, prompt_hash: st
             link("engagement", row[0], eid)
             continue
         cid = new_id()
-        con.execute("INSERT INTO consultant_engagements VALUES (?, ?, ?, ?, ?)", [cid, aid, c.consultant_name[:160], d, key])
+        con.execute("INSERT INTO consultant_engagements (engagement_id, allocator_id, consultant_name_as_disclosed, as_of, dedupe_key) VALUES (?, ?, ?, ?, ?)", [cid, aid, c.consultant_name[:160], d, key])
         link("engagement", cid, eid)
         stats["consultants"] += 1
     return stats
 
 
-SEARCH_SCAN_VERSION = "search-scan-3"  # v2 adds SEARCH_SCHEDULED; v3 adds fee negotiations and manager comparisons (D-B22)
+SEARCH_SCAN_VERSION = "search-scan-3"  # v2 adds SEARCH_SCHEDULED; v3 adds fee negotiations and manager comparisons (D-B24)
 CONSULTANT_SCAN_VERSION = "consultant-scan-1"
 CONSULTANT_VOCAB = re.compile(
     r"investment consultant|performance consultant|investment monitor|consultant|consulting|"
@@ -433,7 +435,7 @@ SEARCH_VOCAB = re.compile(r"request for (proposals?|qualifications?|information)
                           # D-B16: new-manager hires and fund commitments recorded without the word "search"
                           r"new investment managers?|managers? candidates?|candidates? for the|subscription documents?|"
                           r"subscription agreements?|side letters?|finalist presentations?|"
-                          # D-B22: the steps either side of interviews
+                          # D-B24: the steps either side of interviews
                           r"fee (?:discussions?|negotiations?) with|contract negotiations?|"
                           r"(?:cap|equity|income|credit|estate|value|growth|core) (?:manager )?(?:analysis|comparison|review of candidates)", re.I)
 SEARCH_FOCUS = """

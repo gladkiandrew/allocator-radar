@@ -50,6 +50,13 @@ canonical:
   Asset Consulting Group:
     - Asset Consulting Group (ACG)
   Graystone Consulting: []   # Morgan Stanley's consulting unit; one spelling in the corpus so far
+  Cambridge Associates:
+    # every bare "Cambridge" in the corpus is the FL SBA's per-deal consultant column (its alternatives consultant)
+    - Cambridge
+
+# Names printed in the SBA's per-deal "Consultant" column that are the deal's own manager or servicer, not a consultant.
+# consultant_engagements rows for them carry role = per_deal_manager (D-B31); the site does not show them as consultants.
+not_consultant: [Stockbridge, Heitman, Invesco, MetLife, Metlife, SitusAMC]
 
 # Judgment calls and open questions. Listed for the owner; none of these are mapped.
 unsure:
@@ -57,8 +64,6 @@ unsure:
     note: Could be Segal Marco Advisors (investment consulting) or The Segal Group (actuarial). Left unmapped.
   - name: MARINER ASSET CONSULTING
     note: Mapped to Mariner Institutional. No other firm by that name in the corpus, but confirm on the source page.
-  - name: Cambridge
-    note: Probably Cambridge Associates. Too short to map with confidence.
   - name: Milliman / Milliman, Inc.
     note: Usually the plan actuary, not the investment consultant. The extractor may have mislabelled it.
   - name: Heitman, Invesco, Stockbridge, SitusAMC, Cambridge, Mercer, Aksia

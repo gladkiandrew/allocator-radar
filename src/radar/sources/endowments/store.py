@@ -3,7 +3,7 @@ pipeline for the main database's write lock and never changes the pension schema
 
 THE WALL: no column may match config/wall.yaml banned_column_pattern (email, phone, address ...).
 Names stored: organizations', firms', and officers', directors' and trustees' names with their titles as printed
-(D-B26). Never stored: anyone's compensation, hours, benefits, address or contact details.
+(D-B28). Never stored: anyone's compensation, hours, benefits, address or contact details.
 """
 
 from __future__ import annotations
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS ef_signals (
 
 
 MIGRATIONS = [
-    # D-B26: re-read filings
+    # D-B28: re-read filings
     "ALTER TABLE ef_filings ADD COLUMN IF NOT EXISTS endowment_eoy DOUBLE",       # Sch. D Part V line 1g (a)
     "ALTER TABLE ef_filings ADD COLUMN IF NOT EXISTS endowment_boy DOUBLE",       # Sch. D Part V line 1a (a)
     "ALTER TABLE ef_filings ADD COLUMN IF NOT EXISTS investments_program DOUBLE", # 990 Part X line 13
@@ -82,7 +82,9 @@ MIGRATIONS = [
     "ALTER TABLE ef_filings ADD COLUMN IF NOT EXISTS officers_read BOOLEAN DEFAULT false",
     "ALTER TABLE ef_contractors ADD COLUMN IF NOT EXISTS contractor_class VARCHAR",  # manager|consultant|custodian|bank|law_firm|other
     "ALTER TABLE ef_contractors ADD COLUMN IF NOT EXISTS class_basis VARCHAR",
-    "ALTER TABLE ef_other_investments ADD COLUMN IF NOT EXISTS value_status VARCHAR",  # stated | not_stated (placeholder 0/$1)
+    "ALTER TABLE ef_other_investments ADD COLUMN IF NOT EXISTS value_status VARCHAR",
+    "ALTER TABLE ef_other_investments ADD COLUMN IF NOT EXISTS valuation VARCHAR",   # F/C (Sch. D VII) or AT COST/FMV (990-PF)
+    "ALTER TABLE ef_filings ADD COLUMN IF NOT EXISTS investments_other_book DOUBLE",  # 990-PF Part II line 13 book value  # stated | not_stated (placeholder 0/$1)
     """CREATE TABLE IF NOT EXISTS ef_officers (     -- names and titles as printed; nothing else about the person
         object_id VARCHAR, ein VARCHAR, tax_year INTEGER, name_as_printed VARCHAR, title_as_printed VARCHAR, role VARCHAR,
         cite VARCHAR)""",

@@ -1,4 +1,4 @@
-"""Data-session fixes (D-B22, D-B23 and later)."""
+"""Data-session fixes (D-B24, D-B25 and later)."""
 
 from datetime import date, timedelta
 

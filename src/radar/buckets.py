@@ -18,7 +18,8 @@ HF_TEXT = re.compile(r"hedge|absolute return|diversifying|managed futures|\bcta\
 
 # (pattern on "asset class | style | name", bucket). First match wins; order matters.
 RULES = [
-    (r"managed futures|\bcta\b|trend", "MANAGED_FUTURES_CTA"),
+    # D-B30 / R3: narrower hedge-fund words (commentary says "trend", "systematic", "board insurance")
+    (r"managed futures|\bcta\b|trend[- ]following", "MANAGED_FUTURES_CTA"),
     (r"global macro|\bmacro\b|pure alpha", "GLOBAL_MACRO"),
     (r"multi[- ]?strat", "MULTI_STRATEGY"),
     (r"fund of hedge|hedge fund of funds", "FUND_OF_HEDGE_FUNDS"),
@@ -26,22 +27,26 @@ RULES = [
     (r"market neutral", "EQUITY_MARKET_NEUTRAL"),
     (r"long[/ -]short equity|equity long[/ -]short", "EQUITY_LONG_SHORT"),
     (r"merger arb", "MERGER_ARB"),
+    (r"convertible arb", "CONVERTIBLE_ARB"),
     (r"event driven", "EVENT_DRIVEN"),
     (r"distressed", "DISTRESSED"),
-    (r"style premia|risk premia|quant|systematic", "QUANT_SYSTEMATIC"),
+    (r"style premia|risk premia|\bquant(?:itative)?\b|systematic (?:strateg|macro|equity|trend)", "QUANT_SYSTEMATIC"),
     (r"tactical credit|credit long|credit gamma|credit opportunit", "CREDIT_LONG_SHORT"),
-    (r"insurance|reinsurance|catastrophe|\bils\b", "INSURANCE_LINKED"),
+    (r"insurance[- ]linked|reinsurance|catastrophe bond|\bils\b|^\s*insurance\s*$", "INSURANCE_LINKED"),
     (r"hedge", "MULTI_STRATEGY"),
+    (r"bitcoin|\bibit\b|digital assets?|crypto", "DIGITAL_ASSETS"),
     (r"direct lending|private credit|private debt|credit facility|mezzanine", "PRIVATE_CREDIT"),
-    (r"venture", "VENTURE"),
-    (r"private equity|buyout|growth equity|co-?invest|\bpe\b|secondar", "PRIVATE_EQUITY"),
-    (r"real estate|\bre\b|joint venture|multifamily|logistics|reit", "REAL_ESTATE"),
+    (r"(?<!joint )venture", "VENTURE"),
+    (r"private equity|buyout|(?<!cap )growth equity|co-?invest|\bpe\b|secondar", "PRIVATE_EQUITY"),
+    (r"real estate|joint venture|multifamily|logistics|\breit", "REAL_ESTATE"),
     (r"infrastructure", "INFRASTRUCTURE"),
-    (r"natural resources|energy|oil|gas|timber|agricultur", "NATURAL_RESOURCES"),
+    (r"natural resources|\benergy\b|\boil\b|\bgas\b|timber|agricultur", "NATURAL_RESOURCES"),
     (r"commodit", "COMMODITIES"),
-    (r"high yield|emerging market(s)? debt|\bemd\b|core fixed|fixed income|active credit|bond|treasur", "LONG_ONLY_FIXED_INCOME"),
-    (r"equity|large cap|small cap|mid cap|\brei\b", "LONG_ONLY_EQUITY"),
-    (r"cash", "CASH_OVERLAY"),
+    (r"convertible", "LONG_ONLY_CONVERTIBLES"),
+    (r"high yield|emerging market(s)? debt|\bemd\b|core fixed|core plus|fixed income|active credit|multi[- ]sector credit|"
+     r"(?:ultra[- ]?)?short(?:[- ]term)? duration|ultra[- ]?short|bank loans?|\btips\b|bond|treasur", "LONG_ONLY_FIXED_INCOME"),
+    (r"equity|(?:large|mid|small|smid|all)[- ]?cap|\bsmid\b|\brei\b|international|index fund|s&p|passive", "LONG_ONLY_EQUITY"),
+    (r"cash overlay|cash equivalents|cash management|money market|short[- ]term investment fund", "CASH_OVERLAY"),
 ]
 _RULES = [(re.compile(p, re.I), b) for p, b in RULES]
 
@@ -78,3 +83,32 @@ def hf_relevant(bucket: str | None, *labels: str | None) -> bool:
     """Bucket in the hedge-fund set, or the source's own asset-class/style label says hedge fund, absolute return,
     diversifying, managed futures, multi-strategy (fund names are not used: "Opportunities Fund" is not a strategy)."""
     return bool((bucket and bucket in HF_BUCKETS) or any(t and HF_TEXT.search(t) for t in labels))
+
+
+# ---------------- signal buckets (D-B30) ----------------
+# Non-strategy values: a service-provider or consultant engagement, or an event about the whole plan.
+NON_STRATEGY = {"SERVICE_PROVIDER", "TOTAL_PLAN"}
+TOTAL_PLAN_TYPES = {"IPS_AMENDED", "ASSET_LIABILITY_STUDY", "PACING_PLAN_ADOPTED", "REBALANCE_APPROVED", "CIO_CHANGED"}
+
+
+def _match(text: str) -> tuple[str, str] | None:
+    for pat, b in _RULES:
+        if (m := pat.search(text or "")):
+            return b, m.group(0)
+    return None
+
+
+def signal_bucket(signal_type: str, qualifier: str | None, summary: str, quote: str | None) -> tuple[str, str | None]:
+    """(bucket, bucket_label). The label is the source's own words, set only when the matched wording is in the quote;
+    a bucket found only in our summary has no label (shown as inferred)."""
+    if qualifier in ("service_provider", "consultant") or signal_type == "CONSULTANT_CHANGED":
+        return "SERVICE_PROVIDER", None
+    q = _match(quote or "")
+    if q:
+        return q[0], q[1]
+    m = _match(summary)
+    if m:
+        return m[0], None
+    if signal_type in TOTAL_PLAN_TYPES or signal_type == "TARGET_ALLOCATION_CHANGED":
+        return "TOTAL_PLAN", None
+    return "OTHER", None

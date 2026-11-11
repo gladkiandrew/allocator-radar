@@ -19,9 +19,36 @@ from pathlib import Path
 BMF_URL = "https://www.irs.gov/pub/irs-soi/eo_fl.csv"
 BMF_SOURCE = "IRS Exempt Organizations Business Master File, eo_fl.csv"
 PP_ORG = "https://projects.propublica.org/nonprofits/organizations/{ein}"
-CAPS = {"UNIVERSITY_FOUNDATION": 12, "PRIVATE_UNIVERSITY": 6, "COMMUNITY_FOUNDATION": 10, "PRIVATE_FOUNDATION": 20}
+CAPS = {"UNIVERSITY_FOUNDATION": 12, "PRIVATE_UNIVERSITY": 6, "COMMUNITY_FOUNDATION": 10, "PRIVATE_FOUNDATION": 20,
+        "HOSPITAL_SYSTEM": 40}
 KIND_LABEL = {"UNIVERSITY_FOUNDATION": "University foundation", "PRIVATE_UNIVERSITY": "Private university",
-              "COMMUNITY_FOUNDATION": "Community foundation", "PRIVATE_FOUNDATION": "Private foundation"}
+              "COMMUNITY_FOUNDATION": "Community foundation", "PRIVATE_FOUNDATION": "Private foundation",
+              "HOSPITAL_SYSTEM": "Hospital system"}
+
+# D-B32: Florida nonprofit hospital systems. Candidates: 501(c)(3), NTEE E20-E24, BMF assets >= $300M. One entry per
+# system, its largest filer; a hospital that belongs to another listed system is left out (it is inside that
+# system's own filing or reported by its parent). Kept in the universe only if the latest 990 shows investments
+# (Part X lines 11-13) of $100M or more (pipeline.prune_hospitals). Subsidiary judgments are listed for review.
+HOSPITAL_MIN_BMF_ASSETS = 300e6
+HOSPITAL_MIN_INVESTMENTS = 100e6
+HOSPITAL_SUBSIDIARIES = {  # EIN -> the listed system it belongs to (left out)
+    "592170012": "AdventHealth (Adventist Health System Sunbelt Inc)",
+    "590624462": "BayCare", "592374556": "BayCare", "590774199": "BayCare", "590855412": "BayCare",
+    "592043026": "BayCare", "590594631": "BayCare", "592593686": "BayCare",
+    "590910342": "Baptist Health South Florida", "590872594": "Baptist Health South Florida",
+    "592447554": "Baptist Health South Florida", "522438452": "Baptist Health South Florida",
+    "453481327": "Nicklaus Children's (Variety Children's Hospital)",
+    "590624371": "Health First", "592477479": "Health First", "264019868": "Health First",
+    "592650464": "Lakeland Regional (Lakeland Regional Medical Center)",
+    "592487136": "Baptist Health Jacksonville (Southern Baptist Hospital of Florida)",
+    "592487135": "Baptist Health Jacksonville (Southern Baptist Hospital of Florida)",
+    "592980620": "Baptist Health Jacksonville (Southern Baptist Hospital of Florida)",
+    "591113901": "AdventHealth", "593140669": "AdventHealth", "590973502": "AdventHealth", "593149293": "AdventHealth",
+    "824372339": "AdventHealth", "842569909": "AdventHealth", "593214635": "AdventHealth", "593256803": "AdventHealth",
+    "592951990": "AdventHealth", "593322533": "Orlando Health", "800764192": "Orlando Health", "593259553": "Orlando Health",
+    "042121377": "Shriners Hospitals for Children", "591711400": "Mount Sinai Medical Center of Florida",
+    "592406425": "Boca Raton Regional Hospital", "845074208": "BayCare", "208488713": "AdventHealth",
+}
 KEEP = ("EIN", "NAME", "CITY", "STATE", "SUBSECTION", "FOUNDATION", "ASSET_AMT", "NTEE_CD", "TAX_PERIOD", "RULING")
 
 UNI = re.compile(r"\b(UNIVERSITY|COLLEGE|INSTITUTE OF TECHNOLOGY)\b")
@@ -63,6 +90,9 @@ def classify(r: dict) -> str | None:
         return "COMMUNITY_FOUNDATION"
     if fc == "04":
         return "PRIVATE_FOUNDATION"
+    if (r.get("SUBSECTION") == "03" and ntee.startswith(("E20", "E21", "E22", "E24"))
+            and (r["ASSET_AMT"] or 0) >= HOSPITAL_MIN_BMF_ASSETS and r["EIN"] not in HOSPITAL_SUBSIDIARIES):
+        return "HOSPITAL_SYSTEM"
     return None
 
 

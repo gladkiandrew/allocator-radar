@@ -131,7 +131,7 @@ def parse_date(text: str) -> date | None:
     if m := re.search(r"(?<!\d)(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])(20\d{2})(?!\d)", t):
         return _mk(int(m[3]), int(m[1]), int(m[2]))
     # March 12, 2026 / Mar 12 2026 / 12 March 2026
-    # also hyphenated file names: February-13-2024-Minutes.pdf (D-B24)
+    # also hyphenated file names: February-13-2024-Minutes.pdf (D-B26)
     if m := re.search(r"\b([A-Za-z]{3,9})\.?[\s-]+(\d{1,2})(?:st|nd|rd|th)?,?[\s-]+(20\d{2})\b", t):
         mo = _MONTHS.get(m[1][:3].lower())
         if mo:

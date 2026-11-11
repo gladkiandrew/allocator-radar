@@ -111,7 +111,7 @@ _KIND = {"MINUTES": "minutes", "AGENDA": "agenda", "MATERIALS": "materials"}
 
 
 def citation_label(org: str, label: str, url: str, doc_date: date | None, kind: str | None) -> str:
-    """Our own citation label (D-B25): organization, committee, document kind and the meeting date read from the
+    """Our own citation label (D-B27): organization, committee, document kind and the meeting date read from the
     document. The listing's link text is not used for the date, because it can be wrong (UWF lists the August 26,
     2026 Executive Committee minutes as "9/26/26 Executive Committee Minutes")."""
     hay = f"{label} {url.rsplit('/', 1)[-1]}"

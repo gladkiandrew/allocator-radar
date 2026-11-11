@@ -6,7 +6,7 @@ the batch for a return, one ranged GET reads the zip's central directory, and on
 single XML member. Every request goes through radar.net.client (allowlist, robots, per-host delay).
 
 THE WALL: a raw return lists officers, trustees, employees, their pay and street addresses. The XML is parsed
-in memory and dropped. Kept: firm names, dollar amounts, line labels, and (owner's decision, D-B26) the names and
+in memory and dropped. Kept: firm names, dollar amounts, line labels, and (owner's decision, D-B28) the names and
 titles of officers, directors and trustees as printed. Never read: any compensation, hours or benefit element, any
 address element, and employees who are not officers, directors, trustees or key employees.
 """
@@ -258,6 +258,7 @@ class OtherInvestment:
     description: str
     book_value: float | None
     fmv: float | None
+    valuation: str | None = None  # Sch. D Part VII MethodValuationCd (F = end-of-year market value, C = cost) / 990-PF "AT COST" or "FMV"
 
 
 @dataclass
@@ -276,11 +277,12 @@ class Filing:
     tax_year: int
     total_assets_eoy: float | None = None
     investments_public_eoy: float | None = None  # 990 Part X line 11 / 990-PF Part II lines 10b+10c
-    investments_other_eoy: float | None = None  # 990 Part X line 12 / 990-PF Part II line 13
+    investments_other_eoy: float | None = None  # 990 Part X line 12 / 990-PF Part II line 13 (FMV column)
+    investments_other_book_eoy: float | None = None  # 990-PF Part II line 13 book value column
     contractors: list[Contractor] = field(default_factory=list)
     other_investments: list[OtherInvestment] = field(default_factory=list)  # Sch. D Part VII / 990-PF Part II line 13 statement
     contractor_count_over_100k: int | None = None
-    officers: list[Officer] = field(default_factory=list)  # names and titles only (D-B26)
+    officers: list[Officer] = field(default_factory=list)  # names and titles only (D-B28)
     endowment_eoy: float | None = None  # Schedule D Part V line 1g column (a), current year end balance
     endowment_boy: float | None = None  # Schedule D Part V line 1a column (a)
     investments_program_eoy: float | None = None  # 990 Part X line 13 (program-related investments)
@@ -321,15 +323,19 @@ def parse_return(xml: bytes, row: IndexRow) -> Filing:
                 if g is not None and _num(g.find("BookValueAmt")):
                     f.other_investments.append(OtherInvestment(label, _num(g.find("BookValueAmt")), None))
             for g in sd.findall("OtherSecuritiesGrp"):
-                f.other_investments.append(OtherInvestment(_txt(g.find("Desc")) or "Other", _num(g.find("BookValueAmt")), None))
+                f.other_investments.append(OtherInvestment(_txt(g.find("Desc")) or "Other", _num(g.find("BookValueAmt")), None,
+                                                           _txt(g.find("MethodValuationCd")) or None))
     elif (form := data.find("IRS990PF")) is not None:
         f.total_assets_eoy = _num(form.find("Form990PFBalanceSheetsGrp/TotalAssetsEOYFMVAmt")) or \
             _num(form.find("Form990PFBalanceSheetsGrp/TotalAssetsEOYAmt"))
         bs = form.find("Form990PFBalanceSheetsGrp")
         if bs is not None:
-            pub = [_num(bs.find(t)) for t in ("CorporateStockEOYFMVAmt", "CorporateBondsEOYFMVAmt", "USGovernmentObligationsEOYFMVAmt")]
-            f.investments_public_eoy = sum(v for v in pub if v) or None
+            # The e-file schema spells the government line USGovtObligationsEOYFMVAmt; a printed 0 stays 0 (R6 d).
+            pub = [_num(bs.find(t)) for t in ("CorporateStockEOYFMVAmt", "CorporateBondsEOYFMVAmt", "USGovtObligationsEOYFMVAmt",
+                                             "USGovernmentObligationsEOYFMVAmt")]
+            f.investments_public_eoy = None if all(v is None for v in pub) else sum(v for v in pub if v is not None)
             f.investments_other_eoy = _num(bs.find("OtherInvestmentsEOYFMVAmt"))
+            f.investments_other_book_eoy = _num(bs.find("OtherInvestmentsEOYAmt"))
             f.investments_land_eoy = _num(bs.find("InvestmentsLandEOYFMVAmt"))
             f.investments_mortgage_eoy = _num(bs.find("MortgageLoansEOYFMVAmt"))
         f.officers = _officers_pf(form)
@@ -342,7 +348,10 @@ def parse_return(xml: bytes, row: IndexRow) -> Filing:
         for g in data.findall(".//InvestmentsOtherSchedule2/InvestmentsOtherGrp") + data.findall(".//InvestmentsOtherSchedule/InvestmentsOtherGrp"):
             desc = _txt(g.find("CategoryOrItemTxt")) or _txt(g.find("Desc"))
             if desc:
-                f.other_investments.append(OtherInvestment(desc, _num(g.find("BookValueAmt")), _num(g.find("EndOfYearFMVAmt"))))
+                fmv = _num(g.find("EOYFMVAmt"))
+                fmv = fmv if fmv is not None else _num(g.find("EndOfYearFMVAmt"))
+                f.other_investments.append(OtherInvestment(desc, _num(g.find("BookValueAmt")), fmv,
+                                                           _txt(g.find("ListedAtCostOrFMVCd")) or None))
     return f
 
 
@@ -375,7 +384,7 @@ def filing_url(ein: str, object_id: str) -> str:
     return f"https://projects.propublica.org/nonprofits/organizations/{int(ein)}/{object_id}/full"
 
 
-# ---------------- contractor classification (D-B26) ----------------
+# ---------------- contractor classification (D-B28) ----------------
 _SVC_RULES = [
     ("law_firm", re.compile(r"\blegal\b|attorney|\blaw\b|litigation", re.I)),
     ("custodian", re.compile(r"custod", re.I)),
@@ -403,8 +412,9 @@ def classify_contractor(firm: str, service: str, lists: dict[str, list[str]] | N
     svc = service or ""
     for cls, pat in _SVC_RULES:
         if pat.search(svc):
-            if cls == "manager" and named == "consultant" and not re.search(r"outsourced chief|\bocio\b", svc, re.I):
-                return "consultant", "firm (service printed as manager)"
+            if cls == "manager" and named in ("consultant", "bank", "custodian") and \
+                    not re.search(r"outsourced chief|\bocio\b", svc, re.I):
+                return named, "firm (service printed as manager)"
             if cls == "custodian" and re.search(r"manag", svc, re.I):
                 return "custodian", "service (custodian and manager)"
             return cls, "service"

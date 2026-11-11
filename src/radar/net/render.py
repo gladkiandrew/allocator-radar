@@ -12,12 +12,17 @@
 from __future__ import annotations
 
 import logging
+import re
 from urllib.parse import urlsplit
 
 from radar.net.client import BotWall, PoliteClient, RefusedRequest, _log, _looks_like_wall
 
 log = logging.getLogger(__name__)
 SKIP_TYPES = {"image", "font", "media"}
+# D-B33: social-network widgets are never needed to read a listing page. They are refused, and the egress log records
+# only that a widget request was refused, never its URL (widget URLs can carry profile paths or access tokens).
+SOCIAL = re.compile(r"(?:^|[/.%2F])(?:facebook\.com|facebook\.net|fbcdn\.net|twitter\.com|x\.com|twimg\.com|"
+                    r"linkedin\.com|licdn\.com|instagram\.com|tiktok\.com|youtube\.com/embed)", re.I)
 
 
 def render(client: PoliteClient, url: str, *, wait_ms: int = 4000) -> tuple[str, str]:
@@ -35,12 +40,20 @@ def render(client: PoliteClient, url: str, *, wait_ms: int = 4000) -> tuple[str,
 
     def on_route(route):
         req = route.request
+        if SOCIAL.search(req.url):  # before anything else, so no social URL is ever logged
+            _log(req.method, "https://social-widget.invalid/", None, None, None, "refused", "render",
+                 "refused: social widget")
+            return route.abort()
         if req.method not in ("GET", "HEAD"):
             _log(req.method, req.url, None, None, None, None, "render", "refused: method")
             return route.abort()
         if req.resource_type in SKIP_TYPES or urlsplit(req.url).scheme not in ("http", "https"):
             return route.abort()
-        _log(req.method, req.url, None, None, None, "subresource" if req.url != url else "allowed", "render", None)
+        if req.url != url:  # subresources are logged without their query string (it can carry third-party tokens)
+            u = urlsplit(req.url)
+            _log(req.method, f"{u.scheme}://{u.netloc}{u.path}", None, None, None, "subresource", "render", None)
+        else:
+            _log(req.method, req.url, None, None, None, "allowed", "render", None)
         return route.continue_()
 
     with sync_playwright() as p:

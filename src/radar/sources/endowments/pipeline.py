@@ -116,12 +116,12 @@ def load_irs(client, eins: list[str], reparse: bool = False) -> dict:
                 con.execute("""INSERT OR REPLACE INTO ef_filings (object_id, ein, return_type, tax_year, tax_period_end,
                                    total_assets, investments_public, investments_other, contractors_over_100k, index_year,
                                    batch, fetched_at, endowment_eoy, endowment_boy, investments_program, investments_land,
-                                   investments_mortgage, officers_read)
-                               VALUES (?,?,?,?,?,?,?,?,?,?,?, now(), ?,?,?,?,?, true)""",
+                                   investments_mortgage, investments_other_book, officers_read)
+                               VALUES (?,?,?,?,?,?,?,?,?,?,?, now(), ?,?,?,?,?,?, true)""",
                             [f.object_id, ein, f.return_type, f.tax_year, f.tax_period_end or None, f.total_assets_eoy,
                              f.investments_public_eoy, f.investments_other_eoy, f.contractor_count_over_100k,
                              r.index_year, r.batch, f.endowment_eoy, f.endowment_boy, f.investments_program_eoy,
-                             f.investments_land_eoy, f.investments_mortgage_eoy])
+                             f.investments_land_eoy, f.investments_mortgage_eoy, f.investments_other_book_eoy])
                 con.execute("DELETE FROM ef_officers WHERE object_id = ?", [f.object_id])
                 ocite = irs.citation(f, "officers")
                 for o in f.officers:
@@ -133,10 +133,28 @@ def load_irs(client, eins: list[str], reparse: bool = False) -> dict:
                     con.execute("INSERT INTO ef_contractors (object_id, ein, tax_year, firm, service, amount, investment) "
                                 "VALUES (?,?,?,?,?,?,?)", [f.object_id, ein, f.tax_year, c.firm, c.service, c.amount, c.investment])
                 for o in f.other_investments:
-                    con.execute("INSERT INTO ef_other_investments (object_id, ein, tax_year, description, book_value, fmv) "
-                                "VALUES (?,?,?,?,?,?)", [f.object_id, ein, f.tax_year, o.description, o.book_value, o.fmv])
+                    con.execute("INSERT INTO ef_other_investments (object_id, ein, tax_year, description, book_value, fmv, valuation) "
+                                "VALUES (?,?,?,?,?,?,?)", [f.object_id, ein, f.tax_year, o.description, o.book_value, o.fmv,
+                                                          o.valuation])
             stats["returns"] += 1
     return stats
+
+
+def prune_hospitals() -> list[str]:
+    """Drop hospital systems whose latest return shows investments under $100M (D-B32). Returns the EINs dropped."""
+    from radar.sources.endowments.exposure import total_investments
+    dropped = []
+    with store.connect() as con:
+        for (ein,) in con.execute("SELECT ein FROM ef_orgs WHERE kind = 'HOSPITAL_SYSTEM'").fetchall():
+            f = store.rows(con, "SELECT * FROM ef_filings WHERE ein = ? ORDER BY tax_period_end DESC LIMIT 1", [ein])
+            inv = total_investments(f[0]) if f else None
+            if inv is not None and inv >= universe.HOSPITAL_MIN_INVESTMENTS:
+                continue
+            dropped.append(ein)
+            for t in ("ef_signals", "ef_contractors", "ef_other_investments", "ef_officers", "ef_exposure", "ef_filings",
+                      "ef_pp_filings", "ef_orgs"):
+                con.execute(f"DELETE FROM {t} WHERE ein = ?", [ein])
+    return dropped
 
 
 def derive_signals() -> int:
@@ -208,5 +226,6 @@ def run(client=None) -> dict:
         pp = ex.submit(load_propublica, client, eins)
         ir = ex.submit(load_irs, client, eins)
         out = {"orgs": len(picked), "propublica": pp.result(), "irs": ir.result()}
+    out["hospitals_dropped_under_100m"] = prune_hospitals()
     out["signals_990"] = derive_signals()
     return out

@@ -169,8 +169,12 @@ def main() -> int:
     db.init_db()
     violations = check_all()
     with db.connect() as con:
+        # D-B33: the audit row names table, column and kind only. Echoing the matched text stored the very contact
+        # detail the check had found, so the next run failed on the audit log itself.
+        import re as _re
+        safe = [_re.sub(r"(holds \w+):.*$", r"\1", v) for v in violations[:50]]
         db.audit(con, "watchdog", "wall_check", status="fail" if violations else "ok",
-                 detail={"violations": violations[:50], "n": len(violations)})
+                 detail={"violations": safe, "n": len(violations)})
     if violations:
         print("WALL FAILED:", file=sys.stderr)
         for v in violations:

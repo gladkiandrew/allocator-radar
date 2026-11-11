@@ -1,4 +1,4 @@
-# Contractor classification for 990 contractors (D-B26). The service description decides first; these firm
+# Contractor classification for 990 contractors (D-B28). The service description decides first; these firm
 # lists decide when the description is missing, generic or contradicts what the firm plainly is (a law firm
 # whose return line reads "investment management"). Match is case-insensitive on the printed firm name.
 law_firm:

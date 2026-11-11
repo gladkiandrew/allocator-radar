@@ -98,7 +98,7 @@ def derive(org: dict, filings: list[dict], contractors: dict[str, list[dict]], o
     now_hf = hf_lines(latest)
     before_hf = hf_lines(prev) if prev is not None else None
     from radar.sources.endowments.exposure import stated_value
-    # Placeholder amounts ($0, $1 ...) are "not stated" and never rank above a stated holding (D-B27).
+    # Placeholder amounts ($0, $1 ...) are "not stated" and never rank above a stated holding (D-B29).
     for k, o in sorted(now_hf.items(), key=lambda kv: (stated_value(kv[1]) is None, -(stated_value(kv[1]) or 0)))[:12]:
         val = stated_value(o)
         sig(latest, "EF_ALT_HOLDING",

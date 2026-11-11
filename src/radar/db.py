@@ -284,8 +284,11 @@ MIGRATIONS = [
     "ALTER TABLE signals ADD COLUMN IF NOT EXISTS hf_relevant BOOLEAN",          # hedge fund / absolute return / diversifying / managed futures / multi-strat
     "ALTER TABLE documents ADD COLUMN IF NOT EXISTS doc_kind VARCHAR",       # content-based type
     "ALTER TABLE documents ADD COLUMN IF NOT EXISTS content_date DATE",      # first dated phrase on page 1
-    # D-B23: the meeting (or report) date and the retrieval date, kept apart. as_of_date is what freshness uses:
+    # D-B25: the meeting (or report) date and the retrieval date, kept apart. as_of_date is what freshness uses:
     # an agenda posted for an upcoming meeting is only as new as the day it was retrieved.
+    # D-B31 (PRODUCT R4): what the engagement row records. The SBA's per-deal "Consultant" column sometimes names the
+    # deal's own manager or servicer (Heitman, Invesco, Stockbridge, MetLife, SitusAMC): role per_deal_manager.
+    "ALTER TABLE consultant_engagements ADD COLUMN IF NOT EXISTS role VARCHAR DEFAULT 'consultant'",
     """CREATE OR REPLACE VIEW document_dates AS
        SELECT allocator_id, sha256, url, doc_type, doc_date AS meeting_date, CAST(first_seen AS DATE) AS retrieved_on,
               least(doc_date, CAST(first_seen AS DATE)) AS as_of_date,
