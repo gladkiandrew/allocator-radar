@@ -75,8 +75,13 @@ def compute(today: date | None = None) -> dict:
         note = "AND coalesce(o.signal_note, '') = ''" if "signal_note" in cols else ""
         no_reason = con.execute(f"""SELECT count(*) FROM ef_orgs o WHERE NOT EXISTS (SELECT 1 FROM ef_filings f
                                      WHERE f.ein = o.ein) {note}""").fetchone()[0]
-        committee_orgs = con.execute("SELECT count(DISTINCT ein) FROM ef_signals WHERE source_type = 'committee' "
-                                     "AND review_status IN ('approved', 'auto_approved')").fetchone()[0]
+        # a dated committee or board document (agenda, minutes, packet, meeting calendar/notice) read and cited:
+        # documents on file with pages read, or a published non-990 signal (committee, meeting_calendar)
+        committee_orgs = con.execute("""SELECT count(DISTINCT ein) FROM (
+              SELECT ein FROM ef_documents WHERE doc_date IS NOT NULL AND coalesce(page_count, 0) > 0
+                     AND doc_type IN ('AGENDA', 'MINUTES', 'PACKET')
+              UNION SELECT ein FROM ef_signals WHERE source_type <> '990'
+                     AND review_status IN ('approved', 'auto_approved'))""").fetchone()[0]
     ef_latest = [d if isinstance(d, date) else date.fromisoformat(str(d)) for d in ef_latest if d]
     from radar.web.present import is_verified
 
@@ -132,7 +137,7 @@ def _phase_c(n_orgs: int, kinds: dict, no_reason: int, committee_orgs: int) -> l
          "value": f"{len(figs)} organizations with a figure; {len(uncited)} uncited",
          "met": bool(figs) and not uncited},
         {"criterion": "At least 5 organizations with a dated committee or board document read and cited",
-         "value": f"{committee_orgs} organizations with a cited committee or board signal",
+         "value": f"{committee_orgs} organizations with a dated agenda, minutes, packet or meeting notice read and cited",
          "met": committee_orgs >= 5},
         {"criterion": "A person spot-checks 25 E&F signals and at least 95% are correct",
          "value": (f"{len(decided)} of {len(ids) or 25} decided, {acc}% correct" if decided

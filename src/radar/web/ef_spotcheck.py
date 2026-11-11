@@ -63,12 +63,41 @@ def load_signals() -> dict[str, dict]:
     return {r["signal_id"]: r for r in rows}
 
 
+def _norm(t: str) -> str:
+    return " ".join(re.sub(r"[^a-z0-9$]+", " ", (t or "").lower()).split())
+
+
+def parse_table(text: str, signals: dict[str, dict]) -> list[str]:
+    """DATA's table form: | # | Organization | Type | Date | Summary | Cited form / line | Source URL | Correct? |.
+    Each row is matched to the one signal with the same type and date whose summary starts the same way."""
+    by_key: dict[tuple, list[dict]] = {}
+    for sid, sig in signals.items():
+        by_key.setdefault((str(sig.get("signal_type")), str(sig.get("event_date"))), []).append(sig)
+    out: list[str] = []
+    for line in text.splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 5 or not cells[0].isdigit():
+            continue
+        cands = by_key.get((cells[2], cells[3]), [])
+        head = _norm(cells[4])[:60]
+        hit = [c for c in cands if _norm(c.get("summary"))[:60] == head] or \
+              [c for c in cands if _norm(c.get("summary")).startswith(head[:30])]
+        if len(hit) > 1:  # the same firm and summary at two organizations: match the organization name
+            org = _norm(cells[1].split("(")[0])
+            hit = [c for c in hit if _norm(c.get("org_name")).startswith(org[:20]) or org.startswith(_norm(c.get("org_name"))[:20])]
+        if len(hit) == 1 and hit[0]["signal_id"] not in out:
+            out.append(hit[0]["signal_id"])
+    return out
+
+
 def sample(signals: dict[str, dict]) -> tuple[list[str], bool]:
-    """(ids listed in the md that exist in the store, whether the md file exists)."""
+    """(ids listed in the md that exist in the store, whether the md file exists). Accepts the agreed checklist
+    form (`- [ ] <id> | ...`) or DATA's table form."""
     p = md_path()
     if not p.exists():
         return [], False
-    return parse_md(p.read_text(encoding="utf-8", errors="replace"), set(signals)), True
+    text = p.read_text(encoding="utf-8", errors="replace")
+    return (parse_md(text, set(signals)) or parse_table(text, signals)), True
 
 
 # ---------------- decisions ----------------

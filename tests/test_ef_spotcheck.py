@@ -200,3 +200,19 @@ def test_source_url_with_its_own_fragment_is_not_doubled():
     r = _client().get("/review/ef")
     assert 'href="https://example.org/590000001.pdf#page=4"' in r.text and "#page=4#page=4" not in r.text
     assert "page 4 · page 4" not in r.text
+
+
+def test_table_form_from_data_is_matched_by_type_date_summary_and_org():
+    from radar.web.ef_spotcheck import parse_table
+
+    sigs = {"a": {"signal_id": "a", "signal_type": "EF_ALT_HOLDING", "event_date": "2024-12-31", "org_name": "ARISON ARTS FOUNDATION",
+                  "summary": 'The TY2024 return reports $32,336 in "ROKOS GLOBAL MACRO FUND LTD".'},
+            "b": {"signal_id": "b", "signal_type": "EF_CONTRACTOR_LISTED", "event_date": "2024-12-31", "org_name": "ONE FOUNDATION",
+                  "summary": "The TY2024 return lists FORBES FAMILY TRUST among contractors."},
+            "c": {"signal_id": "c", "signal_type": "EF_CONTRACTOR_LISTED", "event_date": "2024-12-31", "org_name": "TWO FOUNDATION",
+                  "summary": "The TY2024 return lists FORBES FAMILY TRUST among contractors."}}
+    md = """| # | Organization | Type | Date | Summary | Cited | URL | Correct? |
+|---|---|---|---|---|---|---|---|
+| 1 | Arison Arts Foundation (private foundation) | EF_ALT_HOLDING | 2024-12-31 | The TY2024 return reports $32,336 in "ROKOS GLOBAL MACRO FUND LTD". | x | y | |
+| 2 | Two Foundation (community foundation) | EF_CONTRACTOR_LISTED | 2024-12-31 | The TY2024 return lists FORBES FAMILY TRUST among contractors. | x | y | |"""
+    assert parse_table(md, sigs) == ["a", "c"]
