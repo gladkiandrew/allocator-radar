@@ -119,6 +119,18 @@
 </tbody></table></div></div>
 <p class="faint small">Names and titles only, exactly as the documents print them. No contact details are stored.</p>{% endif %}
 
+{% if (can_see_contacts if can_see_contacts is defined else not public) and a.contacts %}
+<section class="contacts" data-audience="member" aria-labelledby="contacts-title">
+<h2 id="contacts-title">Contacts <span class="count">as printed, members only</span></h2>
+<div class="table-card"><div class="scroll"><table class="stack"><thead><tr><th scope="col">Name</th><th scope="col">Title</th><th scope="col">Email</th><th scope="col">Phone</th><th scope="col">As of</th><th scope="col">Source</th></tr></thead><tbody>
+{% for c in a.contacts %}<tr><td>{{ c.name_as_printed }}</td><td>{{ c.title_as_printed or '' }}</td>
+  <td>{% if c.email %}<span class="mono">{{ c.email }}</span>{% else %}<span class="faint">not published</span>{% endif %}</td>
+  <td>{% if c.phone %}<span class="mono">{{ c.phone }}</span>{% else %}<span class="faint">not published</span>{% endif %}</td>
+  <td class="mono">{{ c.as_of }}</td><td>{{ cites(c.evidence) }}</td></tr>{% endfor %}
+</tbody></table></div></div>
+<p class="faint small">Business contact details exactly as printed in the cited public document. Shown to signed-in members only.</p>
+</section>{% endif %}
+
 {% if not static_site %}<h2 id="search">Search this plan's documents</h2>
 <div class="search-field">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>

@@ -202,6 +202,7 @@ def allocator_brief(con, allocator_id: str) -> dict | None:
                                                 if a["consultant_engagements"] and e["as_of"] == a["consultant_engagements"][0]["as_of"]])
     from radar import coverage
 
+    a["contacts"] = contacts_for(con, allocator_id)
     a["facts"] = plan_facts(con, allocator_id)
     a["managers_as_of"], a["managers"] = managers_by_class(a["mandates"])
     a["coverage"] = coverage.checklist(con, allocator_id)
@@ -214,6 +215,22 @@ def allocator_brief(con, allocator_id: str) -> dict | None:
     a["when"] = timeline.when({**a, "next_meeting": a["facts"].get("next_meeting"),
                                "upcoming_doc_date": min(ahead) if ahead else None}, sigs)
     return a
+
+
+def contacts_for(con, allocator_id: str) -> list[dict]:
+    """Business contacts as printed in public documents (DATA's `contacts` table, R9), each with its evidence.
+    [] when the table does not exist. Rendering is gated to member/admin audiences by the template."""
+    if not con.execute("SELECT 1 FROM information_schema.tables WHERE table_name = 'contacts'").fetchone():
+        return []
+    rows = db.rows(con, "SELECT * FROM contacts WHERE allocator_id = ? ORDER BY as_of DESC", [allocator_id])
+    key = "contact_id" if rows and "contact_id" in rows[0] else None
+    ev = _evidence_for(con, "contact", [r[key] for r in rows]) if key else {}
+    for r in rows:
+        r["evidence"] = ev.get(r[key], []) if key else []
+        if not r["evidence"] and r.get("source_url"):  # cited inline on the row
+            r["evidence"] = [{"source_url": r["source_url"], "page": r.get("page"), "doc_title": "source",
+                              "document_sha256": None, "quote": ""}]
+    return [r for r in rows if r["evidence"]]  # uncited contacts never render
 
 
 def _norm_label(s: str | None) -> str:

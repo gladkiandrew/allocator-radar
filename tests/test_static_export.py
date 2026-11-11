@@ -103,3 +103,23 @@ def test_unverified_signals_never_render_in_the_public_build(tmp_path):
     static_export.export(out)
     brief = (out / "a" / "canary.html").read_text()
     assert "hedge fund of funds" not in brief.lower() and "verified against source" not in brief
+
+
+def test_contacts_render_locally_but_never_in_the_ungated_public_build(tmp_path):
+    from fastapi.testclient import TestClient
+
+    from radar import db
+    from radar.web.app import create_app
+
+    _store_with_signals()
+    with db.connect() as con:
+        con.execute("""CREATE TABLE contacts (contact_id VARCHAR, allocator_id VARCHAR, name_as_printed VARCHAR,
+                       title_as_printed VARCHAR, email VARCHAR, phone VARCHAR, as_of DATE, source_url VARCHAR, page INTEGER)""")
+        con.execute("""INSERT INTO contacts VALUES ('c1', 'canary', 'Pat Example', 'Plan Administrator',
+                       'admin@canary.invalid', '555-0100', DATE '2026-10-01', 'https://canary.invalid/a.pdf', 1)""")
+    local = TestClient(create_app()).get("/a/canary").text
+    assert "Pat Example" in local and 'data-audience="member"' in local
+    out = tmp_path / "dist"
+    static_export.export(out)
+    pub = (out / "a" / "canary.html").read_text()
+    assert "admin@canary.invalid" not in pub and 'data-audience="member"' not in pub
