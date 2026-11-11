@@ -206,6 +206,23 @@ There is one adapter (`src/radar/llm/provider.py`). Model names live in config, 
 
 Only scrubbed public-document text is ever sent to a model.
 
+## Endowments & Foundations (Phase C)
+
+The **Endowments & Foundations** tab covers the 48 largest Florida university foundations, private universities,
+community foundations and private foundations, chosen by assets from the IRS exempt-organization master file
+(`data/ef_universe.csv` lists each one with its source). Each organization's last three IRS Form 990 / 990-PF returns
+are read straight from the IRS e-file XML. From them come total and investment assets, alternative and other-investment
+lines, and the investment firms named among the five highest-paid independent contractors (firm names only: people are
+never stored), plus year-over-year changes. Every figure cites the tax year, part and line.
+
+990s are annual and lag, so a 990 alone never sets a tier above WATCHING. DEPLOYING or PREPARING needs a dated committee
+or board document that the organization publishes itself; three university foundations publish theirs.
+
+```bash
+uv run radar ef-load        # universe -> ProPublica summaries -> IRS 990 XML -> 990 signals (data/ef.duckdb)
+uv run radar ef-committee   # the foundations' own committee/board documents -> dated signals
+```
+
 ## Scope
 
 The app is set to **South Florida**: Miami-Dade, Broward, Palm Beach and Monroe counties, plus the

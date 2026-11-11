@@ -52,6 +52,12 @@ def uniq_cites(evs: list[dict]) -> list[dict]:
 
 templates.env.filters["uniq_cites"] = uniq_cites
 
+from radar.web import present  # noqa: E402
+
+templates.env.filters["clean_quote"] = present.clean_quote
+templates.env.filters["consultant"] = present.consultant_name
+templates.env.globals["coverage_note"] = present.coverage_note
+
 
 PUBLIC_HIDDEN = ("/review", "/manual", "/records", "/registry", "/inbox", "/export")
 
@@ -127,9 +133,15 @@ def create_app() -> FastAPI:
         spotlight = [r for r in rows if r["readiness"].tier in ("DEPLOYING", "PREPARING")] if not tier else []
         with db.connect() as con:
             kpi = _scope_stats(con, [r["allocator_id"] for r in everything])
+            highlights = present.hf_highlights(con, everything) if strategy == "all" and not tier else []
+        ef_highlights = []
+        if strategy == "all" and not tier:
+            from radar.sources.endowments import views as ef_views
+
+            ef_highlights = ef_views.hf_rows(public=public)
         kpi.update(plans=len(everything), main=len([r for r in everything if not r["bar_reasons"]]))
         return render(request, "index.html", rows=shown, tiers=TIER_ORDER, tier=tier, counts=counts,
-                      strategy=strategy, buckets=buckets, spotlight=spotlight, kpi=kpi,
+                      strategy=strategy, buckets=buckets, spotlight=spotlight, kpi=kpi, highlights=highlights, ef_highlights=ef_highlights,
                       n_gaps=sum(1 for r in everything if r["bar_reasons"]),
                       stale_days=readiness_config()["coverage"]["stale_after_days"])
 
@@ -200,4 +212,7 @@ def create_app() -> FastAPI:
     from radar.web import routes  # noqa: E402  (registers the remaining pages)
 
     routes.register(app, render)
+    from radar.web import ef_routes  # noqa: E402  (Phase C: endowments and foundations)
+
+    ef_routes.register(app, render, public)
     return app

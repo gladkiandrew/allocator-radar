@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}{{ o.name|pretty }} · Allocator Radar{% endblock %}
+{% macro money(v) %}{% if v is not none %}${{ '{:,.0f}'.format(v) }}{% else %}—{% endif %}{% endmacro %}
+{% macro cite(url, label, title='') %}<a class="cite" href="{{ url }}" target="_blank" rel="noopener" title="{{ title }}">{{ label }}</a>{% endmacro %}
+{% block body %}{% set r = o.readiness %}{% set f = o.latest %}
+<p class="crumb"><a href="/ef">← All endowments &amp; foundations</a></p>
+<div class="page-head"><div>
+  <p class="eyebrow">{{ o.kind_label }} · Florida</p>
+  <h1>{{ o.name|pretty }}</h1>
+  <p class="sub" style="margin-bottom:12px">{{ o.city }}, FL · EIN {{ o.ein[:2] }}-{{ o.ein[2:] }} ·
+    <a href="{{ o.propublica_url }}" target="_blank" rel="noopener noreferrer">Filings on ProPublica ↗</a></p>
+</div></div>
+
+<div class="readiness-banner {{ r.tier }}">
+  <span class="tier {{ r.tier }}">{{ r.tier }}</span>
+  <span class="txt">{{ r.rule_meaning }}</span>
+  {% if o.signals %}<a class="btn ghost" href="#signals">See the evidence ↓</a>{% endif %}
+</div>
+
+<section class="facts" aria-label="At a glance">
+  <div class="fact"><div class="l">Total assets</div>{% if f and f.total_assets is not none %}<div class="v big">{{ money(f.total_assets) }}</div>
+    <span class="as">end of TY{{ f.tax_year }} ({{ f.tax_period_end }})</span><div style="margin-top:6px">{{ cite(f.url, 'Form ' ~ f.form ~ ' TY' ~ f.tax_year, f.cite_total) }}</div>
+    {% else %}<div class="v big">{{ money(o.bmf_assets) }}</div><span class="as">IRS master file</span>{% endif %}</div>
+  <div class="fact"><div class="l">{{ 'Investments, other' if not f or f.form == '990-PF' else 'Investments, other securities' }}</div>
+    {% if f and f.investments_other is not none %}<div class="v big">{{ money(f.investments_other) }}</div><span class="as">end of TY{{ f.tax_year }}</span>
+    <div style="margin-top:6px">{{ cite(f.url, 'line', f.cite_other) }}</div>{% else %}<div class="none">Not reported in the filings read</div>{% endif %}</div>
+  <div class="fact"><div class="l">Investments, public securities</div>
+    {% if f and f.investments_public is not none %}<div class="v big">{{ money(f.investments_public) }}</div><span class="as">end of TY{{ f.tax_year }}</span>
+    <div style="margin-top:6px">{{ cite(f.url, 'line', f.cite_public) }}</div>{% else %}<div class="none">Not reported in the filings read</div>{% endif %}</div>
+  <div class="fact"><div class="l">Returns read</div><div class="v big">{{ o.filings|length }}</div><span class="as">IRS e-file XML</span></div>
+</section>
+
+<h2 id="signals">Signal timeline <span class="count">{{ o.signals|length }}</span></h2>
+{% if not o.signals %}<div class="card empty">No change signal in the filings or documents on file.</div>{% else %}
+<div class="card"><ol class="timeline">
+{% for s in o.signals %}
+  <li class="{{ r.tier if s in r.reasons else '' }}">
+    <div class="t-head">
+      <span class="t-date">{{ s.event_date }}</span>
+      <span class="t-type">{{ s.signal_type|replace('EF_', '')|replace('_', ' ')|lower }}</span>
+      <span class="tag">{{ s.source_label }}</span>
+      {% if s.hf_relevant %}<span class="tag hf">HF</span>{% endif %}
+      {% if s.review_status == 'approved' %}<span class="tag ok">approved by a person</span>{% elif s.review_status == 'auto_approved' %}<span class="tag" title="{{ s.reviewed_by }}">auto-approved</span>{% else %}<span class="pending">pending review</span>{% endif %}
+    </div>
+    <div class="t-sum">{{ s.summary }} {{ cite(s.source_url, s.doc_title or 'source', s.cite) }}</div>
+    <div class="faint small" style="margin-top:4px">{{ s.cite }}{% if s.page %} · page {{ s.page }}{% endif %}</div>
+    {% if s.quote %}<blockquote>{{ s.quote|clean_quote }}</blockquote>{% endif %}
+  </li>
+{% endfor %}
+</ol></div>{% endif %}
+
+<h2 id="trend">Assets over the last filings</h2>
+{% if not o.filings %}<div class="card empty">No e-filed return found in the IRS indexes read.</div>{% else %}
+<div class="table-card"><div class="scroll"><table class="stack">
+  <thead><tr><th scope="col">Return</th><th scope="col">Period end</th><th scope="col">Total assets</th><th scope="col">Public securities</th><th scope="col">Other investments</th></tr></thead>
+  <tbody>{% for x in o.filings %}
+  <tr><td>{{ cite(x.url, 'Form ' ~ x.form ~ ' TY' ~ x.tax_year, x.cite_total) }}</td><td class="mono">{{ x.tax_period_end }}</td>
+    <td class="mono">{{ money(x.total_assets) }}</td><td class="mono">{{ money(x.investments_public) }}</td><td class="mono">{{ money(x.investments_other) }}</td></tr>
+  {% endfor %}</tbody></table></div></div>
+<p class="faint small">{{ o.filings[0].cite_total }}; {{ o.filings[0].cite_public }}; {{ o.filings[0].cite_other }}.</p>{% endif %}
+
+<h2 id="contractors">Five highest-paid independent contractors <span class="count">firms only</span></h2>
+{% if not o.filings %}<div class="card empty">No return on file.</div>{% else %}
+{% for x in o.filings %}
+<h3 style="margin:14px 0 8px;font-size:15px">TY{{ x.tax_year }} · {{ cite(x.url, 'Form ' ~ x.form, x.cite_contractors) }}</h3>
+{% if not x.contractors %}<div class="card empty">No firm named (or the names listed were not plainly firms, so they are not stored).</div>{% else %}
+<div class="table-card"><div class="scroll"><table class="stack"><thead><tr><th scope="col">Firm</th><th scope="col">Service as described</th><th scope="col">Paid</th></tr></thead><tbody>
+{% for c in x.contractors %}<tr><td>{{ c.firm }}{% if c.investment %} <span class="tag hf">investment</span>{% endif %}</td><td>{{ c.service|lower }}</td><td class="mono">{{ money(c.amount) }}</td></tr>{% endfor %}
+</tbody></table></div></div>{% endif %}
+{% endfor %}
+<p class="faint small">{{ o.filings[0].cite_contractors }}. Individuals listed on the return are never stored.</p>{% endif %}
+
+<h2 id="alternatives">Other investments as reported <span class="count">{{ o.n_other_latest }}</span></h2>
+{% if not o.other_latest %}<div class="card empty">No itemized "other investments" in the latest return read.</div>{% else %}
+<div class="table-card"><div class="scroll"><table class="stack"><thead><tr><th scope="col">Line as described</th><th scope="col">Book value</th><th scope="col">Fair market value</th></tr></thead><tbody>
+{% for x in o.other_latest[:40] %}<tr><td>{{ x.description }}{% if x.hf %} <span class="tag hf">HF / alternatives</span>{% endif %}</td><td class="mono">{{ money(x.book_value) }}</td><td class="mono">{{ money(x.fmv) }}</td></tr>{% endfor %}
+</tbody></table></div></div>
+<p class="faint small">{{ f.cite_other_list }}{% if o.n_other_latest > 40 %}. Showing 40 of {{ o.n_other_latest }}: hedge fund and alternatives lines first, then by value{% endif %}.</p>{% endif %}
+
+{% if o.documents %}<h2 id="documents">Committee and board documents <span class="count">{{ o.documents|length }}</span></h2>
+<div class="table-card"><div class="scroll"><table class="stack"><thead><tr><th scope="col">Document</th><th scope="col">Type</th><th scope="col">Dated</th></tr></thead><tbody>
+{% for d in o.documents %}<tr><td>{% if public_href(d.url) %}<a href="{{ d.url }}" target="_blank" rel="noopener">{{ d.title|truncate(70) }}</a>{% else %}{{ d.title|truncate(70) }}{% endif %}</td><td><span class="tag">{{ d.doc_type }}</span></td><td class="mono">{{ d.doc_date or '—' }}</td></tr>{% endfor %}
+</tbody></table></div></div>{% endif %}
+{% endblock %}

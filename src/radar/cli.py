@@ -20,6 +20,10 @@ def main(argv: list[str] | None = None) -> int:
     xp.add_argument("--out", default="dist", help="output directory (replaced)")
     wp = sub.add_parser("wall-static", help="wall check on a static snapshot before deploy: contact patterns, admin links")
     wp.add_argument("dir", nargs="?", default="dist")
+    sub.add_parser("ef-universe", help="Phase C: choose the Florida E&F universe from the IRS BMF -> data/ef_universe.csv")
+    sub.add_parser("ef-load", help="Phase C: universe -> ProPublica summaries -> IRS 990 XML -> 990 signals (data/ef.duckdb)")
+    sub.add_parser("ef-signals", help="Phase C: rebuild the 990 signals from stored filings")
+    sub.add_parser("ef-committee", help="Phase C: read the foundations' own committee/board documents for dated signals")
     cp = sub.add_parser("crawl", help="crawl approved allocators' listing pages and fetch documents")
     cp.add_argument("--only", nargs="*", help="allocator ids")
     cp.add_argument("--templates", nargs="*", help="e.g. T-WP T-CP")
@@ -401,6 +405,25 @@ def main(argv: list[str] | None = None) -> int:
         from radar import db, static_export
         db.init_db()
         print(json.dumps(static_export.export(args.out)))
+    elif args.cmd == "ef-committee":
+        import json
+        from radar import db
+        from radar.sources.endowments import committee
+        db.init_db()
+        for r in committee.run():
+            print(json.dumps(r, default=str), flush=True)
+    elif args.cmd in ("ef-universe", "ef-load", "ef-signals"):
+        import json
+        from radar import db
+        from radar.net.client import PoliteClient
+        from radar.sources.endowments import pipeline
+        db.init_db()  # the egress log lives in the main store
+        if args.cmd == "ef-universe":
+            print(f"{len(pipeline.build_universe(PoliteClient(purpose='ef-bmf')))} organizations -> data/ef_universe.csv")
+        elif args.cmd == "ef-load":
+            print(json.dumps(pipeline.run()))
+        else:
+            print(f"{pipeline.derive_signals()} signals from 990s")
     elif args.cmd == "wall-static":
         from radar.wall import static_site
         return static_site.main(args.dir)

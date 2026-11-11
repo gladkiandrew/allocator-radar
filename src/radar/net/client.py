@@ -166,7 +166,10 @@ class PoliteClient:
             time.sleep(wait)
 
     # ---------------- request ----------------
-    def request(self, method: str, url: str, *, max_redirects: int = 5) -> Response:
+    def request(self, method: str, url: str, *, max_redirects: int = 5, headers: dict | None = None,
+                max_bytes: int = MAX_BYTES) -> Response:
+        """`headers`: extra request headers (e.g. Range for one file inside a public zip batch).
+        `max_bytes`: a caller may raise the cap for a known bulk file (IRS index CSVs are ~90 MB)."""
         self._check_method(method)
         for _ in range(max_redirects + 1):
             try:
@@ -182,12 +185,12 @@ class PoliteClient:
             host = urlsplit(url).hostname or ""
             self._wait(host, delay)
             try:
-                with self._http.stream(method, url) as r:
+                with self._http.stream(method, url, headers=headers) as r:
                     chunks, size = [], 0
                     for chunk in r.iter_bytes():
                         size += len(chunk)
-                        if size > MAX_BYTES:
-                            raise RefusedRequest(f"{url} exceeds {MAX_BYTES} bytes")
+                        if size > max_bytes:
+                            raise RefusedRequest(f"{url} exceeds {max_bytes} bytes")
                         chunks.append(chunk)
                     body = b"".join(chunks)
                     status, headers = r.status_code, r.headers
@@ -207,8 +210,8 @@ class PoliteClient:
             return Response(url=url, status=status, content=body, content_type=ctype, sha256=digest)
         raise RefusedRequest(f"too many redirects for {url}")
 
-    def get(self, url: str) -> Response:
-        return self.request("GET", url)
+    def get(self, url: str, *, headers: dict | None = None, max_bytes: int = MAX_BYTES) -> Response:
+        return self.request("GET", url, headers=headers, max_bytes=max_bytes)
 
     def head(self, url: str) -> Response:
         return self.request("HEAD", url)

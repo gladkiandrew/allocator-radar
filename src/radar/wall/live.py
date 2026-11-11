@@ -157,6 +157,9 @@ def check_all(*, include_canary: bool = True) -> list[str]:
     with db.connect() as con:
         v += check_schema(con) + check_sweep(con) + check_egress(con)
     v += check_lance()  # never skipped silently: a failure to read the vector store fails the wall
+    from radar.sources.endowments import wall as ef_wall
+
+    v += ef_wall.check()  # Phase C store (data/ef.duckdb)
     if include_canary:
         v += run_canary()
     return v
