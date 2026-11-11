@@ -61,9 +61,10 @@ unsure:
     note: Probably Cambridge Associates. Too short to map with confidence.
   - name: Milliman / Milliman, Inc.
     note: Usually the plan actuary, not the investment consultant. The extractor may have mislabelled it.
-  - name: Heitman, Invesco, Stockbridge, Sterling
-    note: Investment managers, not consultants. Likely extractor mislabels; candidates for correction on review.
-  - name: MetLife / Metlife, SitusAMC
-    note: An insurer and a valuation firm, not investment consultants. Likely mislabels.
+  - name: Heitman, Invesco, Stockbridge, SitusAMC, Cambridge, Mercer, Aksia
+    note: Printed in the "Consultant" column of FL SBA New Investments reports (SBA's own per-deal consultant), so
+      they are recorded as printed. Heitman and Invesco are also managers; not mapped.
+  - name: Sterling, MetLife / Metlife
+    note: A manager and an insurer named as consultant. Likely extractor mislabels; check on review.
   - name: Townsend, Aksia, Albourne
     note: Real consultants (real estate, hedge fund, alternatives specialists). Kept as their own names.
