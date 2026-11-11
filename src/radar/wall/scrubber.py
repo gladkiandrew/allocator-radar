@@ -51,7 +51,8 @@ PATTERNS: dict[str, re.Pattern[str]] = {
     "po_box": re.compile(r"\bP\.?\s?O\.?\s?Box\s+\d+\b", re.I),
     "state_zip": re.compile(r"\b(?:FL|Florida|NY|New York)\.?,?\s+\d{5}(?:-\d{4})?\b"),
     "social_url": re.compile(
-        r"(?:https?://)?(?:www\.)?(?:linkedin\.com/in/|x\.com/|twitter\.com/|instagram\.com/|facebook\.com/)[^\s)>\]]*",
+        # left boundary: "webex.com/" and "fedex.com/" are not x.com (D-B35 fix)
+        r"(?<![\w.-])(?:https?://)?(?:www\.)?(?:linkedin\.com/in/|x\.com/|twitter\.com/|instagram\.com/|facebook\.com/)[^\s)>\]]*",
         re.I,
     ),
     "contact_block": re.compile(r"(?im)^[ \t]*(?:contact|contact person|contact info(?:rmation)?)\s*:.*$"),
@@ -158,7 +159,7 @@ class ScrubResult:
     redactions: int
 
 
-CONTACT_KINDS = {"email", "mailto", "phone", "fax", "street", "state_zip", "po_box", "contact_block"}
+CONTACT_KINDS = {"email", "mailto", "phone", "phone_label", "fax", "street", "state_zip", "po_box", "contact_block", "gliner"}
 
 
 def contacts_allowed() -> bool:

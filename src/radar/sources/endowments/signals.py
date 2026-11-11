@@ -118,11 +118,19 @@ def _form(f: dict) -> str:
 def ef_readiness(signals: list[dict], has_filings: bool, today: date | None = None) -> Readiness:
     """Pension rules on committee/board signals only; 990 signals can at most make an organization WATCHING."""
     today = today or date.today()
-    # committee/board documents, plus meeting calendars (an OCIO_SEARCH from a calendar counts as PREPARING at most, D-B36)
-    committee = [s for s in signals if s["source_type"] in ("committee", "meeting_calendar")]
+    # Committee/board documents set tiers by the pension rules. A meeting calendar or public notice (source_type
+    # meeting_calendar) shows only that a meeting is scheduled, so it counts as PREPARING at most (owner 2026-11-11, D-B36).
+    committee = [s for s in signals if s["source_type"] == "committee"]
     r = compute(committee, datetime.now(timezone.utc), today)  # coverage judged below, not by fetch date
     if r.tier in ("DEPLOYING", "PREPARING"):
         return r
+    from datetime import timedelta
+    cal = sorted((s for s in signals if s["source_type"] == "meeting_calendar" and s["review_status"] in COUNTING_STATUSES
+                  and today - timedelta(days=180) <= s["event_date"] <= today + timedelta(days=90)),
+                 key=lambda s: s["event_date"], reverse=True)
+    if cal:
+        return Readiness("PREPARING", cal[:3], "A selection or manager meeting is scheduled on the organization's own meeting "
+                         "calendar or public notice; PREPARING at most until an agenda or minutes is read.")
     approved_990 = sorted((s for s in signals if s["source_type"] == "990" and s["review_status"] in COUNTING_STATUSES),
                           key=lambda s: s["event_date"], reverse=True)
     if approved_990 or has_filings or committee:

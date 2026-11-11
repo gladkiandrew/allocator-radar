@@ -78,7 +78,11 @@ def compute(f: dict, lines: list[dict]) -> dict:
     alt_status = "computed" if itemized and (n_hf or n_alt or n_unclassified == 0) else "not_disclosed"
     basis = (f"{len(lines)} itemized lines: {n_hf} hedge fund, {n_alt} other alternative, {n_unclassified} unclassified, "
              f"{n_placeholder} with no stated amount" if itemized else "the filing itemizes no other-investment lines")
-    pct = lambda x: round(100 * x / total, 2) if total and x is not None else None
+    # A blank public-securities line is not a zero: without it the denominator is incomplete, so no share is stated (D-B29).
+    complete = f.get("investments_public") is not None
+    pct = lambda x: round(100 * x / total, 2) if total and x is not None and complete else None
+    if not complete:
+        basis += "; share not stated: the filing leaves the publicly traded securities line blank"
     return {"investments_total": total,
             "hf_usd": hf if hf_status == "computed" else None, "alt_usd": alt if alt_status == "computed" else None,
             "hf_pct": pct(hf) if hf_status == "computed" else None, "alt_pct": pct(alt) if alt_status == "computed" else None,

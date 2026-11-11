@@ -453,3 +453,46 @@ are the irreversible ones, which went to the repo owner.
   `radar ingest-staging <group> [--ef]` is the single writer: it re-checks each file and its robots verdict, stores it with
   its real public URL (provenance CRAWL, `retrieved_by = browser-agent`) and parses it. Blocked items go to
   `data/manual_tasks.yaml`.
+
+## Phase C close (owner's instructions, 2026-11-11)
+
+- **D-B35 Contacts are stored (supersedes the contact parts of D-A14, D-B22 and the Wall).** The product is behind a
+  login. Names, titles, emails, phones and office addresses of officers, trustees, staff, consultants and managers are
+  stored wherever a lawfully reached source shows them, each cited to document and page. Individual compensation stays
+  out. Mechanics:
+  - `settings.scrub_contacts` defaults to false. The scrubber keeps contact text and still removes person
+    social-profile URLs; its `x.com/` pattern now needs a left boundary, so it no longer matches inside "webex.com/".
+  - The LLM provider no longer refuses prompts that contain contacts.
+  - The wall sweeps skip contact kinds. The social-profile check, the canary tokens, the egress checks and banned
+    columns (pay, SSN, DOB, social handles) still apply.
+  - `radar.contacts.recover()` re-parses, from the encrypted originals on disk, every page whose text had been scrubbed
+    (7,069 pages in 1,460 documents; no re-crawl). It rewrites `pages.text_scrubbed`, keeping the column name: the text
+    is now unscrubbed apart from social profiles. It extracts rows into `contacts`: name, title, email, phone,
+    office_address, role_type, document_sha256, page, source_url, context and method. Lines next to a pay amount are
+    skipped.
+  - The test suite runs the strict mode (`RADAR_SCRUB_CONTACTS=true`) so the old Wall stays tested.
+  - The static public-site wall is PRODUCT's to update.
+- **D-B36 Signal definitions, in code (`radar.extract.definitions`).**
+  - (1) A presentation or agenda item is a search only if its own words say search, candidate, finalist, interview, RFP,
+    replacement, selection, new manager or fee/contract negotiation. Otherwise it is `MANAGER_PRESENTATION`, which
+    qualifies for no tier.
+  - (2) Before a search, finalist or hire signal, the firm is looked up in that plan's holdings dated **before** the
+    signal. A firm already held makes a single-firm search an `INCUMBENT_UPDATE`, and makes an award with retain, renew
+    or additional wording a `COMMITMENT_MADE` with qualifier `re_up`. SBA table rows keep their own "New Manager?"
+    column. A search that adds a manager alongside an incumbent stays a search.
+  - (3) Service providers (auditor, attorney, actuary, custodian, investment consultant, OCIO) are never qualifier
+    `manager` when they are the object of the search or hire.
+  - Hand-entered signals have origin `CURATED`.
+  - `CONSULTANT_CHANGED` no longer counts for PREPARING.
+  - Owner decisions: Hollywood's Brightwood item is `MANAGER_PRESENTATION`/incumbent. Vero Beach Nov 4 is rewritten
+    around the large cap value analysis (long-only equity), with Cohen & Steers split out as a non-qualifying item.
+    UCF is `OCIO_SEARCH` from a meeting calendar.
+  - E&F meeting calendars and public notices (`source_type = meeting_calendar`) count as PREPARING at most.
+  - The retro pass retyped 6 signals.
+  - Verification: every published signal (370) plus a 15% sample of the rest (8) was checked by independent verifier
+    subagents that saw only the signal and its cited page or filing lines. Results are in
+    `signals.verification_status/_reason/verified_at` and `ef_signals.verification_status/_reason`; failed published
+    signals went back to review.
+- **D-B37 Timelines** (`radar timeline` → `timeline_searches`, `timeline_allocators`). Documents only; computed fields
+  are labelled. Searches are grouped per plan and asset class with a 365-day gap rule. The next step is taken only as
+  stated in a document. The typical search length is a median over at least 2 of the plan's own completed searches.

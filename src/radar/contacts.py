@@ -110,7 +110,8 @@ def recover(limit: int | None = None, rewrite_pages: bool = True) -> dict:
             with pdfplumber.open(io.BytesIO(data)) as doc:
                 for pno in page_nos:
                     if 1 <= pno <= len(doc.pages):
-                        new[pno] = doc.pages[pno - 1].extract_text() or ""
+                        from radar.wall.scrubber import scrub_text  # keeps contacts (D-B35); still removes social profiles
+                        new[pno] = scrub_text(doc.pages[pno - 1].extract_text() or "", use_gliner=False)
         except Exception:  # noqa: BLE001 - one bad file never stops the run
             stats["errors"] += 1
             continue
@@ -131,3 +132,19 @@ def recover(limit: int | None = None, rewrite_pages: bool = True) -> dict:
     with db.connect() as con:
         db.audit(con, "data-session", "contacts_recover", "pages", detail=stats)
     return stats
+
+
+def clean_social() -> dict:
+    """Remove person social-profile URLs from recovered page text and contact context (they stay banned under D-B35)."""
+    from radar.wall.scrubber import detect, scrub_text
+    n = 0
+    with db.connect() as con:
+        con.execute(SCHEMA)
+        for sha, pno, t in con.execute("SELECT sha256, page_no, text_scrubbed FROM pages WHERE regexp_matches(text_scrubbed, "
+                                       "'facebook\\.com/|x\\.com/|twitter\\.com/|instagram\\.com/|linkedin\\.com/in/', 'i')").fetchall():
+            if any(h.kind == "social_url" for h in detect(t)):
+                con.execute("UPDATE pages SET text_scrubbed = ? WHERE sha256 = ? AND page_no = ?", [scrub_text(t, use_gliner=False), sha, pno]); n += 1
+        for cid, ctx in con.execute("SELECT contact_id, context FROM contacts WHERE context IS NOT NULL").fetchall():
+            if any(h.kind == "social_url" for h in detect(ctx)):
+                con.execute("UPDATE contacts SET context = ? WHERE contact_id = ?", [scrub_text(ctx, use_gliner=False), cid]); n += 1
+    return {"cleaned": n}
