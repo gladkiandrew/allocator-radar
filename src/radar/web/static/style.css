@@ -429,3 +429,15 @@ footer.site a { color: var(--fg-2); }
 .page-head .sub, .notice, .muted.small { overflow-wrap: anywhere; }
 .hf-sub { font-size: 15px; margin: 18px 0 10px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
 .hf-sub .muted { font: 400 13px var(--sans); }
+
+/* ---- E&F hedge fund buyers (/ef/hedge-fund-buyers) ---- */
+.ef-hf-method p { margin: 0 0 8px; }
+.ef-hf-method p:last-child { margin-bottom: 0; }
+.ef-hf td { min-width: 0; overflow-wrap: anywhere; }
+.ef-hf td.ef-hf-rank { overflow-wrap: normal; white-space: nowrap; width: 2.5em; }
+.ef-hf-lines { margin: 4px 0; padding-left: 16px; color: var(--fg-2); }
+.ef-hf-cite { margin-top: 3px; overflow-wrap: anywhere; }
+@media (max-width: 720px) {
+  .ef-hf td.ef-hf-rank { display: none; }
+  .ef-hf td[data-l]::before { content: attr(data-l); display: block; margin-top: 8px; font: 600 11px/1.4 var(--sans); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+}

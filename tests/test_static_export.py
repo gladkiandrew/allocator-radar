@@ -64,6 +64,8 @@ def test_unknown_internal_link_fails_the_export():
         static_export.out_path("/doc/" + "0" * 64)
     assert static_export.out_path("/", "tier=DEPLOYING&strategy=hf") == "view-hf-deploying.html"
     assert static_export.out_path("/", "strategy=all") == "index.html"
+    assert static_export.out_path("/ef/hedge-fund-buyers") == "ef-hf.html"
+    assert static_export.out_path("/ef") == "ef.html" and static_export.out_path("/ef/590000001") == "ef/590000001.html"
 
 
 def test_wall_static_catches_contact_admin_links_and_data_files(tmp_path):

@@ -4,6 +4,7 @@
 {% block body %}
 <p class="eyebrow">Florida · Phase C</p>
 <h1>Endowments &amp; Foundations</h1>
+{% block ef_views %}{% include "_ef_views.html" %}{% endblock %}
 <p class="sub">The {{ rows|length }} largest Florida university foundations, private universities, community foundations and
   private foundations, chosen by assets from the IRS exempt-organization master file. Each row is built from the
   organization's IRS Form 990 or 990-PF filings, and every figure cites its tax year, part and line.</p>

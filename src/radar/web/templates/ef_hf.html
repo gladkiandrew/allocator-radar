@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Hedge fund buyers · Endowments & Foundations · Allocator Radar{% endblock %}
+{% macro money(v) %}{% if v is not none %}${{ '{:,.0f}'.format(v) }}{% else %}—{% endif %}{% endmacro %}
+{% macro pct(v) %}{% if v is none %}% not computable{% elif v > 0 and v < 0.1 %}&lt;0.1% of investments{% else %}{{ '%.1f'|format(v) }}% of investments{% endif %}{% endmacro %}
+{% macro cite(f, full) %}<a class="cite" href="{{ f.url }}" target="_blank" rel="noopener" title="{{ full }}">Form {{ f.form }} TY{{ f.tax_year }}</a>
+  <div class="faint small ef-hf-cite">{{ full }}</div>{% endmacro %}
+{% block body %}
+<p class="eyebrow">Florida · Phase C</p>
+<h1>Endowments &amp; Foundations</h1>
+{% include "_ef_views.html" %}
+<p class="sub">Hedge fund buyers: the {{ rows|length }} organizations ranked by the hedge fund exposure their latest IRS
+  Form 990 or 990-PF discloses, in dollars and as a percent of investments. Every figure cites the form, tax year, part
+  and line, and links to the filing.</p>
+
+<div class="notice ef-hf-method">
+  <p><b>Ranking.</b> Organizations are ranked by the <b>hedge fund (named lines)</b> figure first. Those without one follow,
+    ranked by the broader <b>alternatives (other investments)</b> figure, then those with neither.</p>
+  <p><b>Hedge fund (named lines)</b> is the sum of the other-investment lines on the latest return whose own description
+    names a hedge fund strategy (hedge fund, absolute return, global macro, multi-strategy, market neutral, long/short,
+    arbitrage, event driven, managed futures and similar): Form 990 Schedule D Part VII (investments, other securities)
+    or the Form 990-PF Part II line 13 statement. A fund that is a hedge fund but is not described as one is not counted.
+    Lines described only as "alternative investments" are not counted here either, because they can hold private equity
+    or real estate; they are noted under the broader figure.</p>
+  <p><b>Alternatives (other investments)</b> is the whole other-investments line: Form 990 Part X line 12 (investments,
+    other securities) or Form 990-PF Part II line 13 (investments, other). It is everything the filer did not report as
+    publicly traded securities, so it can also include commingled stock and bond funds, private equity and real estate.
+    It is not a hedge fund figure.</p>
+  <p><b>Percent of investments</b> = figure ÷ (public securities + other investments): Form 990 Part X lines 11 + 12, or
+    Form 990-PF Part II lines 10a–10c + 13. A line left blank on the return counts as zero; when both are blank the
+    percent is not computed. Each figure is labeled with the value it uses: fair market value (FMV) where the return
+    gives one for that line, otherwise book value. The 990 balance sheet is at book value; the 990-PF totals are at FMV,
+    while the 990-PF statement lines read so far carry book value only, so those percents divide a book value by an FMV
+    total and are labeled that way.</p>
+  <p>"Not disclosed" means the return on file does not report the figure. It is never shown as zero. 990s are filed once a
+    year and lag by a year or more.</p>
+</div>
+
+<section class="kpis" aria-label="Key figures" style="margin-top:18px">
+  <div class="kpi"><div class="v">{{ rows|length }}</div><div class="l">Organizations</div></div>
+  <div class="kpi"><div class="v">{{ n_hf }}</div><div class="l">With named hedge fund lines</div></div>
+  <div class="kpi"><div class="v">{{ n_alt_only }}</div><div class="l">Other investments only</div></div>
+  <div class="kpi"><div class="v">{{ n_neither }}</div><div class="l">Neither disclosed</div></div>
+</section>
+
+{% if not rows %}<div class="card empty">No organizations loaded yet.</div>{% else %}
+<div class="table-card ef-hf" style="margin-top:18px"><div class="scroll">
+<table class="stack">
+  <thead><tr><th scope="col" class="hide-sm">#</th><th scope="col">Organization · latest return</th>
+    <th scope="col">Hedge fund (named lines)</th><th scope="col">Alternatives (other investments)</th>
+    <th scope="col">Investments (denominator)</th></tr></thead>
+  <tbody>
+  {% for r in rows %}{% set f = r.latest %}
+  <tr>
+    <td class="hide-sm ef-hf-rank mono faint">{{ r.rank }}</td>
+    <td class="plan"><a class="pname" href="/ef/{{ r.ein }}">{{ r.name|pretty }}</a>
+      <div class="where">{{ r.kind_label }} · {{ r.city }}</div>
+      {% if f %}<div class="faint small">Form {{ f.form }} TY{{ f.tax_year }} · period ended {{ f.tax_period_end }}</div>
+      {% else %}<div class="faint small">No e-filed return in the IRS indexes read</div>{% endif %}</td>
+    <td data-l="Hedge fund (named lines)">{% if r.hf %}
+        <div class="mono"><b>{{ money(r.hf.amount) }}</b> <span class="faint small">{{ r.hf.basis }}</span></div>
+        <div class="small">{{ pct(r.hf_pct) }}{% if r.hf_pct is not none and r.denom and r.hf.basis != r.denom.basis %} <span class="faint">({{ r.hf.basis }} ÷ {{ r.denom.basis }} total)</span>{% endif %}</div>
+        {% if r.hf.amount < 1000 %}<div class="faint small">A nominal amount as filed. The line's FMV column is not in the store.</div>{% endif %}
+        <ul class="ef-hf-lines small">{% for l in r.hf.lines %}<li>"{{ l.description }}" <span class="mono">{{ money(l.value) }}</span></li>{% endfor %}</ul>
+        {{ cite(f, r.hf.cite) }}
+      {% else %}<span class="muted">not disclosed</span>
+        {% if f %}<div class="faint small">{% if r.n_lines %}None of the {{ r.n_lines }} other-investment line{{ 's' if r.n_lines != 1 }} on the TY{{ f.tax_year }} return names a hedge fund strategy.{% else %}No itemized other-investment lines on file for the TY{{ f.tax_year }} return.{% endif %}</div>{% endif %}
+      {% endif %}</td>
+    <td data-l="Alternatives (other investments)">{% if r.alt %}
+        <div class="mono">{{ money(r.alt.amount) }} <span class="faint small">{{ r.alt.basis }}</span></div>
+        <div class="small">{% if r.alt.amount == 0 %}reported as zero{% else %}{{ pct(r.alt_pct) }}{% endif %}</div>
+        {% for l in r.alt_named %}<div class="faint small">includes "{{ l.description }}" {{ money(l.value) }} ({{ l.basis }})</div>{% endfor %}
+        {{ cite(f, r.alt.cite) }}
+      {% else %}<span class="muted">not disclosed</span>
+        {% if f %}<div class="faint small">The line is blank on the TY{{ f.tax_year }} return.</div>{% endif %}
+      {% endif %}</td>
+    <td data-l="Investments (denominator)">{% if r.denom %}
+        <div class="mono">{{ money(r.denom.amount) }} <span class="faint small">{{ r.denom.basis }}</span></div>
+        {% if r.denom.blank %}<div class="faint small">{{ r.denom.blank|join(' and ')|capitalize }} blank on the return, counted as zero.</div>{% endif %}
+        <div class="faint small ef-hf-cite">{{ r.denom.cite }}</div>
+      {% else %}<span class="muted">not disclosed</span><div class="faint small">% not computable</div>{% endif %}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+<p class="muted small">Source: IRS e-file XML (TEOS) for each organization's latest return on file, read directly. Only
+  organization and fund names, dollar amounts and line labels are kept; no individual's compensation or contact details.</p>
+{% endif %}
+{% endblock %}

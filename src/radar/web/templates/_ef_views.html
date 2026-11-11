@@ -1,0 +1,5 @@
+{# The two /ef views. Kept in its own file so edits to ef.html elsewhere do not collide. #}
+<nav class="filters" aria-label="Endowments and foundations views" style="margin:4px 0 14px">
+  <a href="/ef" class="{{ 'on' if ef_view != 'hf' }}"{% if ef_view != 'hf' %} aria-current="page"{% endif %}>By assets</a>
+  <a href="/ef/hedge-fund-buyers" class="{{ 'on' if ef_view == 'hf' }}"{% if ef_view == 'hf' %} aria-current="page"{% endif %}>Hedge fund buyers</a>
+</nav>
