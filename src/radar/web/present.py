@@ -210,3 +210,39 @@ def hf_highlights(con, plans: list[dict], today: date | None = None, per_plan: i
         mine.append(row)
         rows.append(row)
     return sorted(rows, key=lambda r: r["signal"]["event_date"], reverse=True)
+
+
+# ---------------- strategy label as a reader sees it ----------------
+# DATA owns classification (signals.bucket / bucket_label). Until a signal has a bucket, the page shows a display-only
+# label: plan-level events are "total plan", hires of service providers are "service provider", and specific
+# wording in the summary gives an asset class marked "(inferred)". Nothing here is written back to the store.
+TOTAL_PLAN_TYPES = {"IPS_AMENDED", "ASSET_LIABILITY_STUDY", "REBALANCE_APPROVED"}
+SERVICE_TYPES = {"CONSULTANT_CHANGED", "FEE_RENEGOTIATED", "CIO_CHANGED", "OFFICER_CHANGED"}
+_INFER = [  # first match wins; service providers first, so "custodian for the fixed income portfolio" is a service hire
+    (re.compile(r"custod|audit|actuar|counsel\b|attorney|litigation|plan administrator|administrative services|financial statements|"
+                r"transition manag|investment consultant|consulting services|general consultant", re.I), "service provider"),
+    (re.compile(r"real estate|\breits?\b", re.I), "real estate"),
+    (re.compile(r"private (credit|debt)|direct lending", re.I), "private credit"),
+    (re.compile(r"infrastructure", re.I), "infrastructure"),
+    (re.compile(r"private equity|buyout|venture capital", re.I), "private equity"),
+    (re.compile(r"\b(large|mid|small|smid)[- ]cap|s&p 500|index fund|international equity|global equity|"
+                r"domestic equity|equity index|emerging markets? equity", re.I), "long only equity"),
+    (re.compile(r"fixed income|core plus|\bbonds?\b|multi[- ]sector credit|duration|bank loans?|\btips\b", re.I),
+     "long only fixed income"),
+]
+
+
+def strategy_label(s: dict) -> dict:
+    """{text, inferred}: the stored bucket when DATA set one; else a display-only label."""
+    b = s.get("bucket")
+    if b and b != "OTHER":
+        return {"text": b.replace("_", " ").lower(), "inferred": not s.get("bucket_label")}
+    summary = s.get("summary") or ""
+    if s.get("signal_type") in SERVICE_TYPES:
+        return {"text": "service provider", "inferred": False}
+    for pat, label in _INFER:
+        if pat.search(summary):
+            return {"text": label, "inferred": True}
+    if s.get("signal_type") in TOTAL_PLAN_TYPES or s.get("signal_type") == "TARGET_ALLOCATION_CHANGED":
+        return {"text": "total plan", "inferred": False}
+    return {"text": "not classified", "inferred": False}

@@ -167,3 +167,13 @@ def test_how_page_shows_scorecard(monkeypatch, tmp_path):
     monkeypatch.setenv("RADAR_HANDOFF_PATH", str(h))
     body = TestClient(create_app()).get("/how").text
     assert "Data quality" in body and "95.0%" in body and "19 of 20 signals correct" in body
+
+
+def test_strategy_label_prefers_stored_bucket_then_type_then_inferred_wording():
+    sl = present.strategy_label
+    assert sl({"bucket": "REAL_ESTATE", "bucket_label": "Real Estate"}) == {"text": "real estate", "inferred": False}
+    assert sl({"summary": "The Board voted to retain Eagle Capital as its large cap value domestic equity manager."}) \
+        == {"text": "long only equity", "inferred": True}
+    assert sl({"summary": "Custodian finalist presentations for the fixed income portfolio."})["text"] == "service provider"
+    assert sl({"signal_type": "IPS_AMENDED", "summary": "The Board amended the IPS."}) == {"text": "total plan", "inferred": False}
+    assert sl({"signal_type": "COMMITMENT_MADE", "summary": "Approved $5M to Affiliated Fund II."})["text"] == "not classified"

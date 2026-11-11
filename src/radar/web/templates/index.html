@@ -80,7 +80,7 @@
       <div class="what"><span class="mono" style="color:var(--fg)">{{ s.event_date }}</span> · {{ s.summary }}
         {% for e in (s.evidence|uniq_cites)[:1] %}{{ cite(e) }}{% endfor %}</div>
       <div class="meta">
-        <span>Strategy <b>{{ (s.bucket or 'other')|replace('_',' ')|lower }}</b>{% if not s.bucket_label %} <span class="faint">(inferred)</span>{% endif %}</span>
+        {% set sl = strategy_label(s) %}<span>Strategy <b>{{ sl.text }}</b>{% if sl.inferred %} <span class="faint">(inferred)</span>{% endif %}</span>
         {% if a.consultant %}<span>Consultant <b>{{ a.consultant.consultant|consultant|truncate(34) }}</b></span>{% endif %}
         <span>Next meeting <b>{{ a.next_meeting or 'not published' }}</b></span>
         {% if r.reasons|length > 1 %}<a href="/a/{{ a.allocator_id }}#signals">+{{ r.reasons|length - 1 }} more</a>{% endif %}
@@ -143,7 +143,7 @@
           {% for e in (s.evidence|uniq_cites)[:1] %}{{ cite(e) }}{% endfor %}
           <div class="meta">
             {% if s.hf_relevant %}<span class="tag hf">HF</span>{% endif %}
-            <span>{{ (s.bucket or 'other')|replace('_',' ')|lower }}{% if not s.bucket_label %} <span class="faint">(inferred)</span>{% endif %}</span>
+            {% set sl = strategy_label(s) %}<span>{{ sl.text }}{% if sl.inferred %} <span class="faint">(inferred)</span>{% endif %}</span>
             {% if s.date_basis %}<span class="basis">dated by {{ s.date_basis|replace('_',' ') }}</span>{% endif %}
             {% set ap = approval(s) %}<span class="tag {{ ap.cls }}" title="{{ ap.title }}">{{ ap.label }}</span>
             <span>next meeting {{ a.next_meeting or 'not published' }}</span>

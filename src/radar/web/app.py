@@ -59,6 +59,7 @@ templates.env.filters["consultant"] = present.consultant_name
 templates.env.globals["coverage_note"] = present.coverage_note
 templates.env.filters["doc_when"] = present.doc_when
 templates.env.globals["approval"] = present.approval
+templates.env.globals["strategy_label"] = present.strategy_label
 
 
 PUBLIC_HIDDEN = ("/review", "/manual", "/records", "/registry", "/inbox", "/export", "/tasks")
