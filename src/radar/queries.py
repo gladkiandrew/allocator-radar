@@ -41,6 +41,12 @@ def signals_for(con, allocator_ids: list[str] | None = None,
     ev = _evidence_for(con, "signal", [s["signal_id"] for s in sigs])
     for s in sigs:
         s["evidence"] = ev.get(s["signal_id"], [])
+    from radar.settings import get_settings
+
+    if get_settings().public_mode:  # public and member builds: verified signals only (they alone set tiers there)
+        from radar.web.present import is_verified
+
+        sigs = [s for s in sigs if is_verified(s)]
     return sigs
 
 

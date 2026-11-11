@@ -122,9 +122,14 @@ def test_doc_when_marks_future_documents_as_upcoming_meetings():
 def test_approval_labels_show_the_real_state():
     crawled = {"review_status": "auto_approved", "evidence": [{"source_url": "https://x.gov/a.pdf", "provenance": "CRAWL"}]}
     manual = {"review_status": "auto_approved", "evidence": [{"source_url": "manual://fl-sba-frs/a.pdf"}]}
-    assert present.approval({"review_status": "approved"})["label"] == "reviewed"
-    assert present.approval(manual)["label"] == "auto-approved (manual source)"
-    assert present.approval(crawled)["label"] == "awaiting review"
+    crawled["review_note"] = "quote matches cited page; date basis document_date"
+    manual["review_note"] = "parsed table; date basis quarter_end"
+    assert present.approval({"review_status": "approved"})["label"] == "reviewed by a person"
+    assert present.approval(manual)["label"] == "verified against source"
+    assert present.approval(crawled)["label"] == "verified against source"
+    assert not present.is_verified({"review_status": "auto_approved", "review_note": "returned to queue"})
+    assert not present.is_verified({"review_status": "approved", "verification": "failed"})
+    assert present.is_verified({"review_status": "auto_approved", "reviewed_by": "ef-990-parser (deterministic)"})
     assert present.approval({"review_status": "new"})["label"] == "pending review"
 
 

@@ -25,7 +25,11 @@ def _signals(con, eins: list[str] | None, public: bool) -> dict[str, list[dict]]
         where.append(f"ein IN ({','.join('?' * len(eins))})")
         params += eins
     out: dict[str, list[dict]] = defaultdict(list)
+    from radar.web.present import is_verified
+
     for s in store.rows(con, f"SELECT * FROM ef_signals WHERE {' AND '.join(where)} ORDER BY event_date DESC, signal_type", params):
+        if public and not is_verified(s):
+            continue
         s["source_label"] = SOURCE_LABEL.get(s["source_type"], s["source_type"])
         out[s["ein"]].append(s)
     return out
@@ -133,9 +137,11 @@ def hf_rows(public: bool = True, limit: int = 6) -> list[dict]:
              + ("AND review_status IN ('approved', 'auto_approved') " if public else "")
              + "ORDER BY signal_type = 'EF_MANAGER_ADDED', event_date DESC")  # new hedge fund lines first
         sigs = store.rows(con, q)
+    from radar.web.present import is_verified
+
     seen, out = defaultdict(int), []
     for s in sigs:
-        if not strip_qualifies(s):
+        if not strip_qualifies(s) or (public and not is_verified(s)):
             continue
         if seen[s["ein"]] >= 2:
             continue

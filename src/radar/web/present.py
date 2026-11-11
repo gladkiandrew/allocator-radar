@@ -114,40 +114,50 @@ def coverage_note(newest_doc_date, today: date | None = None) -> str | None:
     return f"last document: {newest_doc_date.strftime('%B %Y')}" if newest_doc_date else "no dated document on file"
 
 
-# ---------------- approval state as a reader sees it ----------------
-APPROVAL_TITLE = {
-    "reviewed": "A person read the source page and approved this signal.",
-    "manual": "Passed the four automatic checks; the source file was downloaded by hand from the publisher. "
-              "No person has reviewed this signal yet.",
-    "awaiting": "Passed the four automatic checks, so it counts toward the tier, but no person has reviewed it yet.",
-    "pending": "Not yet checked; not shown on the public site and never counts toward a tier.",
-    "rejected": "Rejected by a person; never counts toward a tier.",
+# ---------------- verification: only verified signals render publicly ----------------
+# A signal is VERIFIED when a person approved it, or when it was checked against its source: its quote matches the
+# cited page word for word, it was read from a parsed table, or it came from the deterministic 990 parser. When DATA's
+# `verification` column is present it decides (R8). Unverified signals never render on public or member pages.
+_SOURCE_CHECKED = re.compile(r"quote matches cited page|parsed table|quote on page|deterministic", re.I)
+VERIFY_TITLE = {
+    "person": "A person read the source page and approved this signal.",
+    "source": "Checked automatically against its source: the quote matches the cited page word for word, or the row "
+              "was read from a table or filing field. No person has reviewed it yet.",
 }
 
 
-def manual_source(s: dict) -> bool:
-    """Was the signal's source file added by hand (the manual inbox), not fetched by the crawler?"""
-    if (s.get("source_url") or "").startswith("manual://"):
-        return True
-    return any((e.get("source_url") or "").startswith("manual://") or e.get("provenance") == "MANUAL"
-               for e in s.get("evidence") or [])
+def verification(s: dict) -> str | None:
+    """'person', 'source', or None (unverified)."""
+    v = s.get("verification")
+    if v is not None and v != "verified":
+        return None
+    if s.get("review_status") == "approved" or s.get("verified_method") == "person":
+        return "person"
+    if v == "verified":
+        return "source"
+    if s.get("review_status") == "auto_approved" and _SOURCE_CHECKED.search(
+            " ".join(filter(None, [s.get("review_note"), s.get("reviewed_by")]))):
+        return "source"
+    return None
+
+
+def is_verified(s: dict) -> bool:
+    return verification(s) is not None
 
 
 def approval(s: dict) -> dict:
-    """The real review state of a signal: 'reviewed' only when a person approved it. Auto-approved signals are
-    labeled as such, never as reviewed. Returns {key, label, cls, title}."""
+    """The label a reader sees: 'reviewed by a person' or 'verified against source'. Admin pages also see pending,
+    unverified and rejected states. Returns {key, label, cls, title}."""
+    v = verification(s)
+    if v == "person":
+        return {"key": "person", "label": "reviewed by a person", "cls": "ok", "title": VERIFY_TITLE["person"]}
+    if v == "source":
+        return {"key": "source", "label": "verified against source", "cls": "", "title": VERIFY_TITLE["source"]}
     st = s.get("review_status")
-    if st == "approved":
-        key, label, cls = "reviewed", "reviewed", "ok"
-    elif st == "auto_approved" and manual_source(s):
-        key, label, cls = "manual", "auto-approved (manual source)", ""
-    elif st == "auto_approved":
-        key, label, cls = "awaiting", "awaiting review", ""
-    elif st == "rejected":
-        key, label, cls = "rejected", "rejected", "bad"
-    else:
-        key, label, cls = "pending", "pending review", "warn"
-    return {"key": key, "label": label, "cls": cls, "title": APPROVAL_TITLE[key]}
+    if st == "rejected":
+        return {"key": "rejected", "label": "rejected", "cls": "bad", "title": "Rejected by a person."}
+    return {"key": "unverified", "label": "unverified" if st == "auto_approved" else "pending review", "cls": "warn",
+            "title": "Not verified against its source; never shown on the public or member site."}
 
 
 def doc_when(d, today: date | None = None) -> str:

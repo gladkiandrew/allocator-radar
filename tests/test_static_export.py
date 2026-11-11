@@ -19,7 +19,7 @@ def _store_with_signals():
                       confidence=0.9)]
     X.extract_document(sha, "canary", provider=FakeProvider(X.XResult(signals=sigs, mandates=[], officers=[], consultants=[])))
     with db.connect() as con:
-        con.execute("UPDATE signals SET review_status='auto_approved', bucket='FUND_OF_HEDGE_FUNDS', hf_relevant=true")
+        con.execute("UPDATE signals SET review_status='auto_approved', review_note='quote matches cited page', bucket='FUND_OF_HEDGE_FUNDS', hf_relevant=true")
     return sha
 
 
@@ -34,7 +34,7 @@ def test_export_writes_public_pages_with_relative_links(tmp_path):
 
     brief = (out / "a" / "canary.html").read_text()
     assert 'href="../index.html"' in brief and 'href="../static/style.css"' in brief
-    assert "awaiting review" in brief and "Public-record data. Updated " in brief  # auto-approved, crawled: no person yet
+    assert "verified against source" in brief and "Public-record data. Updated " in brief  # auto-approved, crawled: no person yet
     assert ">auto-approved<" not in brief  # never an unqualified "auto-approved" label
     assert "https://canary.invalid/a.pdf#page=1" in brief  # citations go to the public source, not the lake
     assert "/doc/" not in brief and "hx-get" not in brief
@@ -91,3 +91,15 @@ def test_wall_reads_table_cells_separately_but_still_catches_a_street_in_one_cel
     assert not detect(visible_text(across))
     inside = "<table><tr><td>Office at 282 Park Place, Suite 4</td></tr></table>"
     assert detect(visible_text(inside))
+
+
+def test_unverified_signals_never_render_in_the_public_build(tmp_path):
+    from radar import db
+
+    _store_with_signals()
+    with db.connect() as con:  # auto-approved but with no record of a source check: unverified
+        con.execute("UPDATE signals SET review_note = 'returned to queue'")
+    out = tmp_path / "dist"
+    static_export.export(out)
+    brief = (out / "a" / "canary.html").read_text()
+    assert "hedge fund of funds" not in brief.lower() and "verified against source" not in brief
