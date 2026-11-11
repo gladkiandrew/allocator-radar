@@ -128,12 +128,12 @@ VERIFY_TITLE = {
 
 def verification(s: dict) -> str | None:
     """'person', 'source', or None (unverified)."""
-    v = s.get("verification")
-    if v is not None and v != "verified":
+    v = s.get("verification_status") or s.get("verification")  # DATA's column (D-B37): verified|verified_after_fix|failed
+    if v is not None and v not in ("verified", "verified_after_fix"):
         return None
     if s.get("review_status") == "approved" or s.get("verified_method") == "person":
         return "person"
-    if v == "verified":
+    if v in ("verified", "verified_after_fix"):
         return "source"
     if s.get("review_status") == "auto_approved" and _SOURCE_CHECKED.search(
             " ".join(filter(None, [s.get("review_note"), s.get("reviewed_by")]))):

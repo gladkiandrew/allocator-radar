@@ -12,11 +12,11 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-STAGES = [  # (key, label, signal types that reach it)
-    ("search_opened", "Search opened", {"SEARCH_OPENED", "SEARCH_SCHEDULED"}),
-    ("rfp_issued", "RFP issued", {"RFP_ISSUED"}),
-    ("finalists_named", "Finalists named", {"FINALISTS_NAMED"}),
+STAGES = [  # (key, label, signal types that reach it); keys match DATA's timeline_searches stage columns (D-B37)
+    ("opened", "Search opened", {"SEARCH_OPENED", "SEARCH_SCHEDULED", "RFP_ISSUED"}),
+    ("finalists", "Finalists named", {"FINALISTS_NAMED"}),
     ("interviews", "Interviews", set()),
+    ("fee_contract", "Fees / contract", set()),
     ("awarded", "Awarded", {"MANDATE_AWARDED"}),
     ("funded", "Funded", {"MANDATE_FUNDED"}),
 ]
@@ -89,6 +89,32 @@ def when(a: dict, signals: list[dict], today: date | None = None, cfg: dict | No
             tracker.append({"key": key, "label": label, "reached": bool(hits),
                             "date": hits[-1]["event_date"] if hits else None, "signal": hits[-1] if hits else None})
 
+    # DATA's timeline tables (D-B37) win where they have a value: they read the documents across all signals.
+    by_id = {x["signal_id"]: x for x in signals if x.get("signal_id")}
+    tl, searches = a.get("tl"), a.get("tl_searches") or []
+    if tl:
+        if tl.get("next_meeting_date"):
+            next_meeting = {"date": tl["next_meeting_date"], "basis": tl.get("next_meeting_source") or "published"}
+        if tl.get("last_deploy_date") and by_id.get(tl.get("last_deploy_signal_id")):
+            sig = by_id[tl["last_deploy_signal_id"]]
+            last = {**sig, "event_date": tl["last_deploy_date"], "manager_name": tl.get("last_deploy_firm") or sig.get("manager_name"),
+                    "amount_usd": tl.get("last_deploy_amount") if tl.get("last_deploy_amount") is not None else sig.get("amount_usd"),
+                    "bucket": tl.get("last_deploy_asset_class") or sig.get("bucket")}
+    search = None
+    if lead is not None and r.tier == "DEPLOYING" and searches:
+        open_ = [x for x in searches if x.get("status") == "open"] or searches
+        lead_ids = {x["signal_id"] for x in r.reasons}
+        search = next((x for x in open_ if lead_ids & set((x.get("signal_ids") or "").split(","))), None) or \
+            next((x for x in open_ if x.get("asset_class") == lead.get("bucket")), None)
+    if search:
+        tracker = []
+        for key, label, _ in STAGES:
+            d = search.get(f"{key}_date")
+            tracker.append({"key": key, "label": label, "reached": d is not None, "date": d, "signal": None})
+        if search.get("next_step_text"):
+            next_step = {"text": search["next_step_text"], "date": search.get("next_step_date"), "stated": True,
+                         "signal": by_id.get(search.get("next_step_signal_id"))}
+
     expiry = None
     win = _window(r.tier, cfg) if r.reasons else None
     if win is not None:
@@ -99,12 +125,16 @@ def when(a: dict, signals: list[dict], today: date | None = None, cfg: dict | No
         size = lead.get("mandate_size_usd") or (lead.get("amount_usd") if lead["signal_type"] in
                                                 ("MANDATE_AWARDED", "MANDATE_FUNDED", "COMMITMENT_MADE",
                                                  "TARGET_ALLOCATION_CHANGED") else None)
+    if tl and tl.get("tier_expires") and r.tier == tl.get("tier"):
+        expiry = tl["tier_expires"]
+    stage = (search or {}).get("stage_reached") if search else (stage_of(lead) if lead is not None else None)
     return {
         "tier": r.tier,
+        "search": search,
         "lead": lead,
-        "stage": stage_of(lead) if lead is not None else None,
-        "stage_label": STAGE_LABEL.get(stage_of(lead)) if lead is not None and stage_of(lead) else None,
-        "stage_computed": bool(lead is not None and not lead.get("stage")),
+        "stage": stage,
+        "stage_label": STAGE_LABEL.get(stage, "early hint" if stage == "hint" else None),
+        "stage_computed": not search,
         "next_step": next_step,
         "next_meeting": next_meeting,
         "last_deployment": last,

@@ -91,8 +91,10 @@ def allocator_table(con, scoped: bool = True) -> list[dict]:
     sigs_by: dict[str, list[dict]] = defaultdict(list)
     for s in signals_for(con):
         sigs_by[s["allocator_id"]].append(s)
+    tl_alloc, tl_search = timeline_rows(con)
     out = []
     for a in allocs:
+        a["tl"], a["tl_searches"] = tl_alloc.get(a["allocator_id"]), tl_search.get(a["allocator_id"], [])
         d = docs.get(a["allocator_id"], {})
         sigs = sigs_by.get(a["allocator_id"], [])
         r = compute(sigs, d.get("last_new_document"))
@@ -212,9 +214,24 @@ def allocator_brief(con, allocator_id: str) -> dict | None:
     from radar import timeline
 
     ahead = [d["doc_date"] for d in a["documents"] if d.get("doc_date") and d["doc_date"] > _date.today()]
+    tl_alloc, tl_search = timeline_rows(con)
+    a["tl"], a["tl_searches"] = tl_alloc.get(allocator_id), tl_search.get(allocator_id, [])
     a["when"] = timeline.when({**a, "next_meeting": a["facts"].get("next_meeting"),
                                "upcoming_doc_date": min(ahead) if ahead else None}, sigs)
     return a
+
+
+def timeline_rows(con) -> tuple[dict, dict]:
+    """DATA's timeline tables (D-B37) if present: ({allocator_id: row}, {allocator_id: [search rows]})."""
+    have = {r[0] for r in con.execute("SELECT table_name FROM information_schema.tables "
+                                      "WHERE table_name IN ('timeline_allocators', 'timeline_searches')").fetchall()}
+    alloc, searches = {}, defaultdict(list)
+    if "timeline_allocators" in have:
+        alloc = {r["allocator_id"]: r for r in db.rows(con, "SELECT * FROM timeline_allocators")}
+    if "timeline_searches" in have:
+        for r in db.rows(con, "SELECT * FROM timeline_searches ORDER BY last_date DESC NULLS LAST"):
+            searches[r["allocator_id"]].append(r)
+    return alloc, searches
 
 
 def contacts_for(con, allocator_id: str) -> list[dict]:
