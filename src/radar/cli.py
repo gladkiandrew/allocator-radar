@@ -56,7 +56,8 @@ def main(argv: list[str] | None = None) -> int:
     cs = sub.add_parser("consultant-scan", help="targeted extraction of service providers for gap plans missing a consultant")
     cs.add_argument("--workers", type=int, default=3)
     sub.add_parser("manual-worklist", help="write data/manual_worklist.md: blocked plans, where to look, where to drop files")
-    sub.add_parser("status", help="one-shot status: registry, main vs gaps by cause, tiers, deploying/preparing, signals, documents")
+    st = sub.add_parser("status", help="one-shot status: registry, main vs gaps by cause, tiers, deploying/preparing, signals, documents")
+    st.add_argument("--save", metavar="PATH", help="also write the deploying funnel as JSON to PATH")
     sub.add_parser("index", help="add newly parsed (scrubbed) pages to the LanceDB search index")
     dp = sub.add_parser("discover", help="discovery agent: registry/seed_florida.yaml -> registry/florida.yaml")
     dp.add_argument("--resuggest", action="store_true", help="recompute suggested pages only (no fetching)")
@@ -375,6 +376,8 @@ def main(argv: list[str] | None = None) -> int:
             docs = con.execute("SELECT count(*), sum(page_count) FROM documents").fetchone()
             sig = dict(con.execute("SELECT review_status, count(*) FROM signals GROUP BY 1").fetchall())
             hf = con.execute("SELECT count(*) FROM signals WHERE hf_relevant AND review_status IN ('approved','auto_approved')").fetchone()[0]
+            from radar import funnel
+            fun = funnel.compute(con)
         print(f"REGISTRY {len(rows)} plans | MAIN TABLE {len(main)} | GAPS {len(gaps)}")
         print("  tiers (main):", dict(Counter(r["readiness"].tier for r in main)))
         print("  tiers (all): ", dict(Counter(r["readiness"].tier for r in rows)))
@@ -389,6 +392,13 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  {'MAIN' if not r['bar_reasons'] else 'GAP '} {r['display_name'][:58]:58} {s0['event_date']} "
                       f"{s0['signal_type']}/{s0.get('qualifier') or '-'} {s0.get('bucket') or ''}{' HF' if s0.get('hf_relevant') else ''} "
                       f"[{(e.get('doc_title') or '')[:30]} p.{e.get('page')}]")
+        print(funnel.render(fun))
+        if args.save:
+            import json
+            from pathlib import Path
+            Path(args.save).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.save).write_text(json.dumps(fun, indent=2) + "\n")
+            print(f"\nwrote {args.save}")
     elif args.cmd == "index":
         from radar import db, search
         db.init_db()
