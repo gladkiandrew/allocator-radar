@@ -7,10 +7,26 @@
   applied to approved signals. Every signal cites a public document and a page.</p>
 
 <div class="credit">
-  <span><b>Built by Andrew Gladki</b>, Financial AI Engineer, and set to {{ scope.label }} allocators only
-    ({{ scope.description }}).</span>
+  <span><b>Built by Andrew Gladki</b>, Financial AI Engineer. Pension plans: {{ scope.label }} only
+    ({{ scope.description }}). Endowments and foundations: statewide.</span>
   <a href="/about">About the project and its mission →</a>
 </div>
+
+<h2 id="quality">Data quality <span class="mono count">computed {{ card.as_of }}</span></h2>
+<section class="kpis" aria-label="Data quality scorecard">
+  <div class="kpi"><div class="v">{{ card.plans + card.orgs }}</div>
+    <div class="l">Plans and organizations covered</div>
+    <div class="faint small">{{ card.plans }} pension plans ({{ card.plans_main }} meet the coverage bar) · {{ card.orgs }} endowments and foundations</div></div>
+  <div class="kpi"><div class="v">{% if card.median_age_days is not none %}{{ card.median_age_days }} days{% else %}—{% endif %}</div>
+    <div class="l">Median age of newest document</div>
+    <div class="faint small">Pension plans, {{ card.plans_dated }} with a dated document; future-dated agendas excluded.{% if card.ef_median_age_days is not none %} E&amp;F latest 990 period end: {{ card.ef_median_age_days }} days.{% endif %}</div></div>
+  <div class="kpi"><div class="v">{% if card.reviewed_pct is not none %}{{ card.reviewed_pct }}%{% else %}—{% endif %}</div>
+    <div class="l">Signals reviewed by a person</div>
+    <div class="faint small">{{ card.reviewed }} of {{ card.public_signals }} public signals. The rest passed the four automatic checks and are labeled as such.</div></div>
+  <div class="kpi"><div class="v">{% if card.spot %}{{ card.spot.pct }}%{% else %}—{% endif %}</div>
+    <div class="l">Latest spot-check accuracy</div>
+    <div class="faint small">{% if card.spot %}{{ card.spot.correct }} of {{ card.spot.checked }} signals correct against their source pages, checked {{ card.spot.date }}.{% else %}No spot check recorded yet.{% endif %}</div></div>
+</section>
 
 <div class="flow" aria-label="Pipeline">
   <div class="step"><div class="k">01 · Discover</div><h3>Find the plans</h3><p>A registry of public plans and the pages where each one posts agendas, minutes and reports. A person approves it before any crawling.</p></div>

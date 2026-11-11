@@ -164,7 +164,9 @@ def create_app() -> FastAPI:
 
     @app.get("/how", response_class=HTMLResponse)
     def how(request: Request):
-        return render(request, "how.html", rules=readiness_config())
+        from radar import scorecard
+
+        return render(request, "how.html", rules=readiness_config(), card=scorecard.compute())
 
     @app.get("/about", response_class=HTMLResponse)
     def about(request: Request):

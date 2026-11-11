@@ -143,3 +143,27 @@ def test_future_dated_document_is_not_newest_and_does_not_make_coverage_recent()
         assert present.coverage_note(row["newest_doc_date"]) is not None  # not "current"
         reasons = coverage.bar(con, {"allocator_id": "canary", "access": "AUTO"})
         assert any("no document dated in the last 6 months" in r for r in reasons)
+
+
+def test_spot_check_parsing_takes_the_latest_and_ignores_bad_lines():
+    from radar.scorecard import latest_spot_check
+
+    text = """### 2026-11-10 DATA SPOT-CHECK
+SPOT-CHECK 2026-11-10: 40 signals checked, 37 correct, accuracy 92.5%, method x
+### 2026-11-12 DATA SPOT-CHECK
+SPOT-CHECK 2026-11-12: 50 signals checked, 48 correct, accuracy 96%, method y
+SPOT-CHECK 2026-11-13: 5 signals checked, 9 correct"""
+    assert latest_spot_check(text) == {"date": "2026-11-12", "checked": 50, "correct": 48, "pct": 96.0}
+    assert latest_spot_check("nothing here") is None
+
+
+def test_how_page_shows_scorecard(monkeypatch, tmp_path):
+    from fastapi.testclient import TestClient
+
+    from radar.web.app import create_app
+
+    h = tmp_path / "HANDOFF.md"
+    h.write_text("SPOT-CHECK 2026-11-11: 20 signals checked, 19 correct, accuracy 95%, method spot\n")
+    monkeypatch.setenv("RADAR_HANDOFF_PATH", str(h))
+    body = TestClient(create_app()).get("/how").text
+    assert "Data quality" in body and "95.0%" in body and "19 of 20 signals correct" in body
