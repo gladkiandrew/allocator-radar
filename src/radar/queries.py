@@ -145,7 +145,8 @@ def shown_engagements(engagements: list[dict]) -> list[dict]:
     listed under not_consultant. Stored rows are untouched."""
     nc = _not_consultants()
     return [e for e in engagements
-            if not _names_own_manager(e) and _norm_label(e.get("consultant_name_as_disclosed")) not in nc]
+            if e.get("role") != "per_deal_manager"  # DATA's role column (D-B31)
+            and not _names_own_manager(e) and _norm_label(e.get("consultant_name_as_disclosed")) not in nc]
 
 
 def pending_count(con) -> int:
