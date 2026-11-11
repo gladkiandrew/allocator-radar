@@ -369,8 +369,8 @@ def test_hf_buyers_ranking_percent_and_not_disclosed():
     assert a["alt"]["cite"].startswith("Form 990 TY2023 Part X line 12")
     assert "Part X line 11" in a["denom"]["cite"] and "Part X line 12" in a["denom"]["cite"]
     assert a["latest"]["url"].endswith("/590000011/202401000000000011/full")
-    # 990-PF: FMV used when the line has one; a blank public-securities line counts as zero and is reported as blank
-    assert b["hf"]["amount"] == 1.2e8 and b["hf"]["basis"] == "FMV" and b["hf_pct"] == pytest.approx(24.0)
+    # 990-PF: FMV used when the line has one; a blank public-securities line is not a zero, so no share is computed
+    assert b["hf"]["amount"] == 1.2e8 and b["hf"]["basis"] == "FMV" and b["hf_pct"] is None and b["alt_pct"] is None
     assert b["denom"]["blank"] == ["public securities"] and b["alt"]["basis"] == "FMV"
     assert b["hf"]["cite"] == "Form 990-PF TY2024 Part II line 13 statement (investments, other)"
     # "ALTERNATIVE INVESTMENTS" is not a hedge fund line: no hedge fund figure, noted under the broader figure
@@ -407,11 +407,12 @@ def test_hf_buyers_page_and_static_export(tmp_path):
     assert page.status_code == 200 and 'href="/ef"' in t and "Hedge fund buyers" in t
     assert t.index("Beta Family Foundation") < t.index("Alpha University Foundation Inc") < t.index("Gamma Community Foundation Inc") \
         < t.index("Delta College Foundation Inc") < t.index("Epsilon Foundation")
-    assert "$120,000,000" in t and "24.0% of investments" in t and "10.0% of investments" in t
+    assert "$120,000,000" in t and "share of investments not disclosed" in t and "10.0% of investments" in t
+    assert "100.0% of investments" not in t
     assert "Form 990 TY2023 Schedule D Part VII (investments, other securities)" in t
     assert "Form 990-PF TY2024 Part II line 13 statement (investments, other)" in t
     assert "https://projects.propublica.org/nonprofits/organizations/590000011/202401000000000011/full" in t
-    assert t.count("not disclosed") >= 5 and "% not computable" in t and "public securities + other investments" in t
+    assert t.count("not disclosed") >= 5 and "public securities + other investments" in t
     assert "$0" not in t
     out = tmp_path / "dist"
     static_export.export(out)
@@ -420,3 +421,13 @@ def test_hf_buyers_page_and_static_export(tmp_path):
     assert 'href="ef-hf.html"' in (out / "ef.html").read_text()
     assert 'href="../ef.html"' in (out / "ef" / "590000022.html").read_text()
     assert static_site.check(out) == []
+
+
+def test_line_basis_labels_follow_the_stated_valuation_method_and_signals_name_their_form():
+    from radar.sources.endowments.views import _line_value, source_form
+
+    assert _line_value({"fmv": 5.0, "book_value": 4.0}) == (5.0, "FMV")
+    assert _line_value({"fmv": None, "book_value": 4.0, "valuation": "F"}) == (4.0, "end-of-year market value")
+    assert _line_value({"fmv": None, "book_value": 4.0, "valuation": "AT COST"}) == (4.0, "book value at cost")
+    assert source_form({"source_type": "990", "cite": "Form 990-PF TY2024 Part II line 13"}) == "Form 990-PF"
+    assert source_form({"source_type": "990", "cite": "Form 990 TY2023 Schedule D Part VII"}) == "Form 990"

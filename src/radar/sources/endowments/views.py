@@ -11,7 +11,7 @@ from radar.sources.endowments.signals import HF, ef_readiness
 from radar.sources.endowments.universe import KIND_LABEL, PP_ORG
 
 PUBLIC_STATUSES = ("approved", "auto_approved")
-SOURCE_LABEL = {"990": "IRS 990", "committee": "Committee document"}
+SOURCE_LABEL = {"990": "IRS 990", "committee": "Committee document", "meeting_calendar": "Meeting calendar"}
 
 
 def _signals(con, eins: list[str] | None, public: bool) -> dict[str, list[dict]]:
@@ -30,7 +30,7 @@ def _signals(con, eins: list[str] | None, public: bool) -> dict[str, list[dict]]
     for s in store.rows(con, f"SELECT * FROM ef_signals WHERE {' AND '.join(where)} ORDER BY event_date DESC, signal_type", params):
         if public and not is_verified(s):
             continue
-        s["source_label"] = SOURCE_LABEL.get(s["source_type"], s["source_type"])
+        s["source_label"] = source_form(s)
         out[s["ein"]].append(s)
     return out
 
@@ -112,6 +112,26 @@ def org_brief(ein: str, public: bool = True) -> dict | None:
     return {**o, "kind_label": KIND_LABEL.get(o["kind"], o["kind"]), "filings": fs, "latest": latest,
             "other_latest": other_latest, "n_other_latest": len(other_latest), "pp_filings": pp, "documents": docs,
             "signals": sigs, "readiness": ef_readiness(sigs, bool(fs)), "propublica_url": PP_ORG.format(ein=int(ein))}
+
+
+def _line_value(x: dict) -> tuple[float | None, str]:
+    """An other-investment line's value and an honest basis label. 990-PF statements carry a fair-market-value column;
+    Schedule D Part VII carries book value plus the method of valuation (F = end-of-year market value, C = cost)."""
+    if x.get("fmv") is not None:
+        return x["fmv"], "FMV"
+    v = (x.get("valuation") or "").strip().upper()
+    if v in ("F", "FMV"):
+        return x.get("book_value"), "end-of-year market value"
+    if v in ("C", "AT COST", "COST"):
+        return x.get("book_value"), "book value at cost"
+    return x.get("book_value"), "book value"
+
+
+def source_form(s: dict) -> str:
+    """The real form behind a 990-sourced signal ("Form 990" or "Form 990-PF"), else the source label."""
+    if s.get("source_type") == "990":
+        return "Form 990-PF" if "990-PF" in (s.get("cite") or "") or "990PF" in (s.get("cite") or "") else "Form 990"
+    return SOURCE_LABEL.get(s.get("source_type"), s.get("source_type") or "")
 
 
 def _filing_obj(f: dict) -> irs.Filing:
@@ -211,7 +231,7 @@ def hf_buyers() -> list[dict]:
                     if HF_NAMED.search(x["description"] or ""):
                         row["hf_unstated"].append(x["description"])
                     continue
-                val, basis = (x["fmv"], "FMV") if x["fmv"] is not None else (x["book_value"], "book value")
+                val, basis = _line_value(x)
                 if val is None:
                     continue
                 item = {"description": x["description"], "value": val, "basis": basis}
@@ -230,11 +250,12 @@ def hf_buyers() -> list[dict]:
                               "cite": irs.citation(fo, "investments_other")}
             parts = [("public securities", f["investments_public"], irs.citation(fo, "investments_public")),
                      ("other investments", f["investments_other"], irs.citation(fo, "investments_other"))]
+            # a blank line is not a zero: with either line blank the share of investments is not disclosed
             if any(v is not None for _, v, _ in parts):
                 row["denom"] = {"amount": sum(v or 0 for _, v, _ in parts), "basis": "FMV" if pf else "book value",
                                 "blank": [label for label, v, _ in parts if v is None],
                                 "cite": "; ".join(_short_cite(c) for _, _, c in parts)}
-            d = row["denom"]["amount"] if row["denom"] else 0
+            d = row["denom"]["amount"] if row["denom"] and not row["denom"]["blank"] else 0
             if d > 0:
                 row["hf_pct"] = 100 * row["hf"]["amount"] / d if row["hf"] else None
                 row["alt_pct"] = 100 * row["alt"]["amount"] / d if row["alt"] else None

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Hedge fund buyers · Endowments & Foundations · Allocator Radar{% endblock %}
 {% macro money(v) %}{% if v is not none %}${{ '{:,.0f}'.format(v) }}{% else %}—{% endif %}{% endmacro %}
-{% macro pct(v) %}{% if v is none %}% not computable{% elif v > 0 and v < 0.1 %}&lt;0.1% of investments{% else %}{{ '%.1f'|format(v) }}% of investments{% endif %}{% endmacro %}
+{% macro pct(v) %}{% if v is none %}share of investments not disclosed{% elif v > 0 and v < 0.1 %}&lt;0.1% of investments{% else %}{{ '%.1f'|format(v) }}% of investments{% endif %}{% endmacro %}
 {% macro cite(f, full) %}<a class="cite" href="{{ f.url }}" target="_blank" rel="noopener" title="{{ full }}">Form {{ f.form }} TY{{ f.tax_year }}</a>
   <div class="faint small ef-hf-cite">{{ full }}</div>{% endmacro %}
 {% block body %}
@@ -26,8 +26,8 @@
     publicly traded securities, so it can also include commingled stock and bond funds, private equity and real estate.
     It is not a hedge fund figure.</p>
   <p><b>Percent of investments</b> = figure ÷ (public securities + other investments): Form 990 Part X lines 11 + 12, or
-    Form 990-PF Part II lines 10a–10c + 13. A line left blank on the return counts as zero; when both are blank the
-    percent is not computed. Each figure is labeled with the value it uses: fair market value (FMV) where the return
+    Form 990-PF Part II lines 10a–10c + 13. A line left blank on the return is not a zero: when either line is blank, the share of investments is shown as
+    not disclosed. Each figure is labeled with the value it uses: fair market value (FMV) where the return
     gives one for that line, otherwise book value. The 990 balance sheet is at book value; the 990-PF totals are at FMV,
     while the 990-PF statement lines read so far carry book value only, so those percents divide a book value by an FMV
     total and are labeled that way.</p>
@@ -77,9 +77,9 @@
       {% endif %}</td>
     <td data-l="Investments (denominator)">{% if r.denom %}
         <div class="mono">{{ money(r.denom.amount) }} <span class="faint small">{{ r.denom.basis }}</span></div>
-        {% if r.denom.blank %}<div class="faint small">{{ r.denom.blank|join(' and ')|capitalize }} blank on the return, counted as zero.</div>{% endif %}
+        {% if r.denom.blank %}<div class="faint small">{{ r.denom.blank|join(' and ')|capitalize }} left blank on the return, so the share of investments is not disclosed.</div>{% endif %}
         <div class="faint small ef-hf-cite">{{ r.denom.cite }}</div>
-      {% else %}<span class="muted">not disclosed</span><div class="faint small">% not computable</div>{% endif %}</td>
+      {% else %}<span class="muted">not disclosed</span>{% endif %}</td>
   </tr>
   {% endfor %}
   </tbody>

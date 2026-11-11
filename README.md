@@ -283,6 +283,44 @@ the public build any block marked `data-audience="member"` or `"admin"` (or `cla
 it; in the member build contact details may appear only inside member blocks, and admin pages and links
 still fail it.
 
+**Rate-limit the login (do this before switching the gated site on).** The Worker keeps no state, so it
+can't count failed logins itself; PBKDF2 at 100,000 iterations slows each guess but doesn't cap them.
+Add a Cloudflare rate-limiting rule in front of it. WAF rules run only on a zone, so the gated site must
+be on a custom domain in the `amagna.co` zone (uncomment the `routes` entry in `wrangler.gated.jsonc`),
+not on `workers.dev`.
+
+The rule, in the dashboard: *amagna.co → Security → WAF → Rate limiting rules → Create rule*.
+
+| Field | Value |
+|---|---|
+| Rule name | `gate-login-bruteforce` |
+| If incoming requests match | `(http.host eq "<gated hostname>" and http.request.uri.path eq "/login" and http.request.method eq "POST")` |
+| With the same characteristics | IP |
+| When rate exceeds | 5 requests per 1 minute |
+| Then take action | Block (or Managed Challenge) |
+| For duration | 10 minutes |
+
+Plan limits apply: on the Free plan the counting period and the block duration are fixed at 10 seconds,
+so use 5 requests per 10 seconds there; Pro and above allow the values in the table. The same rule as an
+API call (a token with *Zone WAF: Edit*; `ZONE_ID` from the zone's overview page):
+
+```bash
+curl -X POST "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/rulesets/phases/http_ratelimit/entrypoint/rules" \
+  -H "Authorization: Bearer $CF_API_TOKEN" -H "Content-Type: application/json" --data '{
+    "description": "gate-login-bruteforce",
+    "expression": "(http.host eq \"<gated hostname>\" and http.request.uri.path eq \"/login\" and http.request.method eq \"POST\")",
+    "action": "block",
+    "ratelimit": {"characteristics": ["ip.src", "cf.colo.id"], "period": 60,
+                  "requests_per_period": 5, "mitigation_timeout": 600}
+  }'
+```
+
+If the zone has no `http_ratelimit` entrypoint ruleset yet, that call returns 404. Create the rule in the
+dashboard once, or `PUT` the whole entrypoint with this rule in its `rules` array. Check it afterwards:
+six wrong passwords inside a minute should get a 429 or the block page. A successful login is a 302,
+which also counts toward the limit, so five sign-ins a minute from one office IP is the ceiling. The
+local app (`radar serve` with the gate on) has its own in-memory backoff and needs none of this.
+
 ## Deploy
 
 **Public site.** [allocator.amagna.co](https://allocator.amagna.co/) is a static snapshot on

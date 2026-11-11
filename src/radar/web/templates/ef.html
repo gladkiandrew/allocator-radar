@@ -39,7 +39,7 @@
       {% if o.signals %}{% set s = o.signals[0] %}
         <span class="date">{{ s.event_date }}</span> {% set lbl = ef_signal_label(s) %}{% if lbl %}<b>{{ lbl }}:</b> {% endif %}{{ s.summary }}
         <a class="cite" href="{{ s.source_url }}" target="_blank" rel="noopener" title="{{ s.cite }}">{{ s.doc_title or s.cite|truncate(26) }}</a>
-        <div class="meta"><span class="tag">{{ s.source_label }}</span>{% if s.hf_relevant %}<span class="tag hf">HF</span>{% endif %}
+        <div class="meta"><span class="tag">{{ s.source_label }}</span>{% if s.hf_relevant %} <span class="tag hf">hedge fund</span>{% endif %}
           {% set ap = approval(s) %}<span class="tag {{ ap.cls }}" title="{{ ap.title }}">{{ ap.label }}</span>
           {% if o.signals|length > 1 %}<a href="/ef/{{ o.ein }}#signals">+{{ o.signals|length - 1 }} more</a>{% endif %}</div>
       {% elif f %}<span class="muted">No change signal in the filings on file. {{ o.filings|length }} return{{ 's' if o.filings|length != 1 }} read.</span>

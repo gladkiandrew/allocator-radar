@@ -47,6 +47,24 @@ def latest_spot_check(text: str) -> dict | None:
     return best
 
 
+OWNER_EF = re.compile(r"ef_spotcheck_25|/review/ef", re.I)
+
+
+def owner_ef_spot_check(text: str) -> dict | None:
+    """The owner's E&F spot check: the latest SPOT-CHECK line whose method names ef_spotcheck_25 or /review/ef."""
+    best = None
+    for line in (text or "").splitlines():
+        m = SPOT.search(line)
+        if not m or not OWNER_EF.search(line):
+            continue
+        d, n, k = m.group(1), int(m.group(2)), int(m.group(3))
+        if n <= 0 or k > n:
+            continue
+        if best is None or d >= best["date"]:
+            best = {"date": d, "checked": n, "correct": k, "pct": round(100 * k / n, 1)}
+    return best
+
+
 def _median_age(dates: list[date], today: date) -> int | None:
     ages = [(today - d).days for d in dates if d and d <= today]
     return int(statistics.median(ages)) if ages else None
@@ -91,7 +109,8 @@ def compute(today: date | None = None) -> dict:
     verified = sum(1 for x in pen_sigs + ef_sigs if is_verified(x))
     p = handoff_path()
     spot = latest_spot_check(p.read_text()) if p.exists() else None
-    phase_c = _phase_c(n_orgs, kinds, no_reason, committee_orgs)
+    owner_ef = owner_ef_spot_check(p.read_text()) if p.exists() else None
+    phase_c = _phase_c(n_orgs, kinds, no_reason, committee_orgs, owner_ef)
     total_rev, total_pub = reviewed + ef_rev, public + ef_pub
     return {
         "as_of": today.isoformat(),
@@ -111,7 +130,7 @@ def compute(today: date | None = None) -> dict:
     }
 
 
-def _phase_c(n_orgs: int, kinds: dict, no_reason: int, committee_orgs: int) -> list[dict]:
+def _phase_c(n_orgs: int, kinds: dict, no_reason: int, committee_orgs: int, owner_ef: dict | None = None) -> list[dict]:
     """Phase C's four done-when criteria (ROADMAP.md), each with the measured value and met / not met."""
     from radar.sources.endowments import views
     from radar.web import ef_spotcheck
@@ -139,8 +158,21 @@ def _phase_c(n_orgs: int, kinds: dict, no_reason: int, committee_orgs: int) -> l
         {"criterion": "At least 5 organizations with a dated committee or board document read and cited",
          "value": f"{committee_orgs} organizations with a dated agenda, minutes, packet or meeting notice read and cited",
          "met": committee_orgs >= 5},
-        {"criterion": "A person spot-checks 25 E&F signals and at least 95% are correct",
-         "value": (f"{len(decided)} of {len(ids) or 25} decided, {acc}% correct" if decided
-                   else "not run yet: owner reviews data/ef_spotcheck_25.md at /review/ef"),
-         "met": len(decided) >= 25 and acc is not None and acc >= 95},
+        _spot_row(owner_ef, decided, ids, acc),
     ]
+
+
+def _spot_row(owner_ef: dict | None, decided: list, ids: list, acc: float | None) -> dict:
+    """Criterion 4. The owner's posted SPOT-CHECK line in HANDOFF.md is the record; local /review/ef progress shows
+    until it is posted."""
+    crit = "A person spot-checks 25 E&F signals and at least 95% are correct"
+    if owner_ef:
+        return {"criterion": crit,
+                "value": f"owner spot check {owner_ef['date']}: {owner_ef['correct']} of {owner_ef['checked']} correct "
+                         f"({owner_ef['pct']}%)",
+                "met": owner_ef["checked"] >= 25 and owner_ef["pct"] >= 95}
+    if decided:
+        return {"criterion": crit, "value": f"in progress: {len(decided)} of {len(ids) or 25} decided, {acc}% correct",
+                "met": False}
+    return {"criterion": crit, "value": "not run yet: owner reviews data/ef_spotcheck_25.md at /review/ef",
+            "met": False}

@@ -47,7 +47,7 @@
       <div class="hf-body">
         <a class="name" href="/ef/{{ s.ein }}">{{ s.org_name|pretty }}</a>
         <p>{{ s.summary }}</p>
-        <div class="meta"><span class="tag">IRS 990</span><span>Source <a class="cite" href="{{ s.source_url }}" target="_blank" rel="noopener" title="{{ s.cite }}">{{ s.doc_title }}</a></span>
+        <div class="meta"><span class="tag">{{ 'Form 990-PF' if '990-PF' in (s.cite or '') else 'Form 990' }}</span> <span>Source <a class="cite" href="{{ s.source_url }}" target="_blank" rel="noopener" title="{{ s.cite }}">{{ s.doc_title }}</a></span>
           <span class="faint">{{ s.cite }}</span></div>
       </div>
     </article>
